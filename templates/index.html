@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--pr:#1a3a6b;--pr2:#2a5298;--ac:#c8a951;--bg:linear-gradient(160deg,#eaf1fb 0%,#f7faff 60%,#e8f0fb 100%)}
+*{box-sizing:border-box}
+body{background:var(--bg);min-height:100vh;font-family:'Sarabun','Segoe UI',sans-serif;font-size:15px;margin:0}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,#1a3a6b 0%,#2a5298 60%,#1565c0 100%);color:#fff;
+     padding:16px 24px 12px;border-bottom:4px solid var(--ac);box-shadow:0 4px 18px rgba(26,58,107,.35)}
+.hdr h4{font-size:1.05rem;margin:0;font-weight:700}
+.hdr small{font-size:.77rem;opacity:.82}
+.mbadge{background:rgba(255,255,255,.18);border-radius:10px;padding:5px 14px;font-size:.75rem;
+        border:1px solid rgba(255,255,255,.3);white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
+.dg{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25);animation:pulse 2s infinite}
+.dy{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.25)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* Tabs */
+.tnav{background:#fff;border-bottom:2px solid #dde3ef;padding:0 20px;position:sticky;top:0;
+      z-index:100;box-shadow:0 2px 8px rgba(26,58,107,.1);display:flex;gap:2px;overflow-x:auto}
+.tbtn{border:none;background:none;padding:12px 20px;font-family:'Sarabun',sans-serif;
+      font-size:.9rem;font-weight:600;color:#777;cursor:pointer;border-bottom:3px solid transparent;
+      transition:.2s;white-space:nowrap}
+.tbtn.active{color:var(--pr);border-bottom-color:var(--ac)}
+.tbtn:hover{color:var(--pr);background:rgba(26,58,107,.04)}
+
+/* Section */
+.sh{background:linear-gradient(90deg,#1a3a6b,#2a5298);color:#fff;padding:9px 18px;
+    border-radius:10px 10px 0 0;font-size:.92rem;font-weight:700;letter-spacing:.3px;
+    box-shadow:0 2px 8px rgba(26,58,107,.15)}
+.sb{background:#fff;border:1px solid #dde3ef;border-top:none;border-radius:0 0 10px 10px;
+    padding:18px 20px 14px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+
+/* Dynamic rows */
+.pos-row{background:linear-gradient(135deg,#f8faff,#eef3ff);border:1px solid #c8d8f0;
+         border-radius:10px;padding:14px 16px;margin-bottom:12px;transition:.2s;position:relative}
+.pos-row:hover{box-shadow:0 4px 14px rgba(26,58,107,.1)}
+.pos-row-num{display:inline-flex;align-items:center;justify-content:center;background:var(--pr);
+             color:#fff;border-radius:50%;width:24px;height:24px;font-size:.8rem;font-weight:700;margin-right:8px}
+
+/* Form */
+.form-label{font-weight:600;color:#1a3a6b;margin-bottom:3px;font-size:.84rem}
+.form-control,.form-select{font-size:.88rem;font-family:'Sarabun',sans-serif;border-color:#c8d3e8;border-radius:7px;transition:.2s}
+.form-control:focus,.form-select:focus{border-color:#2a5298;box-shadow:0 0 0 .22rem rgba(42,82,152,.18)}
+.required::after{content:" *";color:#e53e3e}
+textarea.form-control{resize:vertical}
+
+/* Buttons */
+.btn{border-radius:8px;font-family:'Sarabun',sans-serif;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.btn:active{transform:translateY(0)}
+.btn-save{background:linear-gradient(135deg,#1a3a6b,#2a5298);color:#fff;border:none;font-weight:700;padding:9px 30px}
+.btn-save:hover{background:linear-gradient(135deg,#0f2248,#1a3a6b);color:#fff}
+.btn-add-row{background:linear-gradient(135deg,#198754,#20c997);color:#fff;border:none;font-size:.88rem}
+.btn-add-row:hover{background:linear-gradient(135deg,#145c38,#198754);color:#fff}
+
+/* Upload/Export zone */
+.upload-zone{background:linear-gradient(135deg,#f0f7ff,#e8f0fb);border:2px dashed #90b4e8;
+             border-radius:12px;padding:20px;text-align:center;transition:.3s;cursor:pointer}
+.upload-zone:hover{border-color:#2a5298;background:#e3eeff}
+.upload-zone.has-file{border-style:solid;border-color:#198754;background:linear-gradient(135deg,#f0fff4,#e8f7ee)}
+.export-zone{background:linear-gradient(135deg,#fff8e8,#fff3d0);border:2px solid #f0c040;border-radius:12px;padding:20px}
+.btn-export-pdf{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border:none;font-weight:700}
+.btn-export-pdf:hover{background:linear-gradient(135deg,#922b21,#c0392b);color:#fff}
+.btn-export-csv2{background:linear-gradient(135deg,#1e8449,#27ae60);color:#fff;border:none;font-weight:700}
+.btn-export-csv2:hover{background:linear-gradient(135deg,#196f3d,#1e8449);color:#fff}
+.btn-export-json2{background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;border:none;font-weight:700}
+.btn-export-json2:hover{background:linear-gradient(135deg,#a04000,#d35400);color:#fff}
+.file-info{font-size:.82rem;color:#198754;font-weight:600;margin-top:6px;display:none}
+
+/* Table */
+#tbl{font-size:.79rem;min-width:1050px}
+#tbl thead th{background:linear-gradient(90deg,#1a3a6b,#2a5298);color:#fff;white-space:nowrap;
+              font-weight:600;font-size:.77rem;padding:9px 10px}
+#tbl tbody td{vertical-align:middle;padding:7px 10px}
+#tbl tbody tr:hover{background:#eef4ff}
+.bsm{font-size:.7rem;padding:3px 8px}
+
+/* Dashboard */
+.sc{background:#fff;border-radius:12px;border-left:5px solid var(--ac);
+    padding:18px 20px;box-shadow:0 3px 12px rgba(0,0,0,.09);transition:.2s}
+.sc:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.13)}
+.sc .val{font-size:2.2rem;font-weight:800;line-height:1.1}
+.sc .lbl{font-size:.8rem;color:#888;margin-top:4px}
+.cc{background:#fff;border-radius:12px;padding:20px;box-shadow:0 3px 12px rgba(0,0,0,.09)}
+
+/* Toast */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:9999}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3">
+    <i class="fa fa-landmark fa-2x" style="color:var(--ac)"></i>
+    <div>
+      <h4><i class="fa fa-sitemap me-2"></i>ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</h4>
+      <small>Human Resource Management System &nbsp;|&nbsp; Position Restructuring Database</small>
+    </div>
+  </div>
+  <span class="mbadge" id="mode-badge"><span class="dot dy"></span>กำลังเชื่อมต่อ...</span>
+</div>
+
+<!-- TAB NAV -->
+<div class="tnav">
+  <button class="tbtn active" onclick="showTab('tab-form',this)"><i class="fa fa-edit me-1"></i>กรอกข้อมูล</button>
+  <button class="tbtn" onclick="showTab('tab-list',this)"><i class="fa fa-list me-1"></i>รายการทั้งหมด <span class="badge bg-danger ms-1" id="badge-count">0</span></button>
+  <button class="tbtn" onclick="showTab('tab-dashboard',this)"><i class="fa fa-chart-bar me-1"></i>สรุปภาพรวม</button>
+</div>
+
+<div class="container-fluid px-3 px-md-4 py-3">
+
+<!-- ==================== TAB FORM ==================== -->
+<div id="tab-form">
+<form id="mainForm" novalidate>
+  <input type="hidden" id="rec-id">
+
+  <!-- ส่วนที่ 1 -->
+  <div class="sh"><i class="fa fa-plus-circle me-2"></i>ส่วนที่ 1 : คำขอกำหนดตำแหน่ง (ใหม่)</div>
+  <div class="sb">
+    <div id="sec1-container"></div>
+    <div class="text-center mt-2">
+      <button type="button" class="btn btn-add-row px-4" onclick="addRow('sec1')">
+        <i class="fa fa-plus me-1"></i> เพิ่มตำแหน่งใหม่
+      </button>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 2 -->
+  <div class="sh"><i class="fa fa-exchange-alt me-2"></i>ส่วนที่ 2 : ตำแหน่งที่นำมาปรับปรุงการกำหนดตำแหน่ง</div>
+  <div class="sb">
+    <div id="sec2-container"></div>
+    <div class="text-center mt-2">
+      <button type="button" class="btn btn-add-row px-4" onclick="addRow('sec2')">
+        <i class="fa fa-plus me-1"></i> เพิ่มตำแหน่งที่นำมาปรับปรุง
+      </button>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 3 -->
+  <div class="sh"><i class="fa fa-ban me-2"></i>ส่วนที่ 3 : การยุบเลิกตำแหน่งเพื่อควบคุมค่าใช้จ่าย</div>
+  <div class="sb">
+    <div id="sec3-container"></div>
+    <div class="text-center mt-2">
+      <button type="button" class="btn btn-add-row px-4" onclick="addRow('sec3')">
+        <i class="fa fa-plus me-1"></i> เพิ่มตำแหน่งที่ยุบเลิก
+      </button>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 4 -->
+  <div class="sh"><i class="fa fa-gavel me-2"></i>ส่วนที่ 4 : การพิจารณาของ อกพ. สำนักนายกรัฐมนตรี ในคราวประชุม</div>
+  <div class="sb">
+    <div class="row g-3">
+      <div class="col-6 col-md-2">
+        <label class="form-label">ประชุมครั้งที่</label>
+        <input type="text" class="form-control" id="p4_round" placeholder="เช่น 3/2567">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label">เมื่อวันที่</label>
+        <input type="date" class="form-control" id="p4_date">
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">มติที่ประชุม</label>
+        <select class="form-select" id="p4_resolution">
+          <option value="">-- เลือก --</option>
+          <option>เห็นควรอนุมัติ</option>
+          <option>ไม่เห็นควรอนุมัติ</option>
+          <option>รอพิจารณาเพิ่มเติม</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label required">สถานะคำขอ</label>
+        <select class="form-select" id="p4_status" required>
+          <option value="">-- เลือก --</option>
+          <option>อนุมัติ</option>
+          <option>ไม่อนุมัติ</option>
+          <option>อยู่ระหว่างพิจารณา</option>
+          <option>รอเอกสารเพิ่มเติม</option>
+          <option>ถอนคำขอ</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label">วันที่มีผล</label>
+        <input type="date" class="form-control" id="p4_effective">
+      </div>
+      <div class="col-12 col-md-9">
+        <label class="form-label">หมายเหตุ</label>
+        <textarea class="form-control" id="p4_note" rows="2" placeholder="หมายเหตุเพิ่มเติม"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 5 -->
+  <div class="sh"><i class="fa fa-coins me-2"></i>ส่วนที่ 5 : ค่าตอบแทนเฉลี่ยของตำแหน่งคงเหลือ</div>
+  <div class="sb">
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-4">
+        <label class="form-label">ค่าตอบแทนเฉลี่ยคงเหลือ (บาท/เดือน)</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa fa-baht-sign"></i></span>
+          <input type="number" class="form-control" id="p5_salary" min="0" step="0.01" placeholder="0.00">
+          <span class="input-group-text">บาท</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label">การประชุมครั้งที่</label>
+        <input type="text" class="form-control" id="p5_round" placeholder="เช่น 3/2567">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label">เมื่อวันที่</label>
+        <input type="date" class="form-control" id="p5_date">
+      </div>
+    </div>
+
+    <!-- Upload & Export Panel -->
+    <div class="row g-3">
+      <!-- Upload Zone -->
+      <div class="col-12 col-md-6">
+        <p class="form-label mb-2"><i class="fa fa-paperclip me-1 text-primary"></i>แนบเอกสาร / ไฟล์ประกอบ</p>
+        <div class="upload-zone" id="upload-zone"
+             onclick="document.getElementById('file_attach').click()"
+             ondragover="event.preventDefault();this.style.borderColor='#2a5298'"
+             ondragleave="this.style.borderColor='#90b4e8'"
+             ondrop="handleDrop(event)">
+          <i class="fa fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+          <div class="fw-600 text-primary">คลิกเพื่อเลือกไฟล์ หรือลากวางที่นี่</div>
+          <div class="text-muted" style="font-size:.8rem">รองรับ PDF, Word, Excel (ขนาดไม่เกิน 10 MB)</div>
+          <input type="file" id="file_attach" style="display:none"
+                 accept=".pdf,.doc,.docx,.xls,.xlsx"
+                 onchange="handleFileSelect(this)">
+        </div>
+        <div id="file-info" class="file-info">
+          <i class="fa fa-check-circle text-success me-1"></i>
+          <span id="file-name-display"></span>
+          <button type="button" class="btn btn-sm btn-outline-danger ms-2 py-0" onclick="clearFile()">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Export Zone -->
+      <div class="col-12 col-md-6">
+        <p class="form-label mb-2"><i class="fa fa-file-export me-1 text-warning"></i>ส่งออกข้อมูล (Export)</p>
+        <div class="export-zone">
+          <div class="row g-2">
+            <div class="col-12">
+              <button type="button" class="btn btn-export-pdf w-100 py-2" onclick="exportPDFRecord()">
+                <i class="fa fa-file-pdf me-2"></i>Export PDF รายการนี้
+              </button>
+            </div>
+            <div class="col-6">
+              <button type="button" class="btn btn-export-csv2 w-100" onclick="doExportCSV()">
+                <i class="fa fa-file-csv me-1"></i>Export CSV ทั้งหมด
+              </button>
+            </div>
+            <div class="col-6">
+              <button type="button" class="btn btn-export-json2 w-100" onclick="doExportJSON()">
+                <i class="fa fa-file-code me-1"></i>Export JSON ทั้งหมด
+              </button>
+            </div>
+          </div>
+          <div class="text-muted mt-2" style="font-size:.78rem">
+            <i class="fa fa-info-circle me-1"></i>บันทึกข้อมูลก่อน แล้วค่อย Export
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="d-flex gap-2 mb-5 flex-wrap">
+    <button type="submit" class="btn btn-save px-4"><i class="fa fa-save me-2"></i>บันทึกข้อมูล</button>
+    <button type="button" class="btn btn-outline-secondary px-3" onclick="clearForm()">
+      <i class="fa fa-times me-1"></i>ล้างฟอร์ม
+    </button>
+  </div>
+</form>
+</div>
+
+<!-- ==================== TAB LIST ==================== -->
+<div id="tab-list" style="display:none">
+  <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+    <input type="text" class="form-control" id="search-input"
+      placeholder="🔍 ค้นหาตำแหน่งเลขที่ ประเภท กอง สถานะ..."
+      style="max-width:340px" oninput="renderTable()">
+    <select class="form-select" id="filter-status" style="max-width:200px" onchange="renderTable()">
+      <option value="">ทุกสถานะ</option>
+      <option>อนุมัติ</option><option>ไม่อนุมัติ</option>
+      <option>อยู่ระหว่างพิจารณา</option>
+      <option>รอเอกสารเพิ่มเติม</option><option>ถอนคำขอ</option>
+    </select>
+    <button class="btn btn-success" onclick="doExportCSV()"><i class="fa fa-file-csv me-1"></i>Export CSV</button>
+    <button class="btn btn-warning text-dark" onclick="doExportJSON()"><i class="fa fa-file-code me-1"></i>Export JSON</button>
+    <button class="btn btn-outline-danger" onclick="clearAll()"><i class="fa fa-trash me-1"></i>ลบทั้งหมด</button>
+    <span class="ms-auto text-muted small">แสดง <b id="rec-shown">0</b> / <b id="rec-total">0</b> รายการ</span>
+  </div>
+  <div class="table-responsive rounded shadow-sm">
+    <table class="table table-bordered table-hover table-sm mb-0" id="tbl">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>ตำแหน่งใหม่ (ส1)</th><th>ระดับ (ส1)</th><th>เลขที่ (ส1)</th><th>กอง (ส1)</th>
+          <th>ปรับปรุง (ส2)</th><th>ยุบเลิก (ส3)</th>
+          <th>ครั้งที่</th><th>วันที่ประชุม</th><th>มติ</th>
+          <th>สถานะ</th><th>ค่าตอบแทน</th><th>วันที่บันทึก</th><th>จัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== TAB DASHBOARD ==================== -->
+<div id="tab-dashboard" style="display:none">
+  <div class="row g-3 mb-3" id="stat-cards"></div>
+  <div class="row g-3">
+    <div class="col-12 col-lg-5"><div class="cc"><canvas id="chart-status" height="240"></canvas></div></div>
+    <div class="col-12 col-lg-7"><div class="cc"><canvas id="chart-type" height="240"></canvas></div></div>
+    <div class="col-12 col-lg-6"><div class="cc"><canvas id="chart-div" height="220"></canvas></div></div>
+    <div class="col-12 col-lg-6"><div class="cc"><canvas id="chart-level" height="220"></canvas></div></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- Toast -->
+<div class="toast-container">
+  <div id="myToast" class="toast align-items-center text-white border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toast-msg"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Templates ==================== -->
+<template id="tmpl-sec1">
+  <div class="pos-row" data-section="sec1">
+    <div class="d-flex align-items-center mb-2">
+      <span class="pos-row-num">?</span>
+      <strong class="row-label">ตำแหน่งใหม่ ที่ ?</strong>
+      <button type="button" class="btn btn-outline-danger btn-sm ms-auto py-0" onclick="delRow(this)">
+        <i class="fa fa-trash me-1"></i>ลบ
+      </button>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-md-3">
+        <label class="form-label required">ประเภทตำแหน่ง</label>
+        <select class="form-select" name="s1_type" required>
+          <option value="">-- เลือก --</option>
+          <option>บริหาร</option><option>อำนวยการ</option><option>วิชาการ</option><option>ทั่วไป</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label required">ระดับตำแหน่ง</label>
+        <select class="form-select" name="s1_level" required>
+          <option value="">-- เลือก --</option>
+          <option>ระดับสูง</option><option>ระดับต้น</option><option>ทรงคุณวุฒิ</option>
+          <option>เชี่ยวชาญ</option><option>ชำนาญการพิเศษ</option>
+          <option>ปฏิบัติการ / ชำนาญการ</option><option>ทักษะพิเศษ</option>
+          <option>อาวุโส</option><option>ปฏิบัติงาน / ชำนาญงาน</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label required">ตำแหน่งเลขที่</label>
+        <input type="text" class="form-control" name="s1_no" placeholder="เช่น 001" required>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">สังกัด กลุ่ม/ส่วน/ฝ่าย</label>
+        <input type="text" class="form-control" name="s1_group" placeholder="เช่น กลุ่มสรรหาฯ">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">กอง (สำนัก/กอง/ศูนย์)</label>
+        <input type="text" class="form-control" name="s1_division" placeholder="เช่น กองการเจ้าหน้าที่">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">กรม / หน่วยงาน</label>
+        <select class="form-select" name="s1_dept">
+          <option value="">-- เลือก --</option>
+          <option>สำนักงานปลัดสำนักนายกรัฐมนตรี</option>
+          <option>กรมประชาสัมพันธ์</option>
+          <option>สำนักงานคณะกรรมการคุ้มครองผู้บริโภค</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tmpl-sec2">
+  <div class="pos-row" data-section="sec2">
+    <div class="d-flex align-items-center mb-2">
+      <span class="pos-row-num">?</span>
+      <strong class="row-label">ตำแหน่งที่นำมาปรับปรุง ที่ ?</strong>
+      <button type="button" class="btn btn-outline-danger btn-sm ms-auto py-0" onclick="delRow(this)">
+        <i class="fa fa-trash me-1"></i>ลบ
+      </button>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-md-3">
+        <label class="form-label">ประเภทตำแหน่ง</label>
+        <select class="form-select" name="s2_type">
+          <option value="">-- เลือก --</option>
+          <option>บริหาร</option><option>อำนวยการ</option><option>วิชาการ</option><option>ทั่วไป</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">ระดับตำแหน่ง</label>
+        <select class="form-select" name="s2_level">
+          <option value="">-- เลือก --</option>
+          <option>ระดับสูง</option><option>ระดับต้น</option><option>ทรงคุณวุฒิ</option>
+          <option>เชี่ยวชาญ</option><option>ชำนาญการพิเศษ</option>
+          <option>ปฏิบัติการ / ชำนาญการ</option><option>ทักษะพิเศษ</option>
+          <option>อาวุโส</option><option>ปฏิบัติงาน / ชำนาญงาน</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">สังกัด กลุ่ม/ส่วน/ฝ่าย</label>
+        <input type="text" class="form-control" name="s2_group" placeholder="เช่น กลุ่มบริหารงานบุคคล">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">กอง (สำนัก/กอง/ศูนย์)</label>
+        <input type="text" class="form-control" name="s2_division" placeholder="เช่น กองการเจ้าหน้าที่">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">กรม / หน่วยงาน</label>
+        <select class="form-select" name="s2_dept">
+          <option value="">-- เลือก --</option>
+          <option>สำนักงานปลัดสำนักนายกรัฐมนตรี</option>
+          <option>กรมประชาสัมพันธ์</option>
+          <option>สำนักงานคณะกรรมการคุ้มครองผู้บริโภค</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tmpl-sec3">
+  <div class="pos-row" data-section="sec3">
+    <div class="d-flex align-items-center mb-2">
+      <span class="pos-row-num">?</span>
+      <strong class="row-label">ตำแหน่งที่ยุบเลิก ที่ ?</strong>
+      <button type="button" class="btn btn-outline-danger btn-sm ms-auto py-0" onclick="delRow(this)">
+        <i class="fa fa-trash me-1"></i>ลบ
+      </button>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-md-3">
+        <label class="form-label">ประเภทตำแหน่ง</label>
+        <select class="form-select" name="s3_type">
+          <option value="">-- เลือก --</option>
+          <option>บริหาร</option><option>อำนวยการ</option><option>วิชาการ</option><option>ทั่วไป</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">ระดับตำแหน่ง</label>
+        <select class="form-select" name="s3_level">
+          <option value="">-- เลือก --</option>
+          <option>ระดับสูง</option><option>ระดับต้น</option><option>ทรงคุณวุฒิ</option>
+          <option>เชี่ยวชาญ</option><option>ชำนาญการพิเศษ</option>
+          <option>ปฏิบัติการ / ชำนาญการ</option><option>ทักษะพิเศษ</option>
+          <option>อาวุโส</option><option>ปฏิบัติงาน / ชำนาญงาน</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label">ตำแหน่งเลขที่</label>
+        <input type="text" class="form-control" name="s3_no" placeholder="เช่น 002">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">สังกัด กลุ่ม/ส่วน/ฝ่าย</label>
+        <input type="text" class="form-control" name="s3_group">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">กอง (สำนัก/กอง/ศูนย์)</label>
+        <input type="text" class="form-control" name="s3_division" placeholder="เช่น กองการเจ้าหน้าที่">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">กรม</label>
+        <select class="form-select" name="s3_dept">
+          <option value="">-- เลือก --</option>
+          <option>สำนักงานปลัดสำนักนายกรัฐมนตรี</option>
+          <option>กรมประชาสัมพันธ์</option>
+          <option>สำนักงานคณะกรรมการคุ้มครองผู้บริโภค</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const API_BASE = '/api/positions';
+const LS_KEY   = 'pos_restructure_v4';
+let USE_FLASK  = false;
+let allRecords = [];
+let charts     = {};
+let attachedFileBase64 = null;
+let attachedFileName   = '';
+const COLORS = ['#1a3a6b','#c8a951','#198754','#dc3545','#0dcaf0','#6f42c1','#fd7e14','#20c997'];
+
+/* ============================================================
+   DYNAMIC ROWS
+   ============================================================ */
+const SEC_CFG = {
+  sec1:{ ctr:'sec1-container', tmpl:'tmpl-sec1', lbl:'ตำแหน่งใหม่ ที่',
+         names:['s1_type','s1_level','s1_no','s1_group','s1_division','s1_dept'] },
+  sec2:{ ctr:'sec2-container', tmpl:'tmpl-sec2', lbl:'ตำแหน่งที่นำมาปรับปรุง ที่',
+         names:['s2_type','s2_level','s2_group','s2_division','s2_dept'] },
+  sec3:{ ctr:'sec3-container', tmpl:'tmpl-sec3', lbl:'ตำแหน่งที่ยุบเลิก ที่',
+         names:['s3_type','s3_level','s3_no','s3_group','s3_division','s3_dept'] },
+};
+
+function addRow(secId, vals=null){
+  const cfg = SEC_CFG[secId];
+  const ctr = document.getElementById(cfg.ctr);
+  const clone = document.getElementById(cfg.tmpl).content.cloneNode(true);
+  const row = clone.querySelector('.pos-row');
+  const idx = ctr.querySelectorAll('.pos-row').length + 1;
+  row.querySelector('.pos-row-num').textContent = idx;
+  row.querySelector('.row-label').textContent   = `${cfg.lbl} ${idx}`;
+  if(vals) cfg.names.forEach(n=>{ const el=row.querySelector(`[name="${n}"]`); if(el&&vals[n]!==undefined) el.value=vals[n]; });
+  ctr.appendChild(row);
+}
+
+function delRow(btn){
+  const row = btn.closest('.pos-row');
+  const sid = row.dataset.section;
+  row.remove();
+  renum(sid);
+}
+
+function renum(sid){
+  const cfg = SEC_CFG[sid];
+  document.querySelectorAll(`#${cfg.ctr} .pos-row`).forEach((r,i)=>{
+    r.querySelector('.pos-row-num').textContent = i+1;
+    r.querySelector('.row-label').textContent   = `${cfg.lbl} ${i+1}`;
+  });
+}
+
+function getRows(sid){
+  const cfg = SEC_CFG[sid];
+  return Array.from(document.querySelectorAll(`#${cfg.ctr} .pos-row`)).map(row=>{
+    const o={};
+    cfg.names.forEach(n=>{ const el=row.querySelector(`[name="${n}"]`); o[n]=el?el.value:''; });
+    return o;
+  });
+}
+
+function clearRows(sid){ document.getElementById(SEC_CFG[sid].ctr).innerHTML=''; }
+
+function initDefaultRows(){
+  addRow('sec1');
+  addRow('sec2');
+  addRow('sec3'); addRow('sec3'); addRow('sec3');
+}
+
+/* ============================================================
+   FILE UPLOAD
+   ============================================================ */
+function handleFileSelect(inp){
+  const f = inp.files[0];
+  if(!f) return;
+  attachedFileName = f.name;
+  const reader = new FileReader();
+  reader.onload = e=>{ attachedFileBase64 = e.target.result; showFileInfo(f.name, f.size); };
+  reader.readAsDataURL(f);
+}
+
+function handleDrop(ev){
+  ev.preventDefault();
+  const f = ev.dataTransfer.files[0];
+  if(!f) return;
+  const dt = new DataTransfer(); dt.items.add(f);
+  document.getElementById('file_attach').files = dt.files;
+  handleFileSelect(document.getElementById('file_attach'));
+}
+
+function showFileInfo(name, size){
+  const zone = document.getElementById('upload-zone');
+  zone.classList.add('has-file');
+  zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${name}</span>`;
+  const fi = document.getElementById('file-info');
+  fi.style.display = 'block';
+  document.getElementById('file-name-display').textContent = `${name} (${(size/1024).toFixed(1)} KB)`;
+}
+
+function clearFile(){
+  attachedFileBase64 = null; attachedFileName = '';
+  document.getElementById('file_attach').value = '';
+  document.getElementById('file-info').style.display='none';
+  const zone = document.getElementById('upload-zone');
+  zone.classList.remove('has-file');
+  zone.querySelector('div').innerHTML = `<i class="fa fa-cloud-upload-alt fa-2x text-primary mb-2"></i><div class="fw-600 text-primary">คลิกเพื่อเลือกไฟล์ หรือลากวางที่นี่</div><div class="text-muted" style="font-size:.8rem">รองรับ PDF, Word, Excel (ขนาดไม่เกิน 10 MB)</div>`;
+}
+
+/* ============================================================
+   EXPORT PDF (print-based, no 3rd party)
+   ============================================================ */
+function exportPDFRecord(){
+  const d = getForm();
+  const s1 = JSON.parse(d.sec1_rows||'[]');
+  const s2 = JSON.parse(d.sec2_rows||'[]');
+  const s3 = JSON.parse(d.sec3_rows||'[]');
+
+  const rowsHtml = (arr, fields, labels) => arr.map((r,i)=>
+    `<tr><td>${i+1}</td>${fields.map(f=>`<td>${r[f]||'-'}</td>`).join('')}</tr>`
+  ).join('');
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="th"><head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <title>บอ.1 – ปรับปรุงตำแหน่ง</title>
+  <style>
+    body{font-family:'Sarabun',sans-serif;font-size:13px;padding:24px;color:#222}
+    h2{text-align:center;color:#1a3a6b;margin-bottom:4px}
+    h3{color:#2a5298;margin:16px 0 6px;border-bottom:2px solid #c8a951;padding-bottom:4px}
+    table{width:100%;border-collapse:collapse;margin-bottom:12px}
+    th,td{border:1px solid #aaa;padding:5px 8px;font-size:12px}
+    th{background:#1a3a6b;color:#fff}
+    .info-row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px}
+    .info-item{flex:1;min-width:150px}
+    .info-label{font-weight:700;color:#1a3a6b;font-size:11px}
+    .info-val{border-bottom:1px solid #aaa;padding:2px 0;min-height:20px}
+    @media print{button{display:none}}
+  </style></head><body>
+  <h2>บอ.1 – ข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</h2>
+  <p style="text-align:center;color:#666">วันที่พิมพ์: ${new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}</p>
+
+  <h3>ส่วนที่ 1 : คำขอกำหนดตำแหน่ง (ใหม่)</h3>
+  <table><thead><tr><th>#</th><th>ประเภท</th><th>ระดับ</th><th>เลขที่</th><th>กลุ่มงาน</th><th>กอง</th><th>กรม</th></tr></thead>
+  <tbody>${rowsHtml(s1,['s1_type','s1_level','s1_no','s1_group','s1_division','s1_dept'])}</tbody></table>
+
+  <h3>ส่วนที่ 2 : ตำแหน่งที่นำมาปรับปรุง</h3>
+  <table><thead><tr><th>#</th><th>ประเภท</th><th>ระดับ</th><th>กลุ่มงาน</th><th>กอง</th><th>กรม</th></tr></thead>
+  <tbody>${rowsHtml(s2,['s2_type','s2_level','s2_group','s2_division','s2_dept'])}</tbody></table>
+
+  <h3>ส่วนที่ 3 : การยุบเลิกตำแหน่ง</h3>
+  <table><thead><tr><th>#</th><th>ประเภท</th><th>ระดับ</th><th>เลขที่</th><th>กลุ่มงาน</th><th>กอง</th><th>กรม</th></tr></thead>
+  <tbody>${rowsHtml(s3,['s3_type','s3_level','s3_no','s3_group','s3_division','s3_dept'])}</tbody></table>
+
+  <h3>ส่วนที่ 4 : การพิจารณา อกพ.</h3>
+  <div class="info-row">
+    <div class="info-item"><div class="info-label">ประชุมครั้งที่</div><div class="info-val">${d.p4_round||'-'}</div></div>
+    <div class="info-item"><div class="info-label">เมื่อวันที่</div><div class="info-val">${fmtDate(d.p4_date)||'-'}</div></div>
+    <div class="info-item"><div class="info-label">มติที่ประชุม</div><div class="info-val">${d.p4_resolution||'-'}</div></div>
+    <div class="info-item"><div class="info-label">สถานะคำขอ</div><div class="info-val">${d.p4_status||'-'}</div></div>
+    <div class="info-item"><div class="info-label">วันที่มีผล</div><div class="info-val">${fmtDate(d.p4_effective)||'-'}</div></div>
+  </div>
+  <div class="info-item"><div class="info-label">หมายเหตุ</div><div class="info-val">${d.p4_note||'-'}</div></div>
+
+  <h3>ส่วนที่ 5 : ค่าตอบแทนเฉลี่ย</h3>
+  <div class="info-row">
+    <div class="info-item"><div class="info-label">ค่าตอบแทนเฉลี่ย (บาท)</div><div class="info-val">${d.p5_salary?Number(d.p5_salary).toLocaleString('th-TH'):'- '}</div></div>
+    <div class="info-item"><div class="info-label">ประชุมครั้งที่</div><div class="info-val">${d.p5_round||'-'}</div></div>
+    <div class="info-item"><div class="info-label">เมื่อวันที่</div><div class="info-val">${fmtDate(d.p5_date)||'-'}</div></div>
+  </div>
+
+  <div style="text-align:center;margin-top:20px">
+    <button onclick="window.print()" style="padding:8px 24px;background:#1a3a6b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:Sarabun,sans-serif;font-size:14px">🖨️ พิมพ์ / บันทึก PDF</button>
+  </div>
+  </body></html>`);
+  win.document.close();
+}
+
+/* ============================================================
+   STORAGE LAYER
+   ============================================================ */
+const LS = {
+  all(){ try{ return JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch{ return []; } },
+  save(a){ localStorage.setItem(LS_KEY,JSON.stringify(a)); },
+  add(d){ const a=LS.all(); d._id=uid(); d._created=now(); d._updated=''; a.push(d); LS.save(a); return d; },
+  upd(id,d){ const a=LS.all(); const i=a.findIndex(r=>r._id===id);
+    if(i>-1){ d._id=id; d._created=a[i]._created; d._updated=now(); a[i]=d; } LS.save(a); },
+  del(id){ LS.save(LS.all().filter(r=>r._id!==id)); },
+  clear(){ localStorage.removeItem(LS_KEY); }
+};
+
+async function apiFetch(path,method='GET',body=null){
+  const opt={method,headers:{'Content-Type':'application/json'}};
+  if(body) opt.body=JSON.stringify(body);
+  const r=await fetch(path,opt);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+(async()=>{
+  const b=document.getElementById('mode-badge');
+  try{ await apiFetch(API_BASE); USE_FLASK=true; b.innerHTML='<span class="dot dg"></span>Flask + SQLite ✓'; }
+  catch{ b.innerHTML='<span class="dot dg"></span>LocalStorage (Offline)'; }
+  await loadAll();
+})();
+
+async function dbGetAll(){ return USE_FLASK?apiFetch(API_BASE):LS.all(); }
+async function dbAdd(d){   return USE_FLASK?apiFetch(API_BASE,'POST',d):LS.add(d); }
+async function dbUpd(id,d){ USE_FLASK?await apiFetch(`${API_BASE}/${id}`,'PUT',d):LS.upd(id,d); }
+async function dbDel(id){   USE_FLASK?await apiFetch(`${API_BASE}/${id}`,'DELETE'):LS.del(id); }
+async function dbClear(){   USE_FLASK?await apiFetch(API_BASE,'DELETE'):LS.clear(); }
+async function loadAll(){ allRecords=await dbGetAll(); document.getElementById('badge-count').textContent=allRecords.length; }
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function now(){ return new Date().toLocaleString('th-TH'); }
+function dStr(){ return new Date().toISOString().slice(0,10).replace(/-/g,''); }
+function fmtDate(s){ if(!s)return''; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; }
+function toast(msg,color='#198754'){ const el=document.getElementById('myToast'); el.style.background=color; document.getElementById('toast-msg').textContent=msg; new bootstrap.Toast(el,{delay:2800}).show(); }
+
+function showTab(id,el){
+  ['tab-form','tab-list','tab-dashboard'].forEach(t=>document.getElementById(t).style.display='none');
+  document.getElementById(id).style.display='';
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  if(id==='tab-list')      loadAll().then(renderTable);
+  if(id==='tab-dashboard') loadAll().then(renderDashboard);
+}
+
+/* ============================================================
+   FORM
+   ============================================================ */
+const SF = ['p4_round','p4_date','p4_resolution','p4_status','p4_effective','p4_note','p5_salary','p5_round','p5_date'];
+
+function getForm(){
+  const d={};
+  SF.forEach(id=>{ d[id]=(document.getElementById(id)||{value:''}).value; });
+  d.sec1_rows=JSON.stringify(getRows('sec1'));
+  d.sec2_rows=JSON.stringify(getRows('sec2'));
+  d.sec3_rows=JSON.stringify(getRows('sec3'));
+  if(attachedFileBase64){ d.file_name=attachedFileName; d.file_data=attachedFileBase64; }
+  return d;
+}
+function setForm(r){
+  SF.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=r[id]||''; });
+  ['sec1','sec2','sec3'].forEach(sec=>{
+    clearRows(sec);
+    let rows=[]; try{ rows=JSON.parse(r[sec+'_rows']||'[]'); }catch{}
+    if(!rows.length) addRow(sec); else rows.forEach(rv=>addRow(sec,rv));
+  });
+}
+function clearForm(){
+  SF.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('rec-id').value='';
+  ['sec1','sec2','sec3'].forEach(clearRows);
+  clearFile();
+  initDefaultRows();
+}
+
+document.getElementById('mainForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const d=getForm();
+  if(!d.p4_status) return toast('กรุณาเลือกสถานะคำขอ (ส่วนที่ 4)','#dc3545');
+  const s1=JSON.parse(d.sec1_rows||'[]');
+  if(!s1.length||!s1[0].s1_type||!s1[0].s1_no) return toast('กรุณากรอกตำแหน่งใหม่ ที่ 1 ให้ครบ','#dc3545');
+  const rid=document.getElementById('rec-id').value;
+  try{
+    if(rid){ await dbUpd(rid,d); toast('อัปเดตข้อมูลเรียบร้อยแล้ว ✓'); }
+    else   { await dbAdd(d);     toast('บันทึกข้อมูลเรียบร้อยแล้ว ✓'); }
+    clearForm(); await loadAll();
+  }catch(err){ toast('เกิดข้อผิดพลาด: '+err.message,'#dc3545'); }
+});
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+function renderTable(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  const st=document.getElementById('filter-status').value;
+  const f=allRecords.filter(r=>{
+    const txt=JSON.stringify(r).toLowerCase();
+    return(!q||txt.includes(q))&&(!st||r.p4_status===st);
+  });
+  document.getElementById('rec-shown').textContent=f.length;
+  document.getElementById('rec-total').textContent=allRecords.length;
+  const SC={อนุมัติ:'success',ไม่อนุมัติ:'danger','อยู่ระหว่างพิจารณา':'warning','รอเอกสารเพิ่มเติม':'info',ถอนคำขอ:'secondary'};
+  document.getElementById('tbody').innerHTML=f.map((r,i)=>{
+    const rid=r._id||r.id;
+    const s1=JSON.parse(r.sec1_rows||'[]'); const s2=JSON.parse(r.sec2_rows||'[]'); const s3=JSON.parse(r.sec3_rows||'[]');
+    const s1f=s1[0]||{};
+    const sal=r.p5_salary?Number(r.p5_salary).toLocaleString('th-TH')+'฿':'-';
+    return`<tr>
+      <td>${i+1}</td>
+      <td>${s1f.s1_type||'-'}</td>
+      <td><span class="badge bg-secondary bsm">${s1f.s1_level||'-'}</span></td>
+      <td><b>${s1f.s1_no||'-'}</b></td>
+      <td>${s1f.s1_division||'-'}</td>
+      <td style="font-size:.72rem">${s2.map(x=>x.s2_type||'').filter(Boolean).join(', ')||'-'}</td>
+      <td style="font-size:.72rem">${s3.map(x=>x.s3_no||'').filter(Boolean).join(', ')||'-'}</td>
+      <td>${r.p4_round||'-'}</td>
+      <td>${fmtDate(r.p4_date)||'-'}</td>
+      <td style="font-size:.75rem">${r.p4_resolution||'-'}</td>
+      <td>${r.p4_status?`<span class="badge bg-${SC[r.p4_status]||'secondary'} bsm">${r.p4_status}</span>`:'-'}</td>
+      <td class="text-end">${sal}</td>
+      <td style="white-space:nowrap;font-size:.72rem">${r._created||r.created||''}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-outline-primary me-1 py-0" onclick="editRec('${rid}')"><i class="fa fa-edit"></i></button>
+        <button class="btn btn-sm btn-outline-danger py-0" onclick="delRec('${rid}')"><i class="fa fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function editRec(id){
+  await loadAll();
+  const r=allRecords.find(x=>(x._id||x.id)==id);
+  if(!r) return;
+  document.querySelectorAll('.tbtn')[0].click();
+  setTimeout(()=>{ setForm(r); document.getElementById('rec-id').value=id; window.scrollTo(0,0); toast('โหลดข้อมูลเพื่อแก้ไขแล้ว','#0d6efd'); },100);
+}
+async function delRec(id){ if(!confirm('ต้องการลบรายการนี้?'))return; await dbDel(id); toast('ลบรายการเรียบร้อย','#dc3545'); await loadAll(); renderTable(); }
+async function clearAll(){ if(!confirm('ต้องการลบข้อมูลทั้งหมด?\n(ไม่สามารถย้อนกลับได้)'))return; await dbClear(); toast('ลบข้อมูลทั้งหมดเรียบร้อย','#dc3545'); await loadAll(); renderTable(); }
+
+/* ============================================================
+   EXPORT CSV / JSON
+   ============================================================ */
+function dl(c,n,t){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); }
+function doExportCSV(){
+  if(!allRecords.length) return toast('ไม่มีข้อมูล','#dc3545');
+  const flat=allRecords.map(r=>{
+    const b={...r};
+    ['sec1_rows','sec2_rows','sec3_rows'].forEach(k=>{
+      try{ const arr=JSON.parse(r[k]||'[]'); arr.forEach((item,i)=>Object.entries(item).forEach(([fk,fv])=>{ b[`${k}_${i+1}_${fk}`]=fv; })); delete b[k]; }catch{}
+    });
+    delete b.file_data; // ไม่ export binary
+    return b;
+  });
+  const keys=[...new Set(flat.flatMap(r=>Object.keys(r)))];
+  const rows=flat.map(r=>keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(','));
+  dl('\uFEFF'+[keys.join(','),...rows].join('\n'),`pos_${dStr()}.csv`,'text/csv;charset=utf-8');
+  toast('Export CSV สำเร็จ ✓');
+}
+function doExportJSON(){
+  if(!allRecords.length) return toast('ไม่มีข้อมูล','#dc3545');
+  // ไม่ export binary ในไฟล์ JSON (ใหญ่เกิน)
+  const safe=allRecords.map(r=>{ const c={...r}; delete c.file_data; return c; });
+  dl(JSON.stringify(safe,null,2),`pos_${dStr()}.json`,'application/json');
+  toast('Export JSON สำเร็จ ✓');
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function kc(k){ if(charts[k]){charts[k].destroy();delete charts[k];} }
+function mkDoughnut(id,labels,data,title){
+  kc(id);
+  charts[id]=new Chart(document.getElementById(id),{type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:COLORS,borderWidth:2,hoverOffset:8}]},
+    options:{plugins:{title:{display:true,text:title,font:{size:13,family:'Sarabun'}},
+      legend:{position:'bottom',labels:{font:{family:'Sarabun'},padding:12}}},cutout:'55%'}});
+}
+function mkBar(id,labels,data,title,color='#1a3a6b'){
+  kc(id);
+  charts[id]=new Chart(document.getElementById(id),{type:'bar',
+    data:{labels,datasets:[{label:title,data,backgroundColor:color,borderRadius:6}]},
+    options:{plugins:{title:{display:true,text:title,font:{size:13,family:'Sarabun'}},legend:{display:false}},
+      scales:{x:{ticks:{font:{family:'Sarabun'},maxRotation:40}},y:{ticks:{stepSize:1,font:{family:'Sarabun'}},beginAtZero:true}}}});
+}
+function renderDashboard(){
+  const total=allRecords.length;
+  const passed=allRecords.filter(r=>r.p4_status==='อนุมัติ').length;
+  let salSum=0,salCnt=0; const sc={},tc={},dc={},lc={};
+  allRecords.forEach(r=>{
+    const s=r.p4_status||'ไม่ระบุ'; sc[s]=(sc[s]||0)+1;
+    try{ const s1=JSON.parse(r.sec1_rows||'[]'); if(s1[0]){
+      const t=s1[0].s1_type||'ไม่ระบุ'; tc[t]=(tc[t]||0)+1;
+      const dv=s1[0].s1_division||'ไม่ระบุ'; dc[dv]=(dc[dv]||0)+1;
+      const lv=s1[0].s1_level||'ไม่ระบุ'; lc[lv]=(lc[lv]||0)+1;
+    }}catch{}
+    if(r.p5_salary){salSum+=parseFloat(r.p5_salary)||0;salCnt++;}
+  });
+  const avgSal=salCnt?(salSum/salCnt).toLocaleString('th-TH',{maximumFractionDigits:2}):'-';
+  document.getElementById('stat-cards').innerHTML=`
+    <div class="col-6 col-lg-3"><div class="sc"><div class="val text-primary">${total}</div><div class="lbl"><i class="fa fa-folder-open me-1"></i>คำขอทั้งหมด</div></div></div>
+    <div class="col-6 col-lg-3"><div class="sc"><div class="val text-success">${passed}</div><div class="lbl"><i class="fa fa-check-circle me-1"></i>ได้รับอนุมัติ</div></div></div>
+    <div class="col-6 col-lg-3"><div class="sc"><div class="val text-info" style="font-size:1.4rem">${avgSal}${salCnt?' ฿':''}</div><div class="lbl"><i class="fa fa-coins me-1"></i>ค่าตอบแทนเฉลี่ย</div></div></div>
+    <div class="col-6 col-lg-3"><div class="sc"><div class="val text-warning">${total?((passed/total)*100).toFixed(1)+'%':'-'}</div><div class="lbl"><i class="fa fa-percent me-1"></i>อัตราอนุมัติ</div></div></div>`;
+  mkDoughnut('chart-status',Object.keys(sc),Object.values(sc),'สถานะคำขอ');
+  mkBar('chart-type',Object.keys(tc),Object.values(tc),'จำนวนตามประเภทตำแหน่ง','#2a5298');
+  mkBar('chart-div',Object.keys(dc),Object.values(dc),'จำนวนตามกอง/สำนัก','#c8a951');
+  mkBar('chart-level',Object.keys(lc),Object.values(lc),'จำนวนตามระดับตำแหน่ง','#198754');
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+initDefaultRows();
+</script>
+</body>
+</html>
