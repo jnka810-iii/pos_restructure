@@ -316,7 +316,7 @@ textarea.form-control{resize:vertical}
           <th>ตำแหน่งใหม่ (ส1)</th><th>ระดับ (ส1)</th><th>เลขที่ (ส1)</th><th>กอง (ส1)</th>
           <th>ปรับปรุง (ส2)</th><th>ยุบเลิก (ส3)</th>
           <th>ครั้งที่</th><th>วันที่ประชุม</th><th>มติ</th>
-          <th>สถานะ</th><th>ค่าตอบแทน</th><th>วันที่บันทึก</th><th>จัดการ</th>
+          <th>สถานะ</th><th>ค่าตอบแทน</th><th>วันที่บันทึก</th><th>ไฟล์</th><th>จัดการ</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -427,7 +427,11 @@ textarea.form-control{resize:vertical}
           <option>อาวุโส</option><option>ปฏิบัติงาน / ชำนาญงาน</option>
         </select>
       </div>
-      <div class="col-12 col-md-6">
+      <div class="col-6 col-md-2">
+        <label class="form-label">ตำแหน่งเลขที่</label>
+        <input type="text" class="form-control" name="s2_no" placeholder="เช่น 001">
+      </div>
+      <div class="col-12 col-md-4">
         <label class="form-label">สังกัด กลุ่ม/ส่วน/ฝ่าย</label>
         <input type="text" class="form-control" name="s2_group" placeholder="เช่น กลุ่มบริหารงานบุคคล">
       </div>
@@ -510,8 +514,10 @@ const LS_KEY   = 'pos_restructure_v4';
 let USE_FLASK  = false;
 let allRecords = [];
 let charts     = {};
-let attachedFileBase64 = null;
+let attachedFileBase64 = null;   // fallback สำหรับ LocalStorage mode
 let attachedFileName   = '';
+let uploadedServerFile = '';     // UUID filename บนเซิร์ฟเวอร์ (Flask mode)
+let uploadedOrigName   = '';     // ชื่อไฟล์ดั้งเดิมสำหรับแสดงผล
 const COLORS = ['#1a3a6b','#c8a951','#198754','#dc3545','#0dcaf0','#6f42c1','#fd7e14','#20c997'];
 
 /* ============================================================
@@ -521,7 +527,7 @@ const SEC_CFG = {
   sec1:{ ctr:'sec1-container', tmpl:'tmpl-sec1', lbl:'ตำแหน่งใหม่ ที่',
          names:['s1_type','s1_level','s1_no','s1_group','s1_division','s1_dept'] },
   sec2:{ ctr:'sec2-container', tmpl:'tmpl-sec2', lbl:'ตำแหน่งที่นำมาปรับปรุง ที่',
-         names:['s2_type','s2_level','s2_group','s2_division','s2_dept'] },
+         names:['s2_type','s2_level','s2_no','s2_group','s2_division','s2_dept'] },
   sec3:{ ctr:'sec3-container', tmpl:'tmpl-sec3', lbl:'ตำแหน่งที่ยุบเลิก ที่',
          names:['s3_type','s3_level','s3_no','s3_group','s3_division','s3_dept'] },
 };
@@ -573,35 +579,66 @@ function initDefaultRows(){
 /* ============================================================
    FILE UPLOAD
    ============================================================ */
-function handleFileSelect(inp){
+async function handleFileSelect(inp){
   const f = inp.files[0];
   if(!f) return;
+  if(f.size > 10*1024*1024){ toast('ไฟล์ขนาดเกิน 10 MB','#dc3545'); inp.value=''; return; }
+
   attachedFileName = f.name;
-  const reader = new FileReader();
-  reader.onload = e=>{ attachedFileBase64 = e.target.result; showFileInfo(f.name, f.size); };
-  reader.readAsDataURL(f);
+
+  if(USE_FLASK){
+    // ── Flask mode: อัปโหลดไฟล์ไปเซิร์ฟเวอร์ทันที ──
+    showFileUploading(f.name);
+    const fd = new FormData();
+    fd.append('file', f);
+    try{
+      const res = await fetch('/api/upload',{method:'POST',body:fd});
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error||'อัปโหลดไม่สำเร็จ');
+      uploadedServerFile = data.file_name;
+      uploadedOrigName   = data.orig_name;
+      attachedFileBase64 = null;
+      showFileInfo(f.name, f.size, data.file_name);
+    }catch(e){
+      toast('อัปโหลดไฟล์ไม่สำเร็จ: '+e.message,'#dc3545');
+      clearFile();
+    }
+  } else {
+    // ── LocalStorage mode: เก็บ base64 ไว้ในหน่วยความจำ ──
+    uploadedServerFile = ''; uploadedOrigName = '';
+    const reader = new FileReader();
+    reader.onload = e=>{ attachedFileBase64 = e.target.result; showFileInfo(f.name, f.size, ''); };
+    reader.readAsDataURL(f);
+  }
 }
 
-function handleDrop(ev){
+async function handleDrop(ev){
   ev.preventDefault();
   const f = ev.dataTransfer.files[0];
   if(!f) return;
   const dt = new DataTransfer(); dt.items.add(f);
   document.getElementById('file_attach').files = dt.files;
-  handleFileSelect(document.getElementById('file_attach'));
+  await handleFileSelect(document.getElementById('file_attach'));
 }
 
-function showFileInfo(name, size){
+function showFileUploading(name){
+  const zone = document.getElementById('upload-zone');
+  zone.querySelector('div').innerHTML = `<i class="fa fa-spinner fa-spin fa-2x text-primary mb-2"></i><div class="fw-bold text-primary">กำลังอัปโหลด ${name}...</div>`;
+}
+
+function showFileInfo(name, size, serverFile){
   const zone = document.getElementById('upload-zone');
   zone.classList.add('has-file');
   zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${name}</span>`;
   const fi = document.getElementById('file-info');
   fi.style.display = 'block';
-  document.getElementById('file-name-display').textContent = `${name} (${(size/1024).toFixed(1)} KB)`;
+  const link = serverFile ? ` <a href="/uploads/${serverFile}" target="_blank" class="btn btn-sm btn-outline-primary py-0 ms-1"><i class="fa fa-eye me-1"></i>เปิดไฟล์</a>` : '';
+  document.getElementById('file-name-display').innerHTML = `${name} (${(size/1024).toFixed(1)} KB)${link}`;
 }
 
 function clearFile(){
   attachedFileBase64 = null; attachedFileName = '';
+  uploadedServerFile = ''; uploadedOrigName = '';
   document.getElementById('file_attach').value = '';
   document.getElementById('file-info').style.display='none';
   const zone = document.getElementById('upload-zone');
@@ -684,7 +721,14 @@ function exportPDFRecord(){
    ============================================================ */
 const LS = {
   all(){ try{ return JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch{ return []; } },
-  save(a){ localStorage.setItem(LS_KEY,JSON.stringify(a)); },
+  save(a){
+    try{ localStorage.setItem(LS_KEY,JSON.stringify(a)); }
+    catch{
+      const slim=a.map(r=>{const c={...r};delete c.file_data;return c;});
+      try{ localStorage.setItem(LS_KEY,JSON.stringify(slim)); }
+      catch{ throw new Error('พื้นที่จัดเก็บเต็ม กรุณาลบข้อมูลเก่าก่อน'); }
+    }
+  },
   add(d){ const a=LS.all(); d._id=uid(); d._created=now(); d._updated=''; a.push(d); LS.save(a); return d; },
   upd(id,d){ const a=LS.all(); const i=a.findIndex(r=>r._id===id);
     if(i>-1){ d._id=id; d._created=a[i]._created; d._updated=now(); a[i]=d; } LS.save(a); },
@@ -695,24 +739,53 @@ const LS = {
 async function apiFetch(path,method='GET',body=null){
   const opt={method,headers:{'Content-Type':'application/json'}};
   if(body) opt.body=JSON.stringify(body);
-  const r=await fetch(path,opt);
-  if(!r.ok) throw new Error('HTTP '+r.status);
+  let r;
+  try{ r=await fetch(path,opt); }
+  catch{ throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); }
+  if(!r.ok){
+    let msg='HTTP '+r.status;
+    try{ const j=await r.json(); if(j&&j.error) msg=j.error; }catch{}
+    throw new Error(msg);
+  }
   return r.json();
 }
 
-(async()=>{
+function updateModeBadge(online){
   const b=document.getElementById('mode-badge');
-  try{ await apiFetch(API_BASE); USE_FLASK=true; b.innerHTML='<span class="dot dg"></span>Flask + SQLite ✓'; }
-  catch{ b.innerHTML='<span class="dot dg"></span>LocalStorage (Offline)'; }
+  b.innerHTML=online?'<span class="dot dg"></span>Flask + SQLite ✓':'<span class="dot dy"></span>LocalStorage (Offline)';
+}
+(async()=>{
+  for(let i=0;i<5;i++){
+    try{ await apiFetch('/api/ping'); USE_FLASK=true; updateModeBadge(true); break; }
+    catch{ if(i<4) await new Promise(r=>setTimeout(r,500)); else updateModeBadge(false); }
+  }
   await loadAll();
 })();
 
 async function dbGetAll(){ return USE_FLASK?apiFetch(API_BASE):LS.all(); }
-async function dbAdd(d){   return USE_FLASK?apiFetch(API_BASE,'POST',d):LS.add(d); }
-async function dbUpd(id,d){ USE_FLASK?await apiFetch(`${API_BASE}/${id}`,'PUT',d):LS.upd(id,d); }
+async function dbAdd(d){
+  if(!USE_FLASK) return LS.add(d);
+  try{ return await apiFetch(API_BASE,'POST',d); }
+  catch(e){
+    if(e.message==='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'){ USE_FLASK=false; updateModeBadge(false); return LS.add(d); }
+    throw e;
+  }
+}
+async function dbUpd(id,d){
+  if(!USE_FLASK){ LS.upd(id,d); return; }
+  try{ await apiFetch(`${API_BASE}/${id}`,'PUT',d); }
+  catch(e){
+    if(e.message==='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'){ USE_FLASK=false; updateModeBadge(false); LS.upd(id,d); return; }
+    throw e;
+  }
+}
 async function dbDel(id){   USE_FLASK?await apiFetch(`${API_BASE}/${id}`,'DELETE'):LS.del(id); }
 async function dbClear(){   USE_FLASK?await apiFetch(API_BASE,'DELETE'):LS.clear(); }
-async function loadAll(){ allRecords=await dbGetAll(); document.getElementById('badge-count').textContent=allRecords.length; }
+async function loadAll(){
+  try{ allRecords=await dbGetAll(); }
+  catch{ if(USE_FLASK){ USE_FLASK=false; updateModeBadge(false); allRecords=LS.all(); } }
+  document.getElementById('badge-count').textContent=allRecords.length;
+}
 
 /* ============================================================
    UTILS
@@ -743,7 +816,13 @@ function getForm(){
   d.sec1_rows=JSON.stringify(getRows('sec1'));
   d.sec2_rows=JSON.stringify(getRows('sec2'));
   d.sec3_rows=JSON.stringify(getRows('sec3'));
-  if(attachedFileBase64){ d.file_name=attachedFileName; d.file_data=attachedFileBase64; }
+  if(uploadedServerFile){
+    d.file_name=uploadedServerFile;
+    d.file_orig_name=uploadedOrigName;
+  } else if(attachedFileBase64){
+    d.file_name=attachedFileName;
+    d.file_data=attachedFileBase64;
+  }
   return d;
 }
 function setForm(r){
@@ -753,6 +832,30 @@ function setForm(r){
     let rows=[]; try{ rows=JSON.parse(r[sec+'_rows']||'[]'); }catch{}
     if(!rows.length) addRow(sec); else rows.forEach(rv=>addRow(sec,rv));
   });
+  clearFile();
+  if(r.file_orig_name && r.file_name){
+    // ไฟล์บนเซิร์ฟเวอร์ (Flask mode)
+    uploadedServerFile = r.file_name;
+    uploadedOrigName   = r.file_orig_name;
+    attachedFileName   = r.file_orig_name;
+    const zone = document.getElementById('upload-zone');
+    zone.classList.add('has-file');
+    zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${r.file_orig_name}</span>`;
+    const fi = document.getElementById('file-info');
+    fi.style.display = 'block';
+    document.getElementById('file-name-display').innerHTML = `${r.file_orig_name} <a href="/uploads/${r.file_name}" target="_blank" class="btn btn-sm btn-outline-primary py-0 ms-1"><i class="fa fa-eye me-1"></i>เปิดไฟล์</a>`;
+  } else if(r.file_data){
+    // ไฟล์ base64 (LocalStorage mode legacy)
+    attachedFileBase64 = r.file_data;
+    attachedFileName   = r.file_name||'';
+    if(r.file_name){
+      const zone = document.getElementById('upload-zone');
+      zone.classList.add('has-file');
+      zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${r.file_name}</span>`;
+      const fi = document.getElementById('file-info'); fi.style.display='block';
+      document.getElementById('file-name-display').textContent = r.file_name;
+    }
+  }
 }
 function clearForm(){
   SF.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -769,11 +872,14 @@ document.getElementById('mainForm').addEventListener('submit', async e=>{
   const s1=JSON.parse(d.sec1_rows||'[]');
   if(!s1.length||!s1[0].s1_type||!s1[0].s1_no) return toast('กรุณากรอกตำแหน่งใหม่ ที่ 1 ให้ครบ','#dc3545');
   const rid=document.getElementById('rec-id').value;
+  const btn=document.querySelector('#mainForm button[type="submit"]');
+  btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin me-2"></i>กำลังบันทึก...';
   try{
     if(rid){ await dbUpd(rid,d); toast('อัปเดตข้อมูลเรียบร้อยแล้ว ✓'); }
     else   { await dbAdd(d);     toast('บันทึกข้อมูลเรียบร้อยแล้ว ✓'); }
     clearForm(); await loadAll();
   }catch(err){ toast('เกิดข้อผิดพลาด: '+err.message,'#dc3545'); }
+  finally{ btn.disabled=false; btn.innerHTML='<i class="fa fa-save me-2"></i>บันทึกข้อมูล'; }
 });
 
 /* ============================================================
@@ -808,6 +914,7 @@ function renderTable(){
       <td>${r.p4_status?`<span class="badge bg-${SC[r.p4_status]||'secondary'} bsm">${r.p4_status}</span>`:'-'}</td>
       <td class="text-end">${sal}</td>
       <td style="white-space:nowrap;font-size:.72rem">${r._created||r.created||''}</td>
+      <td style="text-align:center">${r.file_orig_name?`<a href="/uploads/${r.file_name}" target="_blank" class="btn btn-sm btn-outline-secondary py-0 bsm" title="${r.file_orig_name}"><i class="fa fa-paperclip me-1"></i>ไฟล์</a>`:'-'}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-sm btn-outline-primary me-1 py-0" onclick="editRec('${rid}')"><i class="fa fa-edit"></i></button>
         <button class="btn btn-sm btn-outline-danger py-0" onclick="delRec('${rid}')"><i class="fa fa-trash"></i></button>
