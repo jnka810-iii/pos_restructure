@@ -11,13 +11,20 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{--pr:#1a3a6b;--pr2:#2a5298;--ac:#c8a951;--bg:linear-gradient(160deg,#eaf1fb 0%,#f7faff 60%,#e8f0fb 100%)}
+:root{--pr:#1976D2;--pr2:#1565C0;--ac:#c8a951;--sec:#F5F5F5;--bg:#F5F5F5;
+      --shadow-soft:0 2px 8px rgba(25,118,210,.08),0 1px 3px rgba(0,0,0,.04);
+      --shadow-soft-hover:0 6px 20px rgba(25,118,210,.15),0 2px 6px rgba(0,0,0,.06)}
 *{box-sizing:border-box}
 body{background:var(--bg);min-height:100vh;font-family:'Sarabun','Segoe UI',sans-serif;font-size:15px;margin:0}
 
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(-8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
 /* Header */
-.hdr{background:linear-gradient(135deg,#1a3a6b 0%,#2a5298 60%,#1565c0 100%);color:#fff;
-     padding:16px 24px 12px;border-bottom:4px solid var(--ac);box-shadow:0 4px 18px rgba(26,58,107,.35)}
+.hdr{background:linear-gradient(135deg,#1976D2 0%,#1565C0 60%,#0D47A1 100%);color:#fff;
+     padding:16px 24px 12px;border-bottom:4px solid var(--ac);box-shadow:0 4px 18px rgba(25,118,210,.35)}
 .hdr h4{font-size:1.05rem;margin:0;font-weight:700}
 .hdr small{font-size:.77rem;opacity:.82}
 .mbadge{background:rgba(255,255,255,.18);border-radius:10px;padding:5px 14px;font-size:.75rem;
@@ -28,32 +35,34 @@ body{background:var(--bg);min-height:100vh;font-family:'Sarabun','Segoe UI',sans
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
 /* Tabs */
-.tnav{background:#fff;border-bottom:2px solid #dde3ef;padding:0 20px;position:sticky;top:0;
-      z-index:100;box-shadow:0 2px 8px rgba(26,58,107,.1);display:flex;gap:2px;overflow-x:auto}
+.tnav{background:#fff;border-bottom:2px solid #e0e0e0;padding:0 20px;position:sticky;top:0;
+      z-index:100;box-shadow:0 2px 8px rgba(25,118,210,.1);display:flex;gap:2px;overflow-x:auto}
 .tbtn{border:none;background:none;padding:12px 20px;font-family:'Sarabun',sans-serif;
       font-size:.9rem;font-weight:600;color:#777;cursor:pointer;border-bottom:3px solid transparent;
       transition:.2s;white-space:nowrap}
 .tbtn.active{color:var(--pr);border-bottom-color:var(--ac)}
-.tbtn:hover{color:var(--pr);background:rgba(26,58,107,.04)}
+.tbtn:hover{color:var(--pr);background:rgba(25,118,210,.04)}
 
 /* Section */
-.sh{background:linear-gradient(90deg,#1a3a6b,#2a5298);color:#fff;padding:9px 18px;
+.sh{background:linear-gradient(90deg,#1976D2,#1565C0);color:#fff;padding:9px 18px;
     border-radius:10px 10px 0 0;font-size:.92rem;font-weight:700;letter-spacing:.3px;
-    box-shadow:0 2px 8px rgba(26,58,107,.15)}
-.sb{background:#fff;border:1px solid #dde3ef;border-top:none;border-radius:0 0 10px 10px;
-    padding:18px 20px 14px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+    box-shadow:0 2px 8px rgba(25,118,210,.18)}
+.sb{background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 10px 10px;
+    padding:18px 20px 14px;margin-bottom:18px;box-shadow:var(--shadow-soft)}
 
 /* Dynamic rows */
-.pos-row{background:linear-gradient(135deg,#f8faff,#eef3ff);border:1px solid #c8d8f0;
-         border-radius:10px;padding:14px 16px;margin-bottom:12px;transition:.2s;position:relative}
-.pos-row:hover{box-shadow:0 4px 14px rgba(26,58,107,.1)}
+.pos-row{background:linear-gradient(135deg,#fafbfd,var(--sec));border:1px solid #e3eaf3;
+         border-radius:12px;padding:14px 16px;margin-bottom:12px;transition:box-shadow .25s,transform .25s;
+         position:relative;box-shadow:var(--shadow-soft);
+         animation:fadeInUp .35s ease-out both}
+.pos-row:hover{box-shadow:var(--shadow-soft-hover);transform:translateY(-1px)}
 .pos-row-num{display:inline-flex;align-items:center;justify-content:center;background:var(--pr);
              color:#fff;border-radius:50%;width:24px;height:24px;font-size:.8rem;font-weight:700;margin-right:8px}
 
 /* Form */
-.form-label{font-weight:600;color:#1a3a6b;margin-bottom:3px;font-size:.84rem}
-.form-control,.form-select{font-size:.88rem;font-family:'Sarabun',sans-serif;border-color:#c8d3e8;border-radius:7px;transition:.2s}
-.form-control:focus,.form-select:focus{border-color:#2a5298;box-shadow:0 0 0 .22rem rgba(42,82,152,.18)}
+.form-label{font-weight:600;color:var(--pr);margin-bottom:3px;font-size:.84rem}
+.form-control,.form-select{font-size:.88rem;font-family:'Sarabun',sans-serif;border-color:#d0d8e3;border-radius:7px;transition:.2s}
+.form-control:focus,.form-select:focus{border-color:var(--pr);box-shadow:0 0 0 .22rem rgba(25,118,210,.18)}
 .required::after{content:" *";color:#e53e3e}
 textarea.form-control{resize:vertical}
 
@@ -61,15 +70,15 @@ textarea.form-control{resize:vertical}
 .btn{border-radius:8px;font-family:'Sarabun',sans-serif;transition:transform .15s,box-shadow .15s}
 .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
 .btn:active{transform:translateY(0)}
-.btn-save{background:linear-gradient(135deg,#1a3a6b,#2a5298);color:#fff;border:none;font-weight:700;padding:9px 30px}
-.btn-save:hover{background:linear-gradient(135deg,#0f2248,#1a3a6b);color:#fff}
+.btn-save{background:linear-gradient(135deg,#1976D2,#1565C0);color:#fff;border:none;font-weight:700;padding:9px 30px}
+.btn-save:hover{background:linear-gradient(135deg,#1565C0,#0D47A1);color:#fff}
 .btn-add-row{background:linear-gradient(135deg,#198754,#20c997);color:#fff;border:none;font-size:.88rem}
 .btn-add-row:hover{background:linear-gradient(135deg,#145c38,#198754);color:#fff}
 
 /* Upload/Export zone */
-.upload-zone{background:linear-gradient(135deg,#f0f7ff,#e8f0fb);border:2px dashed #90b4e8;
+.upload-zone{background:linear-gradient(135deg,#f5faff,var(--sec));border:2px dashed #90b4e8;
              border-radius:12px;padding:20px;text-align:center;transition:.3s;cursor:pointer}
-.upload-zone:hover{border-color:#2a5298;background:#e3eeff}
+.upload-zone:hover{border-color:var(--pr);background:#e3eeff}
 .upload-zone.has-file{border-style:solid;border-color:#198754;background:linear-gradient(135deg,#f0fff4,#e8f7ee)}
 .export-zone{background:linear-gradient(135deg,#fff8e8,#fff3d0);border:2px solid #f0c040;border-radius:12px;padding:20px}
 .btn-export-pdf{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border:none;font-weight:700}
@@ -82,19 +91,21 @@ textarea.form-control{resize:vertical}
 
 /* Table */
 #tbl{font-size:.79rem;min-width:1050px}
-#tbl thead th{background:linear-gradient(90deg,#1a3a6b,#2a5298);color:#fff;white-space:nowrap;
+#tbl thead th{background:linear-gradient(90deg,#1976D2,#1565C0);color:#fff;white-space:nowrap;
               font-weight:600;font-size:.77rem;padding:9px 10px}
 #tbl tbody td{vertical-align:middle;padding:7px 10px}
-#tbl tbody tr:hover{background:#eef4ff}
+#tbl tbody tr{animation:fadeInUp .3s ease-out both}
+#tbl tbody tr:hover{background:#e3f2fd}
 .bsm{font-size:.7rem;padding:3px 8px}
 
 /* Dashboard */
-.sc{background:#fff;border-radius:12px;border-left:5px solid var(--ac);
-    padding:18px 20px;box-shadow:0 3px 12px rgba(0,0,0,.09);transition:.2s}
-.sc:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.13)}
+.sc{background:#fff;border-radius:12px;border-left:5px solid var(--pr);
+    padding:18px 20px;box-shadow:var(--shadow-soft);transition:.25s;
+    animation:fadeInUp .35s ease-out both}
+.sc:hover{transform:translateY(-2px);box-shadow:var(--shadow-soft-hover)}
 .sc .val{font-size:2.2rem;font-weight:800;line-height:1.1}
 .sc .lbl{font-size:.8rem;color:#888;margin-top:4px}
-.cc{background:#fff;border-radius:12px;padding:20px;box-shadow:0 3px 12px rgba(0,0,0,.09)}
+.cc{background:#fff;border-radius:12px;padding:20px;box-shadow:var(--shadow-soft)}
 
 /* Toast */
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:9999}
@@ -510,13 +521,9 @@ textarea.form-control{resize:vertical}
    CONFIG
    ============================================================ */
 const API_BASE = '/api/positions';
-const LS_KEY   = 'pos_restructure_v4';
-let USE_FLASK  = false;
 let allRecords = [];
 let charts     = {};
-let attachedFileBase64 = null;   // fallback สำหรับ LocalStorage mode
-let attachedFileName   = '';
-let uploadedServerFile = '';     // UUID filename บนเซิร์ฟเวอร์ (Flask mode)
+let uploadedServerFile = '';     // UUID filename บนเซิร์ฟเวอร์
 let uploadedOrigName   = '';     // ชื่อไฟล์ดั้งเดิมสำหรับแสดงผล
 const COLORS = ['#1a3a6b','#c8a951','#198754','#dc3545','#0dcaf0','#6f42c1','#fd7e14','#20c997'];
 
@@ -584,31 +591,19 @@ async function handleFileSelect(inp){
   if(!f) return;
   if(f.size > 10*1024*1024){ toast('ไฟล์ขนาดเกิน 10 MB','#dc3545'); inp.value=''; return; }
 
-  attachedFileName = f.name;
-
-  if(USE_FLASK){
-    // ── Flask mode: อัปโหลดไฟล์ไปเซิร์ฟเวอร์ทันที ──
-    showFileUploading(f.name);
-    const fd = new FormData();
-    fd.append('file', f);
-    try{
-      const res = await fetch('/api/upload',{method:'POST',body:fd});
-      const data = await res.json();
-      if(!data.ok) throw new Error(data.error||'อัปโหลดไม่สำเร็จ');
-      uploadedServerFile = data.file_name;
-      uploadedOrigName   = data.orig_name;
-      attachedFileBase64 = null;
-      showFileInfo(f.name, f.size, data.file_name);
-    }catch(e){
-      toast('อัปโหลดไฟล์ไม่สำเร็จ: '+e.message,'#dc3545');
-      clearFile();
-    }
-  } else {
-    // ── LocalStorage mode: เก็บ base64 ไว้ในหน่วยความจำ ──
-    uploadedServerFile = ''; uploadedOrigName = '';
-    const reader = new FileReader();
-    reader.onload = e=>{ attachedFileBase64 = e.target.result; showFileInfo(f.name, f.size, ''); };
-    reader.readAsDataURL(f);
+  showFileUploading(f.name);
+  const fd = new FormData();
+  fd.append('file', f);
+  try{
+    const res = await fetch('/api/upload',{method:'POST',body:fd});
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error||'อัปโหลดไม่สำเร็จ');
+    uploadedServerFile = data.file_name;
+    uploadedOrigName   = data.orig_name;
+    showFileInfo(data.orig_name, f.size, data.file_name);
+  }catch(e){
+    toast('อัปโหลดไฟล์ไม่สำเร็จ: '+e.message,'#dc3545');
+    clearFile();
   }
 }
 
@@ -623,21 +618,20 @@ async function handleDrop(ev){
 
 function showFileUploading(name){
   const zone = document.getElementById('upload-zone');
-  zone.querySelector('div').innerHTML = `<i class="fa fa-spinner fa-spin fa-2x text-primary mb-2"></i><div class="fw-bold text-primary">กำลังอัปโหลด ${name}...</div>`;
+  zone.querySelector('div').innerHTML = `<i class="fa fa-spinner fa-spin fa-2x text-primary mb-2"></i><div class="fw-bold text-primary">กำลังอัปโหลด ${esc(name)}...</div>`;
 }
 
 function showFileInfo(name, size, serverFile){
   const zone = document.getElementById('upload-zone');
   zone.classList.add('has-file');
-  zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${name}</span>`;
+  zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${esc(name)}</span>`;
   const fi = document.getElementById('file-info');
   fi.style.display = 'block';
-  const link = serverFile ? ` <a href="/uploads/${serverFile}" target="_blank" class="btn btn-sm btn-outline-primary py-0 ms-1"><i class="fa fa-eye me-1"></i>เปิดไฟล์</a>` : '';
-  document.getElementById('file-name-display').innerHTML = `${name} (${(size/1024).toFixed(1)} KB)${link}`;
+  const link = serverFile ? ` <a href="/uploads/${encodeURIComponent(serverFile)}" target="_blank" class="btn btn-sm btn-outline-primary py-0 ms-1"><i class="fa fa-eye me-1"></i>เปิดไฟล์</a>` : '';
+  document.getElementById('file-name-display').innerHTML = `${esc(name)} (${(size/1024).toFixed(1)} KB)${link}`;
 }
 
 function clearFile(){
-  attachedFileBase64 = null; attachedFileName = '';
   uploadedServerFile = ''; uploadedOrigName = '';
   document.getElementById('file_attach').value = '';
   document.getElementById('file-info').style.display='none';
@@ -655,8 +649,8 @@ function exportPDFRecord(){
   const s2 = JSON.parse(d.sec2_rows||'[]');
   const s3 = JSON.parse(d.sec3_rows||'[]');
 
-  const rowsHtml = (arr, fields, labels) => arr.map((r,i)=>
-    `<tr><td>${i+1}</td>${fields.map(f=>`<td>${r[f]||'-'}</td>`).join('')}</tr>`
+  const rowsHtml = (arr, fields) => arr.map((r,i)=>
+    `<tr><td>${i+1}</td>${fields.map(f=>`<td>${esc(r[f])||'-'}</td>`).join('')}</tr>`
   ).join('');
 
   const win = window.open('','_blank');
@@ -694,18 +688,18 @@ function exportPDFRecord(){
 
   <h3>ส่วนที่ 4 : การพิจารณา อกพ.</h3>
   <div class="info-row">
-    <div class="info-item"><div class="info-label">ประชุมครั้งที่</div><div class="info-val">${d.p4_round||'-'}</div></div>
+    <div class="info-item"><div class="info-label">ประชุมครั้งที่</div><div class="info-val">${esc(d.p4_round)||'-'}</div></div>
     <div class="info-item"><div class="info-label">เมื่อวันที่</div><div class="info-val">${fmtDate(d.p4_date)||'-'}</div></div>
-    <div class="info-item"><div class="info-label">มติที่ประชุม</div><div class="info-val">${d.p4_resolution||'-'}</div></div>
-    <div class="info-item"><div class="info-label">สถานะคำขอ</div><div class="info-val">${d.p4_status||'-'}</div></div>
+    <div class="info-item"><div class="info-label">มติที่ประชุม</div><div class="info-val">${esc(d.p4_resolution)||'-'}</div></div>
+    <div class="info-item"><div class="info-label">สถานะคำขอ</div><div class="info-val">${esc(d.p4_status)||'-'}</div></div>
     <div class="info-item"><div class="info-label">วันที่มีผล</div><div class="info-val">${fmtDate(d.p4_effective)||'-'}</div></div>
   </div>
-  <div class="info-item"><div class="info-label">หมายเหตุ</div><div class="info-val">${d.p4_note||'-'}</div></div>
+  <div class="info-item"><div class="info-label">หมายเหตุ</div><div class="info-val">${esc(d.p4_note)||'-'}</div></div>
 
   <h3>ส่วนที่ 5 : ค่าตอบแทนเฉลี่ย</h3>
   <div class="info-row">
     <div class="info-item"><div class="info-label">ค่าตอบแทนเฉลี่ย (บาท)</div><div class="info-val">${d.p5_salary?Number(d.p5_salary).toLocaleString('th-TH'):'- '}</div></div>
-    <div class="info-item"><div class="info-label">ประชุมครั้งที่</div><div class="info-val">${d.p5_round||'-'}</div></div>
+    <div class="info-item"><div class="info-label">ประชุมครั้งที่</div><div class="info-val">${esc(d.p5_round)||'-'}</div></div>
     <div class="info-item"><div class="info-label">เมื่อวันที่</div><div class="info-val">${fmtDate(d.p5_date)||'-'}</div></div>
   </div>
 
@@ -719,29 +713,13 @@ function exportPDFRecord(){
 /* ============================================================
    STORAGE LAYER
    ============================================================ */
-const LS = {
-  all(){ try{ return JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch{ return []; } },
-  save(a){
-    try{ localStorage.setItem(LS_KEY,JSON.stringify(a)); }
-    catch{
-      const slim=a.map(r=>{const c={...r};delete c.file_data;return c;});
-      try{ localStorage.setItem(LS_KEY,JSON.stringify(slim)); }
-      catch{ throw new Error('พื้นที่จัดเก็บเต็ม กรุณาลบข้อมูลเก่าก่อน'); }
-    }
-  },
-  add(d){ const a=LS.all(); d._id=uid(); d._created=now(); d._updated=''; a.push(d); LS.save(a); return d; },
-  upd(id,d){ const a=LS.all(); const i=a.findIndex(r=>r._id===id);
-    if(i>-1){ d._id=id; d._created=a[i]._created; d._updated=now(); a[i]=d; } LS.save(a); },
-  del(id){ LS.save(LS.all().filter(r=>r._id!==id)); },
-  clear(){ localStorage.removeItem(LS_KEY); }
-};
-
 async function apiFetch(path,method='GET',body=null){
   const opt={method,headers:{'Content-Type':'application/json'}};
   if(body) opt.body=JSON.stringify(body);
   let r;
   try{ r=await fetch(path,opt); }
-  catch{ throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); }
+  catch{ updateModeBadge(false); throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); }
+  updateModeBadge(true);
   if(!r.ok){
     let msg='HTTP '+r.status;
     try{ const j=await r.json(); if(j&&j.error) msg=j.error; }catch{}
@@ -752,48 +730,46 @@ async function apiFetch(path,method='GET',body=null){
 
 function updateModeBadge(online){
   const b=document.getElementById('mode-badge');
-  b.innerHTML=online?'<span class="dot dg"></span>Flask + SQLite ✓':'<span class="dot dy"></span>LocalStorage (Offline)';
+  b.innerHTML=online?'<span class="dot dg"></span>Flask + SQLite ✓':'<span class="dot dy"></span>เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
 }
 (async()=>{
   for(let i=0;i<5;i++){
-    try{ await apiFetch('/api/ping'); USE_FLASK=true; updateModeBadge(true); break; }
-    catch{ if(i<4) await new Promise(r=>setTimeout(r,500)); else updateModeBadge(false); }
+    try{ await apiFetch('/api/ping'); break; }
+    catch{ if(i<4) await new Promise(r=>setTimeout(r,500)); }
   }
   await loadAll();
 })();
 
-async function dbGetAll(){ return USE_FLASK?apiFetch(API_BASE):LS.all(); }
-async function dbAdd(d){
-  if(!USE_FLASK) return LS.add(d);
-  try{ return await apiFetch(API_BASE,'POST',d); }
-  catch(e){
-    if(e.message==='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'){ USE_FLASK=false; updateModeBadge(false); return LS.add(d); }
-    throw e;
-  }
-}
-async function dbUpd(id,d){
-  if(!USE_FLASK){ LS.upd(id,d); return; }
-  try{ await apiFetch(`${API_BASE}/${id}`,'PUT',d); }
-  catch(e){
-    if(e.message==='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'){ USE_FLASK=false; updateModeBadge(false); LS.upd(id,d); return; }
-    throw e;
-  }
-}
-async function dbDel(id){   USE_FLASK?await apiFetch(`${API_BASE}/${id}`,'DELETE'):LS.del(id); }
-async function dbClear(){   USE_FLASK?await apiFetch(API_BASE,'DELETE'):LS.clear(); }
+async function dbAdd(d){ return apiFetch(API_BASE,'POST',d); }
+async function dbUpd(id,d){ await apiFetch(`${API_BASE}/${id}`,'PUT',d); }
+async function dbDel(id){ await apiFetch(`${API_BASE}/${id}`,'DELETE'); }
+async function dbClear(){ await apiFetch(API_BASE,'DELETE'); }
 async function loadAll(){
-  try{ allRecords=await dbGetAll(); }
-  catch{ if(USE_FLASK){ USE_FLASK=false; updateModeBadge(false); allRecords=LS.all(); } }
+  try{ allRecords=await apiFetch(API_BASE); }
+  catch(e){ toast('โหลดข้อมูลไม่สำเร็จ: '+e.message,'#dc3545'); }
   document.getElementById('badge-count').textContent=allRecords.length;
 }
 
 /* ============================================================
    UTILS
    ============================================================ */
-function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
-function now(){ return new Date().toLocaleString('th-TH'); }
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 function dStr(){ return new Date().toISOString().slice(0,10).replace(/-/g,''); }
 function fmtDate(s){ if(!s)return''; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; }
+/* timestamp ถูกเก็บเป็น ISO 8601 ค.ศ. ในฐานข้อมูล แปลงเป็นรูปแบบไทยที่จุดแสดงผลเท่านั้น */
+function fmtStamp(s){
+  if(!s) return '';
+  const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : String(s);
+}
+/* คำขอหนึ่งใบมีตำแหน่งใหม่ได้หลายรายการ ทั้งตารางและ Dashboard ต้องอ่านทุกแถว ไม่ใช่แถวแรก
+   getRows เก็บแถวเปล่าที่ผู้ใช้กดเพิ่มแต่ไม่ได้กรอกไว้ด้วย จึงกรองออกก่อนทุกครั้ง */
+function filledRows(json){
+  let rows=[]; try{ rows=JSON.parse(json||'[]'); }catch{}
+  return Array.isArray(rows) ? rows.filter(r=>r&&Object.values(r).some(v=>String(v??'').trim()!=='')) : [];
+}
+function cell(v){ return String(v??'').trim()||'-'; }
+function colList(rows,key){ return rows.length ? rows.map(r=>cell(r[key])).join(', ') : '-'; }
 function toast(msg,color='#198754'){ const el=document.getElementById('myToast'); el.style.background=color; document.getElementById('toast-msg').textContent=msg; new bootstrap.Toast(el,{delay:2800}).show(); }
 
 function showTab(id,el){
@@ -816,13 +792,8 @@ function getForm(){
   d.sec1_rows=JSON.stringify(getRows('sec1'));
   d.sec2_rows=JSON.stringify(getRows('sec2'));
   d.sec3_rows=JSON.stringify(getRows('sec3'));
-  if(uploadedServerFile){
-    d.file_name=uploadedServerFile;
-    d.file_orig_name=uploadedOrigName;
-  } else if(attachedFileBase64){
-    d.file_name=attachedFileName;
-    d.file_data=attachedFileBase64;
-  }
+  d.file_name=uploadedServerFile;
+  d.file_orig_name=uploadedOrigName;
   return d;
 }
 function setForm(r){
@@ -834,27 +805,14 @@ function setForm(r){
   });
   clearFile();
   if(r.file_orig_name && r.file_name){
-    // ไฟล์บนเซิร์ฟเวอร์ (Flask mode)
     uploadedServerFile = r.file_name;
     uploadedOrigName   = r.file_orig_name;
-    attachedFileName   = r.file_orig_name;
     const zone = document.getElementById('upload-zone');
     zone.classList.add('has-file');
-    zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${r.file_orig_name}</span>`;
+    zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${esc(r.file_orig_name)}</span>`;
     const fi = document.getElementById('file-info');
     fi.style.display = 'block';
-    document.getElementById('file-name-display').innerHTML = `${r.file_orig_name} <a href="/uploads/${r.file_name}" target="_blank" class="btn btn-sm btn-outline-primary py-0 ms-1"><i class="fa fa-eye me-1"></i>เปิดไฟล์</a>`;
-  } else if(r.file_data){
-    // ไฟล์ base64 (LocalStorage mode legacy)
-    attachedFileBase64 = r.file_data;
-    attachedFileName   = r.file_name||'';
-    if(r.file_name){
-      const zone = document.getElementById('upload-zone');
-      zone.classList.add('has-file');
-      zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${r.file_name}</span>`;
-      const fi = document.getElementById('file-info'); fi.style.display='block';
-      document.getElementById('file-name-display').textContent = r.file_name;
-    }
+    document.getElementById('file-name-display').innerHTML = `${esc(r.file_orig_name)} <a href="/uploads/${encodeURIComponent(r.file_name)}" target="_blank" class="btn btn-sm btn-outline-primary py-0 ms-1"><i class="fa fa-eye me-1"></i>เปิดไฟล์</a>`;
   }
 }
 function clearForm(){
@@ -896,25 +854,24 @@ function renderTable(){
   document.getElementById('rec-total').textContent=allRecords.length;
   const SC={อนุมัติ:'success',ไม่อนุมัติ:'danger','อยู่ระหว่างพิจารณา':'warning','รอเอกสารเพิ่มเติม':'info',ถอนคำขอ:'secondary'};
   document.getElementById('tbody').innerHTML=f.map((r,i)=>{
-    const rid=r._id||r.id;
-    const s1=JSON.parse(r.sec1_rows||'[]'); const s2=JSON.parse(r.sec2_rows||'[]'); const s3=JSON.parse(r.sec3_rows||'[]');
-    const s1f=s1[0]||{};
+    const rid=r.id;
+    const s1=filledRows(r.sec1_rows); const s2=filledRows(r.sec2_rows); const s3=filledRows(r.sec3_rows);
     const sal=r.p5_salary?Number(r.p5_salary).toLocaleString('th-TH')+'฿':'-';
     return`<tr>
       <td>${i+1}</td>
-      <td>${s1f.s1_type||'-'}</td>
-      <td><span class="badge bg-secondary bsm">${s1f.s1_level||'-'}</span></td>
-      <td><b>${s1f.s1_no||'-'}</b></td>
-      <td>${s1f.s1_division||'-'}</td>
-      <td style="font-size:.72rem">${s2.map(x=>x.s2_type||'').filter(Boolean).join(', ')||'-'}</td>
-      <td style="font-size:.72rem">${s3.map(x=>x.s3_no||'').filter(Boolean).join(', ')||'-'}</td>
-      <td>${r.p4_round||'-'}</td>
+      <td>${esc(colList(s1,'s1_type'))}</td>
+      <td>${s1.length?s1.map(x=>`<span class="badge bg-secondary bsm">${esc(cell(x.s1_level))}</span>`).join(' '):'-'}</td>
+      <td><b>${esc(colList(s1,'s1_no'))}</b></td>
+      <td>${esc(colList(s1,'s1_division'))}</td>
+      <td style="font-size:.72rem">${esc(s2.map(x=>x.s2_type||'').filter(Boolean).join(', '))||'-'}</td>
+      <td style="font-size:.72rem">${esc(s3.map(x=>x.s3_no||'').filter(Boolean).join(', '))||'-'}</td>
+      <td>${esc(r.p4_round)||'-'}</td>
       <td>${fmtDate(r.p4_date)||'-'}</td>
-      <td style="font-size:.75rem">${r.p4_resolution||'-'}</td>
-      <td>${r.p4_status?`<span class="badge bg-${SC[r.p4_status]||'secondary'} bsm">${r.p4_status}</span>`:'-'}</td>
+      <td style="font-size:.75rem">${esc(r.p4_resolution)||'-'}</td>
+      <td>${r.p4_status?`<span class="badge bg-${SC[r.p4_status]||'secondary'} bsm">${esc(r.p4_status)}</span>`:'-'}</td>
       <td class="text-end">${sal}</td>
-      <td style="white-space:nowrap;font-size:.72rem">${r._created||r.created||''}</td>
-      <td style="text-align:center">${r.file_orig_name?`<a href="/uploads/${r.file_name}" target="_blank" class="btn btn-sm btn-outline-secondary py-0 bsm" title="${r.file_orig_name}"><i class="fa fa-paperclip me-1"></i>ไฟล์</a>`:'-'}</td>
+      <td style="white-space:nowrap;font-size:.72rem">${esc(fmtStamp(r.created))}</td>
+      <td style="text-align:center">${r.file_orig_name?`<a href="/uploads/${encodeURIComponent(r.file_name)}" target="_blank" class="btn btn-sm btn-outline-secondary py-0 bsm" title="${esc(r.file_orig_name)}"><i class="fa fa-paperclip me-1"></i>ไฟล์</a>`:'-'}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-sm btn-outline-primary me-1 py-0" onclick="editRec('${rid}')"><i class="fa fa-edit"></i></button>
         <button class="btn btn-sm btn-outline-danger py-0" onclick="delRec('${rid}')"><i class="fa fa-trash"></i></button>
@@ -925,7 +882,7 @@ function renderTable(){
 
 async function editRec(id){
   await loadAll();
-  const r=allRecords.find(x=>(x._id||x.id)==id);
+  const r=allRecords.find(x=>x.id==id);
   if(!r) return;
   document.querySelectorAll('.tbtn')[0].click();
   setTimeout(()=>{ setForm(r); document.getElementById('rec-id').value=id; window.scrollTo(0,0); toast('โหลดข้อมูลเพื่อแก้ไขแล้ว','#0d6efd'); },100);
@@ -936,6 +893,13 @@ async function clearAll(){ if(!confirm('ต้องการลบข้อม�
 /* ============================================================
    EXPORT CSV / JSON
    ============================================================ */
+/* F17 Excel ตีความค่าที่ขึ้นต้นด้วย = + - @ หรืออักขระควบคุมเป็นสูตร เติม ' นำหน้ากันไว้
+   F23 ใช้ ?? ไม่ใช่ || เพราะเลข 0 เป็น falsy แล้วจะกลายเป็นช่องว่าง */
+function csvCell(v){
+  let s=(v ?? '').toString();
+  if(/^[=+\-@\t\r]/.test(s)) s="'"+s;
+  return '"'+s.replace(/"/g,'""')+'"';
+}
 function dl(c,n,t){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); }
 function doExportCSV(){
   if(!allRecords.length) return toast('ไม่มีข้อมูล','#dc3545');
@@ -944,19 +908,16 @@ function doExportCSV(){
     ['sec1_rows','sec2_rows','sec3_rows'].forEach(k=>{
       try{ const arr=JSON.parse(r[k]||'[]'); arr.forEach((item,i)=>Object.entries(item).forEach(([fk,fv])=>{ b[`${k}_${i+1}_${fk}`]=fv; })); delete b[k]; }catch{}
     });
-    delete b.file_data; // ไม่ export binary
     return b;
   });
   const keys=[...new Set(flat.flatMap(r=>Object.keys(r)))];
-  const rows=flat.map(r=>keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(','));
+  const rows=flat.map(r=>keys.map(k=>csvCell(r[k])).join(','));
   dl('\uFEFF'+[keys.join(','),...rows].join('\n'),`pos_${dStr()}.csv`,'text/csv;charset=utf-8');
   toast('Export CSV สำเร็จ ✓');
 }
 function doExportJSON(){
   if(!allRecords.length) return toast('ไม่มีข้อมูล','#dc3545');
-  // ไม่ export binary ในไฟล์ JSON (ใหญ่เกิน)
-  const safe=allRecords.map(r=>{ const c={...r}; delete c.file_data; return c; });
-  dl(JSON.stringify(safe,null,2),`pos_${dStr()}.json`,'application/json');
+  dl(JSON.stringify(allRecords,null,2),`pos_${dStr()}.json`,'application/json');
   toast('Export JSON สำเร็จ ✓');
 }
 
@@ -981,14 +942,16 @@ function mkBar(id,labels,data,title,color='#1a3a6b'){
 function renderDashboard(){
   const total=allRecords.length;
   const passed=allRecords.filter(r=>r.p4_status==='อนุมัติ').length;
-  let salSum=0,salCnt=0; const sc={},tc={},dc={},lc={};
+  let salSum=0,salCnt=0,posCnt=0; const sc={},tc={},dc={},lc={};
   allRecords.forEach(r=>{
     const s=r.p4_status||'ไม่ระบุ'; sc[s]=(sc[s]||0)+1;
-    try{ const s1=JSON.parse(r.sec1_rows||'[]'); if(s1[0]){
-      const t=s1[0].s1_type||'ไม่ระบุ'; tc[t]=(tc[t]||0)+1;
-      const dv=s1[0].s1_division||'ไม่ระบุ'; dc[dv]=(dc[dv]||0)+1;
-      const lv=s1[0].s1_level||'ไม่ระบุ'; lc[lv]=(lc[lv]||0)+1;
-    }}catch{}
+    /* นับทุกตำแหน่งใหม่ในคำขอ คำขอที่มีสามตำแหน่งนับเป็นสาม กราฟจึงเป็นจำนวนตำแหน่ง ไม่ใช่จำนวนคำขอ */
+    filledRows(r.sec1_rows).forEach(p=>{
+      posCnt++;
+      const t=p.s1_type||'ไม่ระบุ'; tc[t]=(tc[t]||0)+1;
+      const dv=p.s1_division||'ไม่ระบุ'; dc[dv]=(dc[dv]||0)+1;
+      const lv=p.s1_level||'ไม่ระบุ'; lc[lv]=(lc[lv]||0)+1;
+    });
     if(r.p5_salary){salSum+=parseFloat(r.p5_salary)||0;salCnt++;}
   });
   const avgSal=salCnt?(salSum/salCnt).toLocaleString('th-TH',{maximumFractionDigits:2}):'-';
@@ -997,10 +960,12 @@ function renderDashboard(){
     <div class="col-6 col-lg-3"><div class="sc"><div class="val text-success">${passed}</div><div class="lbl"><i class="fa fa-check-circle me-1"></i>ได้รับอนุมัติ</div></div></div>
     <div class="col-6 col-lg-3"><div class="sc"><div class="val text-info" style="font-size:1.4rem">${avgSal}${salCnt?' ฿':''}</div><div class="lbl"><i class="fa fa-coins me-1"></i>ค่าตอบแทนเฉลี่ย</div></div></div>
     <div class="col-6 col-lg-3"><div class="sc"><div class="val text-warning">${total?((passed/total)*100).toFixed(1)+'%':'-'}</div><div class="lbl"><i class="fa fa-percent me-1"></i>อัตราอนุมัติ</div></div></div>`;
+  /* ใส่จำนวนตำแหน่งไว้ในหัวกราฟ เพื่อให้ชัดว่าแกนนี้นับตำแหน่ง ไม่ใช่นับคำขอ */
+  const pos=` (${posCnt} ตำแหน่ง จาก ${total} คำขอ)`;
   mkDoughnut('chart-status',Object.keys(sc),Object.values(sc),'สถานะคำขอ');
-  mkBar('chart-type',Object.keys(tc),Object.values(tc),'จำนวนตามประเภทตำแหน่ง','#2a5298');
-  mkBar('chart-div',Object.keys(dc),Object.values(dc),'จำนวนตามกอง/สำนัก','#c8a951');
-  mkBar('chart-level',Object.keys(lc),Object.values(lc),'จำนวนตามระดับตำแหน่ง','#198754');
+  mkBar('chart-type',Object.keys(tc),Object.values(tc),'จำนวนตามประเภทตำแหน่ง'+pos,'#2a5298');
+  mkBar('chart-div',Object.keys(dc),Object.values(dc),'จำนวนตามกอง/สำนัก'+pos,'#c8a951');
+  mkBar('chart-level',Object.keys(lc),Object.values(lc),'จำนวนตามระดับตำแหน่ง'+pos,'#198754');
 }
 
 /* ============================================================

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+*.spec
+
+# ฐานข้อมูลจริงและไฟล์สำรอง ไม่ควรอยู่ใน git
+*.db
+*.db-wal
+*.db-shm
+*.bak
+*.db.*.bak
+
+# log ของแอป เขียนข้างฐานข้อมูล
+*.log
+
+# เอกสารที่ผู้ใช้อัปโหลด เป็นข้อมูลจริงของหน่วยงาน
+uploads/
+static/uploads/
