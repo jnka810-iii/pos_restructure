@@ -3,12 +3,12 @@
 | หัวข้อ | รายละเอียด |
 | --- | --- |
 | วันที่รีวิว | 20 ตุลาคม 2026 |
-| แก้ไขรอบล่าสุด | 20 ตุลาคม 2026 รอบที่ 4 ครอบ F11 ถึง F13, F15, F16 และ F19 |
+| แก้ไขรอบล่าสุด | 22 ตุลาคม 2026 รอบที่ 5 ครอบ F10 |
 | Commit ที่รีวิว | `6a9f887` |
 | ขอบเขต | `app.py`, `templates/index.html`, `run.bat`, `run_server.bat`, `run_browser.bat`, `requirements.txt`, `.gitignore`, schema ของ `pos_restructure.db` |
 | เวอร์ชันที่ติดตั้ง | Flask 3.1.3, Werkzeug 3.1.9, Jinja2 3.1.6, pywebview 6.2.1, pyinstaller 6.22.3 |
-| วิธีตรวจสอบ | Flask test client, sqlite3 ตรงๆ, Node 22 สำหรับ parse JavaScript, และ Chrome บนหน้าแอปจริง |
-| จำนวนที่พบ | 25 ข้อ แก้แล้ว 23 ข้อ ค้างอยู่ 2 ข้อ คือ F10 กับ F25 |
+| วิธีตรวจสอบ | Flask test client, sqlite3 ตรงๆ, Node 22 สำหรับ parse JavaScript, Chrome บนหน้าแอปจริง และ Edge headless ที่ตัดเน็ตทั้งเครื่องสำหรับ F10 |
+| จำนวนที่พบ | 25 ข้อ แก้แล้ว 24 ข้อ ค้างอยู่ 1 ข้อ คือ F25 |
 
 ## วิธีอ่านเอกสารนี้
 
@@ -33,7 +33,7 @@
 | F07 | LocalStorage เต็มแล้วทิ้งไฟล์แนบเงียบๆ | สำคัญ | แก้แล้ว |
 | F08 | ลบระเบียนแล้วไฟล์แนบค้างบนดิสก์ | สำคัญ | แก้แล้ว |
 | F09 | Schema เพี้ยนไปจากโค้ด มีคอลัมน์ตาย 29 ตัว | สำคัญ | แก้แล้ว |
-| F10 | แอปที่ตั้งใจทำเป็น .exe ออฟไลน์ แต่พึ่ง CDN ทั้งหมด | สำคัญ | ค้าง |
+| F10 | แอปที่ตั้งใจทำเป็น .exe ออฟไลน์ แต่พึ่ง CDN ทั้งหมด | สำคัญ | แก้แล้ว |
 | F11 | `time.sleep(0.8)` คือการแข่งเวลา ไม่ใช่การรอ | สำคัญ | แก้แล้ว |
 | F12 | อัปโหลดไฟล์เกิน 10 MB ตอบ 500 พร้อมข้อความอังกฤษ | ควรแก้ | แก้แล้ว |
 | F13 | `except Exception` กว้างเกินไป และส่ง `str(e)` กลับ client | ควรแก้ | แก้แล้ว |
@@ -69,7 +69,6 @@
 'รายงาน ก.พ. 2567.xlsx'  -> '2567.xlsx'    ext = xlsx
 'ok_file.pdf'            -> 'ok_file.pdf'  ext = pdf
 ```
-
 สังเกตว่า `บอ.1.pdf` ไม่ error แต่ชื่อที่แสดงกลายเป็น `1.pdf` ซึ่งผิดอยู่ดี
 
 **ผลกระทบ.** ระบบนี้ใช้ในหน่วยงานราชการไทย ชื่อไฟล์ภาษาไทยคือกรณีปกติ ไม่ใช่กรณีขอบ ฟีเจอร์แนบเอกสารจึงใช้งานไม่ได้จริงกับผู้ใช้ส่วนใหญ่
@@ -233,6 +232,24 @@ whitelist ของ API ก็อนุมานจาก `COLUMNS` เช่น
 **การย้ายข้อมูลจริง.** `migrate_schema.py` เป็นโหมด dry-run เป็นค่าเริ่มต้น มันพิมพ์รายชื่อคอลัมน์ที่จะลบ พร้อมเตือนถ้าคอลัมน์ไหนยังถือค่าอยู่ เมื่อสั่ง `--apply` มันจะสำรองฐานข้อมูลด้วย SQLite backup API ก่อน แล้วจึงลบ และตรวจซ้ำว่าจำนวนแถวไม่เปลี่ยนกับ schema ตรงกับ `COLUMNS`
 
 **หลักฐาน.** วัดผลแล้วกับฐานข้อมูลจริง ก่อนย้ายมี 46 คอลัมน์ หลังย้ายเหลือ 17 คอลัมน์ จำนวนแถวคงเดิมที่ 1 และไม่มีคอลัมน์ใดในชุดที่ลบถือค่าอยู่เลย ไฟล์สำรองอยู่ที่ `pos_restructure.db.20261020-113652.bak` รายละเอียดอยู่ในภาคผนวก ฉ
+
+### F10 แอปที่ตั้งใจทำเป็น .exe ออฟไลน์ แต่พึ่ง CDN ทั้งหมด
+
+**ตำแหน่ง.** `templates/index.html` ส่วน `<head>`, แท็ก `<script>` ท้ายหน้า และฟังก์ชัน `exportPDFRecord`
+
+**อาการ.** ทรัพยากรสี่ชุดโหลดจากอินเทอร์เน็ตทั้งหมด ได้แก่ ฟอนต์ Sarabun จาก Google Fonts, Bootstrap 5.3.2, Font Awesome 6.4.2 และ Chart.js 4.4.1 หน้า PDF ที่ `exportPDFRecord` เปิดขึ้นมาก็ขอฟอนต์จาก Google อีกชุดหนึ่ง เอกสารรอบก่อนระบุระดับหลักฐานไว้ว่าอ่านจากโค้ด รอบนี้ทดสอบจริงแล้ว
+
+**การแก้.** `vendor_assets.py` ดาวน์โหลดทั้งสี่ชุดมาไว้ใต้ `static/vendor/` แล้วหน้าเว็บชี้มาที่ไฟล์ในเครื่องแทน สคริปต์เป็นที่เดียวที่บอกว่าไฟล์แต่ละตัวมาจาก URL ไหนและเวอร์ชันอะไร รันซ้ำได้ผลเหมือนเดิมเพราะมันสร้างลงโฟลเดอร์ชั่วคราวก่อนแล้วค่อยสลับเข้าที่ การขึ้นเวอร์ชันไลบรารีจึงเป็นการแก้ตาราง `ASSETS` แล้วรันใหม่
+
+สองจุดที่ต้องทำมากกว่าการคัดลอกไฟล์ คือ CSS ของ Font Awesome ที่อ้าง `../webfonts/` ต่อไปอีกชั้น สคริปต์จึงไล่ดึง woff2 ตามมาด้วยและตัด fallback เป็น ttf ทิ้ง เพราะเบราว์เซอร์เลือก woff2 อยู่แล้ว กับ CSS ของ Google Fonts ที่ชื่อไฟล์ฟอนต์เป็นแฮชซึ่งเปลี่ยนได้ทุกเมื่อ สคริปต์จึงตั้งชื่อใหม่ตามน้ำหนักและช่วงอักษรเป็น `sarabun-400-thai.woff2` แล้วเขียน url ใน CSS ทับ
+
+ลิงก์ฟอนต์ในหน้า PDF ชี้มาที่ `/static/vendor/sarabun/sarabun.css` เหมือนกัน หน้าต่างที่เปิดด้วย `window.open('','_blank')` รับ base URL ของหน้าแม่มาใช้ ลิงก์แบบขึ้นต้นด้วย `/` จึงคลี่เป็นที่อยู่ของเครื่องตัวเอง
+
+คำสั่ง build ใน `app.py` และ `README.md` เพิ่ม `--add-data "static;static"` ถ้าขาดบรรทัดนี้ ไฟล์ `.exe` จะไม่มีไลบรารีติดไปด้วย ซึ่งเป็นกับดักเดียวกับที่ F24 เจอมาแล้ว ชุดตรวจ `the_build_command_bundles_the_static_folder` จึงเฝ้าทั้งสองไฟล์ไว้
+
+**ขนาดที่เพิ่มเข้ามา.** 1,054,937 ไบต์ ใน 25 ไฟล์ ก้อนใหญ่สุดคือ Bootstrap CSS 232,903 ไบต์, Chart.js 200,807 ไบต์ และ webfont ของ Font Awesome รวม 288,884 ไบต์
+
+**หลักฐาน.** วัดผลแล้วด้วย `verify_offline.py` ซึ่งเปิดแอปบนพอร์ตว่างแล้วสั่ง Edge headless ให้เปิดหน้านั้นโดยใส่ `--host-resolver-rules` ที่ทำให้ทุกโฮสต์นอกจาก 127.0.0.1 หาที่อยู่ไม่เจอ ซึ่งเป็นสภาพเดียวกับเครื่องที่ไม่มีเน็ต ก่อนแก้ผ่าน 2 ข้อจาก 7 ข้อ `typeof Chart` เป็น `undefined`, `new Chart(...)` โยน `ReferenceError: Chart is not defined`, `border-radius` ของปุ่ม Bootstrap เป็น `0px` และ `document.fonts` ว่างเปล่าทั้งชุด หลังแก้ผ่านทั้ง 8 ข้อ และชุดตรวจใน `test_api.py` ขึ้นจาก 35/38 เป็น 38/38 ผลเต็มอยู่ในภาคผนวก ญ
 
 ### F11 `time.sleep(0.8)` คือการแข่งเวลา ไม่ใช่การรอ
 
@@ -499,20 +516,6 @@ templates/index.html
 
 ## ส่วนที่ 2 ข้อที่ยังไม่ได้แก้
 
-### ระดับสำคัญ
-
-#### F10 แอปที่ตั้งใจทำเป็น .exe ออฟไลน์ แต่พึ่ง CDN ทั้งหมด
-
-**ตำแหน่ง.** `templates/index.html` บรรทัด 8 ถึง 12 และบรรทัด 518 และบรรทัด 676
-
-ทรัพยากรสี่ชุดโหลดจากอินเทอร์เน็ตทั้งหมด ได้แก่ Google Fonts Sarabun, Bootstrap 5.3.2, Font Awesome 6.4.2 และ Chart.js 4.4.1 หน้า PDF ที่ `exportPDFRecord` สร้างก็โหลดฟอนต์จาก Google อีกครั้ง
-
-docstring บนหัว `app.py` ระบุว่าเป้าหมายคือ build เป็น `.exe` ด้วย PyInstaller เครื่องที่ไม่มีเน็ตจะได้หน้าไม่มี style ไม่มีไอคอน ฟอนต์ไทยตกไปใช้ fallback และแท็บสรุปภาพรวมพังทั้งแท็บ เพราะ `new Chart(...)` ใน `mkDoughnut` โยน ReferenceError เมื่อ Chart.js ไม่ถูกโหลด
-
-ระดับหลักฐานคืออ่านจากโค้ด ยังไม่ได้ทดสอบด้วยการตัดเน็ตจริง
-
-**แนวทางแก้.** ดาวน์โหลดทั้งสี่ชุดมาไว้ใน `static/vendor/` แล้วเพิ่มเข้า `--add-data` ของ PyInstaller ขนาดรวมประมาณไม่กี่ร้อยกิโลไบต์ ซึ่งคุ้มกับการที่แอปทำงานได้จริงตอนออฟไลน์
-
 ### ระดับควรแก้
 
 #### F14 `except: pass` เปล่าในลูป migration
@@ -537,11 +540,9 @@ docstring บนหัว `app.py` ระบุว่าเป้าหมาย
 
 ## ส่วนที่ 4 คำถามที่ต้องให้เจ้าของระบบตัดสิน
 
-เหลือสองข้อที่ตอบจากโค้ดไม่ได้ ต้องการการตัดสินใจเชิงนโยบายหรือเชิงสเปก ส่วนคำถามเรื่อง F05 ได้คำตอบแล้วว่าให้ตัด LocalStorage ทิ้ง และคำถามเรื่อง F19 ได้คำตอบแล้วว่าให้นับทุกตำแหน่ง ทั้งสองข้อย้ายไปอยู่ในหัวข้อของตัวเองในส่วนที่ 1
+เหลือข้อเดียวที่ตอบจากโค้ดไม่ได้ ต้องการการตัดสินใจเชิงนโยบายหรือเชิงสเปก ส่วนคำถามเรื่อง F05 ได้คำตอบแล้วว่าให้ตัด LocalStorage ทิ้ง คำถามเรื่อง F19 ได้คำตอบแล้วว่าให้นับทุกตำแหน่ง และคำถามเรื่อง F10 ได้คำตอบแล้วว่าให้รวมไลบรารีลงเครื่องในรอบที่ 5 ทั้งสามข้อย้ายไปอยู่ในหัวข้อของตัวเองในส่วนที่ 1
 
 **ระบบนี้จะถูกใช้แบบหลายคนผ่าน `run_server.bat` หรือไม่** ถ้าใช่ การยืนยันตัวตนเปลี่ยนจากเรื่องที่ควรทำเป็นเรื่องที่ต้องทำก่อนเปิดใช้ เพราะตอนนี้ใครอยู่ในวงเดียวกันก็ลบข้อมูลทั้งตารางได้ด้วยคำขอเดียว
-
-**F10 จะรวมไลบรารีลงเครื่องเมื่อไหร่** ตราบใดที่ Bootstrap, Chart.js, Font Awesome และฟอนต์ Sarabun ยังโหลดจาก CDN แอปที่ build เป็น .exe จะใช้งานออฟไลน์ไม่ได้เต็มที่ และแท็บสรุปภาพรวมจะพังทั้งแท็บ
 
 ## ภาคผนวก ก ผลการรันชุดตรวจ
 
@@ -1004,7 +1005,136 @@ DELETE /api/positions/3  200
 
 ### ที่ยังค้าง
 
-เหลือสองข้อ F10 คือการรวมไลบรารีจาก CDN มาไว้ในเครื่องเพื่อให้ `.exe` ทำงานได้จริงตอนออฟไลน์ และ F25 คือการขยายชุดตรวจให้ครอบส่วนที่ยังไม่มีเทส ซึ่งรอบที่สามกับสี่ขยับไปแล้วบางส่วน คือ Export CSV และการนับใน Dashboard มีเทสครอบแล้ว ที่ยังไม่มีคือ Export JSON กับ CI
+เหลือข้อเดียวคือ F25 การขยายชุดตรวจให้ครอบส่วนที่ยังไม่มีเทส ซึ่งรอบที่สามกับสี่ขยับไปแล้วบางส่วน คือ Export CSV และการนับใน Dashboard มีเทสครอบแล้ว ที่ยังไม่มีคือ Export JSON กับ CI ส่วน F10 ปิดไปในรอบที่ห้า รายละเอียดอยู่ในภาคผนวก ญ
 
 นอกจากนี้การล้าง `ANNOUNCEMENT.pdf` ออกจาก git history ตาม F20 ยังไม่ได้ทำ เพราะต้องใช้ `git filter-repo` ซึ่งเขียน commit hash ใหม่ทั้งสาย
 
+
+## ภาคผนวก ญ ผลการตรวจรอบที่ห้า F10
+
+### ไฟล์ที่แตะในรอบนี้
+
+- `vendor_assets.py` ไฟล์ใหม่ ดาวน์โหลดไลบรารีทั้งสี่ชุดลง `static/vendor/`
+- `verify_offline.py` ไฟล์ใหม่ เปิดหน้าแอปด้วย Edge headless ที่หาโฮสต์นอกเครื่องไม่เจอ แล้ววัดผลจากในเบราว์เซอร์
+- `static/vendor/` ไฟล์ใหม่ 25 ไฟล์ รวม 1,054,937 ไบต์
+- `templates/index.html` ลิงก์ CDN ห้าจุดชี้มาที่ไฟล์ในเครื่อง และตัด `preconnect` ทิ้ง
+- `app.py` กับ `README.md` คำสั่ง build เพิ่ม `--add-data "static;static"`
+- `test_api.py` เพิ่มสามเคส
+- `.gitattributes` ไฟล์ใหม่ กัน git แปลงท้ายบรรทัดของไฟล์ใต้ `static/vendor`
+
+### วิธีจำลองเครื่องที่ไม่มีเน็ต
+
+`verify_offline.py` ส่ง `--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1` ให้เบราว์เซอร์ ทุกโฮสต์นอกจาก loopback จึงหาที่อยู่ไม่เจอ ข้อตรวจแรกของทุกรอบคือยิง `fetch` ไปที่ cdnjs แล้วต้องล้มเหลว ถ้าข้อนี้ไม่ผ่าน แปลว่ายังวัดสภาพออฟไลน์ไม่ได้จริง ผลที่เหลือก็เชื่อไม่ได้
+
+### ชุดตรวจออฟไลน์ก่อนแก้
+
+```
+assets    local
+          https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css
+          https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css
+          https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap
+          https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap
+          https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js
+          https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js
+probe     {"navigator_online": true, "external_fetch": "blocked", "chart_global": "undefined",
+           "button_radius": "0px", "icon_font": "Sarabun, sans-serif", "fonts": [],
+           "doughnut": "ReferenceError: Chart is not defined"}
+PASS  the machine really is offline
+FAIL  chart.js is loaded
+        typeof Chart = undefined แท็บสรุปภาพรวมจะพังทั้งแท็บ
+FAIL  a doughnut chart draws
+        ReferenceError: Chart is not defined
+FAIL  bootstrap css is applied
+        border-radius ของปุ่ม = '0px' หน้าเว็บไม่มี style
+FAIL  the icon webfont is loaded
+        ไอคอนไม่มา ::before font-family = 'Sarabun, sans-serif' ฟอนต์ที่โหลดได้ []
+FAIL  the thai webfont is loaded
+        Sarabun ที่โหลดได้ [] ฟอนต์ไทยตกไปใช้ fallback ของระบบ
+PASS  the screenshot was written
+
+2/7 passed
+```
+
+ข้อ `the pdf window resolves the font to this machine` ยังไม่มีในรอบก่อนแก้ จึงเป็น 7 ข้อ ไม่ใช่ 8
+
+### ชุดตรวจออฟไลน์หลังแก้
+
+```
+assets    local
+          /static/vendor/bootstrap/css/bootstrap.min.css
+          /static/vendor/fontawesome/css/all.min.css
+          /static/vendor/sarabun/sarabun.css
+          /static/vendor/bootstrap/js/bootstrap.bundle.min.js
+          /static/vendor/chartjs/chart.umd.min.js
+probe     {"navigator_online": true, "external_fetch": "blocked", "chart_global": "function",
+           "button_radius": "6px", "icon_font": "\"Font Awesome 6 Free\"", "fonts": <26 รายการ>,
+           "popup_font": "http://127.0.0.1:51589/static/vendor/sarabun/sarabun.css",
+           "doughnut": "drawn"}
+PASS  the machine really is offline
+PASS  chart.js is loaded
+PASS  a doughnut chart draws
+PASS  bootstrap css is applied
+PASS  the icon webfont is loaded
+PASS  the thai webfont is loaded
+PASS  the pdf window resolves the font to this machine
+PASS  the screenshot was written
+
+8/8 passed
+```
+
+รายการใน `fonts` ย่อไว้ให้สั้น ของจริงมี 26 รายการ ที่มีสถานะ `loaded` คือ Font Awesome 6 Free น้ำหนัก 900 กับ Sarabun น้ำหนัก 400 และ 700 ตามที่หน้า probe สั่งโหลด ที่เหลือเป็น `unloaded` ตามปกติของ CSS ที่ประกาศ `@font-face` ไว้มากกว่าที่หน้านั้นใช้
+
+### ชุดตรวจถดถอย
+
+ก่อนแก้ 35/38 ตกสามเคสที่เพิ่มเข้ามาใหม่
+
+```
+FAIL  the_page_never_loads_a_resource_from_the_internet
+        หน้าเว็บยังโหลดจากอินเทอร์เน็ต https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js,
+        https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css,
+        https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js,
+        https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css,
+        https://fonts.googleapis.com, https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap,
+        https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap
+FAIL  every_asset_the_page_asks_for_is_served_from_disk
+        หน้าเว็บไม่ได้อ้างไฟล์ใน static เลย ไลบรารียังไม่ได้ย้ายลงเครื่อง
+FAIL  the_build_command_bundles_the_static_folder
+        คำสั่ง build ใน app.py ยังไม่ได้ใส่โฟลเดอร์ static
+
+35/38 passed
+```
+
+หลังแก้ 38/38 ผ่านทั้งหมด
+
+### ไฟล์ที่ดาวน์โหลดมาเก็บไว้
+
+```
+  232,903  static\vendor\bootstrap\css\bootstrap.min.css
+   80,615  static\vendor\bootstrap\js\bootstrap.bundle.min.js
+  200,807  static\vendor\chartjs\chart.umd.min.js
+  101,672  static\vendor\fontawesome\css\all.min.css
+  109,808  static\vendor\fontawesome\webfonts\fa-brands-400.woff2
+   24,488  static\vendor\fontawesome\webfonts\fa-regular-400.woff2
+  150,020  static\vendor\fontawesome\webfonts\fa-solid-900.woff2
+    4,568  static\vendor\fontawesome\webfonts\fa-v4compatibility.woff2
+   10,568  static\vendor\sarabun\sarabun-300-latin-ext.woff2
+   11,660  static\vendor\sarabun\sarabun-300-latin.woff2
+    9,972  static\vendor\sarabun\sarabun-300-thai.woff2
+    4,136  static\vendor\sarabun\sarabun-300-vietnamese.woff2
+   10,488  static\vendor\sarabun\sarabun-400-latin-ext.woff2
+   11,396  static\vendor\sarabun\sarabun-400-latin.woff2
+    9,868  static\vendor\sarabun\sarabun-400-thai.woff2
+    4,144  static\vendor\sarabun\sarabun-400-vietnamese.woff2
+   10,552  static\vendor\sarabun\sarabun-600-latin-ext.woff2
+   11,720  static\vendor\sarabun\sarabun-600-latin.woff2
+    9,872  static\vendor\sarabun\sarabun-600-thai.woff2
+    4,176  static\vendor\sarabun\sarabun-600-vietnamese.woff2
+   10,492  static\vendor\sarabun\sarabun-700-latin-ext.woff2
+   11,596  static\vendor\sarabun\sarabun-700-latin.woff2
+    9,812  static\vendor\sarabun\sarabun-700-thai.woff2
+    4,228  static\vendor\sarabun\sarabun-700-vietnamese.woff2
+    5,376  static\vendor\sarabun\sarabun.css
+1,054,937  รวม
+```
+
+webfont ของ Font Awesome สามไฟล์รวม 138,864 ไบต์ไม่ได้ถูกใช้บนหน้านี้ คือ brands, regular และ v4compatibility วัดผลแล้วจาก CSS ที่ดาวน์โหลดมา ไม่มีกฎไหนเรียกตระกูล `FontAwesome` เลย และไอคอนทุกตัวบนหน้านี้อยู่ในชุด solid น้ำหนัก 900 ชุดเดียว ไฟล์ทั้งสามยังเก็บไว้เพราะ CSS ต้นทางประกาศ `@font-face` ไว้ครบ การตัดไฟล์ออกต้องแก้ CSS ตามไปด้วย ซึ่งแลกกับเนื้อที่ 138 กิโลไบต์แล้วไม่คุ้ม ถ้าวันหนึ่งหน้าเว็บใช้ไอคอน `fab` ขึ้นมา มันจะทำงานได้ทันทีโดยไม่ต้องแก้สคริปต์
