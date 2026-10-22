@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</title>
 <link rel="icon" href="data:,">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/vendor/sarabun/sarabun.css">
+<link rel="stylesheet" href="/static/vendor/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
+<script src="/static/vendor/chartjs/chart.umd.min.js"></script>
 <style>
 :root{--pr:#1976D2;--pr2:#1565C0;--ac:#c8a951;--sec:#F5F5F5;--bg:#F5F5F5;
       --shadow-soft:0 2px 8px rgba(25,118,210,.08),0 1px 3px rgba(0,0,0,.04);
@@ -515,7 +514,7 @@ textarea.form-control{resize:vertical}
   </div>
 </template>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
 /* ============================================================
    CONFIG
@@ -656,7 +655,7 @@ function exportPDFRecord(){
   const win = window.open('','_blank');
   win.document.write(`<!DOCTYPE html><html lang="th"><head>
   <meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/vendor/sarabun/sarabun.css">
   <title>บอ.1 – ปรับปรุงตำแหน่ง</title>
   <style>
     body{font-family:'Sarabun',sans-serif;font-size:13px;padding:24px;color:#222}

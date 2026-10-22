@@ -53,9 +53,12 @@ python -m venv .venv
 ```bat
 .venv\Scripts\pyinstaller.exe --noconfirm --onefile --windowed ^
   --add-data "templates;templates" ^
+  --add-data "static;static" ^
   --hidden-import webview ^
   --name "PosRestructure" app.py
 ```
+
+`--add-data "static;static"` คือไลบรารีหน้าเว็บ ถ้าไม่ใส่บรรทัดนี้ `.exe` จะไม่มี Bootstrap, Chart.js, Font Awesome และฟอนต์ Sarabun ติดไปด้วย และแท็บสรุปภาพรวมจะใช้งานไม่ได้
 
 ไฟล์ที่ได้อยู่ใน `dist\PosRestructure.exe` ตอนรัน แอปจะสร้างฐานข้อมูล ไฟล์ log และโฟลเดอร์ `uploads` ไว้ข้างไฟล์ `.exe`
 
@@ -65,7 +68,10 @@ python -m venv .venv
 pos_restructure/
 ├── app.py                 Flask app, API และตัวเปิดหน้าต่าง pywebview
 ├── templates/index.html   หน้าเว็บทั้งหมด (HTML, CSS, JavaScript ในไฟล์เดียว)
+├── static/vendor/         Bootstrap, Chart.js, Font Awesome, ฟอนต์ Sarabun ในเครื่อง
 ├── test_api.py            เทส regression ของ API และฟังก์ชันในหน้าเว็บ
+├── verify_offline.py      เปิดหน้าเว็บในเบราว์เซอร์ที่ตัดเน็ต แล้ววัดว่าไลบรารีมาครบ
+├── vendor_assets.py       ดาวน์โหลดไลบรารีหน้าเว็บมาไว้ใน static/vendor
 ├── migrate_schema.py      ลบคอลัมน์ที่โค้ดไม่ใช้แล้วออกจากฐานข้อมูล
 ├── cleanup_orphans.py     ลบไฟล์ใน uploads/ ที่ไม่มีรายการไหนอ้างถึง
 ├── run.bat / run_browser.bat / run_server.bat
@@ -117,6 +123,14 @@ pos_restructure/
 
 เทสใช้ฐานข้อมูลและโฟลเดอร์อัปโหลดชั่วคราว ไม่แตะข้อมูลจริง และจบด้วยสรุปจำนวนเทสที่ผ่าน คืนค่า exit code 1 ถ้ามีเทสไม่ผ่าน
 
+### ตรวจว่าใช้งานออฟไลน์ได้
+
+```bat
+.venv\Scripts\python.exe verify_offline.py
+```
+
+สคริปต์เปิดแอปบนพอร์ตว่าง แล้วสั่ง Edge หรือ Chrome แบบ headless ให้เปิดหน้านั้นโดยทุกโฮสต์นอกจาก 127.0.0.1 หาที่อยู่ไม่เจอ ซึ่งเป็นสภาพเดียวกับเครื่องที่ไม่มีเน็ต แล้ววัดจากในเบราว์เซอร์ว่า Chart.js, Bootstrap, ไอคอน และฟอนต์ไทยมาครบ ภาพหน้าจอที่ได้อยู่ในโฟลเดอร์ temp สั่งที่อื่นได้ด้วย `--shot`
+
 ## สคริปต์ดูแลระบบ
 
 ทั้งสองสคริปต์เป็น dry-run โดยค่าเริ่มต้น แสดงแค่สิ่งที่จะทำ ต้องใส่ `--apply` จึงจะทำจริง
@@ -131,11 +145,16 @@ REM ลบคอลัมน์ที่โค้ดไม่ใช้แล้�
 .venv\Scripts\python.exe migrate_schema.py --apply
 ```
 
+ส่วน `vendor_assets.py` ดาวน์โหลดไลบรารีหน้าเว็บลง `static/vendor` ใหม่ทั้งโฟลเดอร์ ต้องต่อเน็ตตอนรัน ใช้เมื่อขึ้นเวอร์ชัน Bootstrap, Chart.js, Font Awesome หรือฟอนต์ Sarabun โดยแก้ตาราง `ASSETS` ในสคริปต์ก่อน แล้วรัน `verify_offline.py` ซ้ำ
+
+```bat
+.venv\Scripts\python.exe vendor_assets.py
+```
+
 ## ข้อจำกัดที่ทราบ
 
-รายละเอียดทั้งหมดอยู่ใน [CODE_REVIEW.md](CODE_REVIEW.md) ข้อที่ยังค้างอยู่มี 2 ข้อ
+รายละเอียดทั้งหมดอยู่ใน [CODE_REVIEW.md](CODE_REVIEW.md) ข้อที่ยังค้างอยู่มี 1 ข้อ
 
-- **F10** ไลบรารีหน้าเว็บโหลดจาก CDN ทั้งหมด เครื่องที่ไม่มีอินเทอร์เน็ตจะแสดงผลไม่ครบ และแท็บสรุปภาพรวมจะใช้งานไม่ได้
 - **F25** เทสยังครอบเฉพาะจุดที่แก้ไปแล้วจากการรีวิว ส่วนอื่นยังไม่มีเทส
 
 นอกจากนี้แอปไม่มีระบบผู้ใช้หรือสิทธิ์การเข้าถึง และไฟล์แนบแต่ละรายการมีได้ไฟล์เดียว

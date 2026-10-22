@@ -8,6 +8,7 @@ Flask + SQLite3 + pywebview → Desktop App (.exe)
   ├── pos_restructure.db   (สร้างอัตโนมัติ)
   ├── pos_restructure.log  (สร้างอัตโนมัติ เก็บ error ที่ไม่คาดคิด)
   ├── uploads/             (สร้างอัตโนมัติ เสิร์ฟผ่าน /uploads/<ชื่อไฟล์> เท่านั้น)
+  ├── static/vendor/       (ไลบรารีหน้าเว็บในเครื่อง สร้างด้วย vendor_assets.py)
   └── templates/
       └── index.html
 
@@ -17,6 +18,7 @@ Flask + SQLite3 + pywebview → Desktop App (.exe)
 Build .exe (Windows):
   pyinstaller --noconfirm --onefile --windowed \
     --add-data "templates;templates" \
+    --add-data "static;static" \
     --hidden-import webview \
     --name "PosRestructure" app.py
 """
