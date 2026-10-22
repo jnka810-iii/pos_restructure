@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import tempfile
+from urllib.parse import urljoin
 
 TMP = tempfile.mkdtemp(prefix='pos_test_')
 
@@ -409,6 +410,52 @@ console.log(JSON.stringify({{
     assert got['broken'] == 0, 'malformed JSON must degrade to an empty list'
 
 
+def external_asset_urls(text):
+    """URL ทุกตัวที่สั่งให้เบราว์เซอร์ไปโหลดจากนอกเครื่อง ทั้ง src href และ url() ใน CSS"""
+    found = re.findall(r"""(?:src|href)\s*=\s*["'](//[^"']+|https?://[^"']+)""", text)
+    found += re.findall(r"""url\(\s*["']?(//[^)"']+|https?://[^)"']+)""", text)
+    return sorted(set(found))
+
+
+def the_page_never_loads_a_resource_from_the_internet():
+    """แอปนี้ build เป็น .exe ไว้ใช้บนเครื่องที่ไม่มีเน็ต ทุกไฟล์ที่หน้าเว็บใช้ต้องมาจากเครื่องเอง"""
+    page = client.get('/').get_data(as_text=True)
+    outside = external_asset_urls(page)
+    assert not outside, 'หน้าเว็บยังโหลดจากอินเทอร์เน็ต ' + ', '.join(outside)
+
+
+def every_asset_the_page_asks_for_is_served_from_disk():
+    """ไล่ตามไฟล์ที่หน้าเว็บอ้างรวมถึง url() ชั้นในของ CSS ว่าเสิร์ฟได้จริงและไม่ใช่ไฟล์เปล่า"""
+    page = client.get('/').get_data(as_text=True)
+    queue = sorted(set(re.findall(r"""(?:src|href)\s*=\s*["'](/static/[^"']+)""", page)))
+    assert queue, 'หน้าเว็บไม่ได้อ้างไฟล์ใน static เลย ไลบรารียังไม่ได้ย้ายลงเครื่อง'
+    seen = set()
+    while queue:
+        path = queue.pop()
+        if path in seen:
+            continue
+        seen.add(path)
+        res = client.get(path)
+        assert res.status_code == 200, f'{path} ตอบ {res.status_code}'
+        assert len(res.get_data()) > 500, f'{path} มีแค่ {len(res.get_data())} ไบต์'
+        if path.endswith('.css'):
+            body = res.get_data(as_text=True)
+            outside = external_asset_urls(body)
+            assert not outside, f'{path} ยังอ้างไฟล์จากอินเทอร์เน็ต ' + ', '.join(outside)
+            queue += [urljoin(path, ref)
+                      for ref in re.findall(r"""url\(\s*["']?([^)"'#?]+)""", body)
+                      if not ref.startswith('data:')]
+    assert len(seen) > 4, f'ไล่ได้แค่ {len(seen)} ไฟล์ ชุดไลบรารีในเครื่องยังไม่ครบ'
+
+
+def the_build_command_bundles_the_static_folder():
+    """PyInstaller เก็บเฉพาะไฟล์ที่สั่งไว้ ถ้าไม่ระบุ static ไลบรารีจะไม่ติดไปกับ .exe"""
+    readme = open(os.path.join(HERE, 'README.md'), encoding='utf-8').read()
+    for name, text in (('app.py', APP_SOURCE), ('README.md', readme)):
+        assert '--add-data "static;static"' in text, \
+            f'คำสั่ง build ใน {name} ยังไม่ได้ใส่โฟลเดอร์ static'
+
+
 CHECKS = [
     upload_accepts_a_thai_filename,
     upload_keeps_the_extension_when_the_name_has_several_dots,
@@ -445,6 +492,9 @@ CHECKS = [
     uploads_are_served_by_exactly_one_route,
     the_table_and_dashboard_read_every_position,
     blank_position_rows_are_neither_counted_nor_displayed,
+    the_page_never_loads_a_resource_from_the_internet,
+    every_asset_the_page_asks_for_is_served_from_disk,
+    the_build_command_bundles_the_static_folder,
 ]
 
 
