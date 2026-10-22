@@ -117,11 +117,21 @@ pos_restructure/
 
 ## เทส
 
+[![tests](https://github.com/jnka810-iii/pos_restructure/actions/workflows/tests.yml/badge.svg)](https://github.com/jnka810-iii/pos_restructure/actions/workflows/tests.yml)
+
 ```bat
 .venv\Scripts\python.exe test_api.py
 ```
 
 เทสใช้ฐานข้อมูลและโฟลเดอร์อัปโหลดชั่วคราว ไม่แตะข้อมูลจริง และจบด้วยสรุปจำนวนเทสที่ผ่าน คืนค่า exit code 1 ถ้ามีเทสไม่ผ่าน
+
+เคสที่ต้องใช้ Node เพื่อรัน JavaScript จากหน้าเว็บจะขึ้น SKIP ถ้าเครื่องไม่มี Node สั่ง `--no-skip` เพื่อให้เคสที่ข้ามนับเป็นตก ซึ่งเป็นแบบที่ CI ใช้
+
+```bat
+.venv\Scripts\python.exe test_api.py --no-skip
+```
+
+GitHub Actions รัน `test_api.py --no-skip` กับ `verify_offline.py` บน `windows-latest` ทุก pull request ตั้งค่าอยู่ใน `.github/workflows/tests.yml`
 
 ### ตรวจว่าใช้งานออฟไลน์ได้
 
@@ -153,8 +163,6 @@ REM ลบคอลัมน์ที่โค้ดไม่ใช้แล้�
 
 ## ข้อจำกัดที่ทราบ
 
-รายละเอียดทั้งหมดอยู่ใน [CODE_REVIEW.md](CODE_REVIEW.md) ข้อที่ยังค้างอยู่มี 1 ข้อ
+รายละเอียดทั้งหมดอยู่ใน [CODE_REVIEW.md](CODE_REVIEW.md) ทั้ง 25 ข้อจากการรีวิวปิดครบแล้ว
 
-- **F25** เทสยังครอบเฉพาะจุดที่แก้ไปแล้วจากการรีวิว ส่วนอื่นยังไม่มีเทส
-
-นอกจากนี้แอปไม่มีระบบผู้ใช้หรือสิทธิ์การเข้าถึง และไฟล์แนบแต่ละรายการมีได้ไฟล์เดียว
+ที่ยังเป็นข้อจำกัดของตัวระบบเอง ไม่ใช่ข้อค้างจากการรีวิว คือแอปไม่มีระบบผู้ใช้หรือสิทธิ์การเข้าถึง ไฟล์แนบแต่ละรายการมีได้ไฟล์เดียว และชุดตรวจยังไม่ครอบการวาดกราฟใน Dashboard กับการกรองในตาราง เพราะสองอย่างนี้ต้องขับเบราว์เซอร์จริง ไม่ใช่รันด้วย Node
