@@ -20,3 +20,6 @@ dist/
 # เอกสารที่ผู้ใช้อัปโหลด เป็นข้อมูลจริงของหน่วยงาน
 uploads/
 static/uploads/
+
+# ภาพหน้าจอจาก verify_offline.py
+offline_page.png

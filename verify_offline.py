@@ -168,6 +168,8 @@ def main():
     parser.add_argument('--assets', choices=['local', 'cdn'], default='local')
     parser.add_argument('--shot', default=os.path.join(tempfile.gettempdir(), 'offline_page.png'))
     args = parser.parse_args()
+    # เบราว์เซอร์เป็นคนละโปรเซส เส้นทางแบบสัมพัทธ์ของมันไม่ใช่ที่เดียวกับของสคริปต์
+    args.shot = os.path.abspath(args.shot)
 
     browser = find_browser()
     port = free_port()
@@ -185,7 +187,8 @@ def main():
     got = read_probe(browser, f'{base}/__probe__')
     print('probe     ' + json.dumps(got, ensure_ascii=False))
 
-    run_offline(browser, f'{base}/', ['--window-size=1280,900', f'--screenshot={args.shot}'])
+    shot = run_offline(browser, f'{base}/',
+                       ['--window-size=1280,900', f'--screenshot={args.shot}'])
     shutil.rmtree(tmp, ignore_errors=True)
 
     sarabun = {f['weight'] for f in got['fonts']
@@ -208,8 +211,10 @@ def main():
         ('the pdf window resolves the font to this machine',
          got['popup_font'].startswith(base if args.assets == 'local' else 'https://'),
          f"หน้าต่าง PDF ชี้ฟอนต์ไปที่ {got['popup_font']}"),
-        ('the screenshot was written', os.path.getsize(args.shot) > 10000,
-         f'{args.shot} เล็กผิดปกติ'),
+        ('the screenshot was written',
+         os.path.exists(args.shot) and os.path.getsize(args.shot) > 10000,
+         f'{args.shot} ไม่ถูกสร้างหรือเล็กผิดปกติ '
+         f'เบราว์เซอร์จบด้วย {shot.returncode} {shot.stderr.strip()[:300]}'),
     ]
     failed = 0
     for name, ok, why in checks:
