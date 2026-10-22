@@ -635,12 +635,18 @@ CHECKS = [
 
 
 def main():
+    """--no-skip ทำให้เคสที่ข้ามนับเป็นตก ใช้ใน CI ที่ต้องมีเครื่องมือครบทุกตัว"""
+    strict = '--no-skip' in sys.argv
     failed = skipped = 0
     for fn in CHECKS:
         try:
             fn()
             print(f'PASS  {fn.__name__}')
         except Skipped as e:
+            if strict:
+                failed += 1
+                print(f'FAIL  {fn.__name__}\n        {e}')
+                continue
             skipped += 1
             print(f'SKIP  {fn.__name__}\n        {e}')
         except AssertionError as e:
