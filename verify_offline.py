@@ -69,6 +69,14 @@ PROBE_PAGE = """<!doctype html>
   } catch (e) {}
   await document.fonts.ready;
   r.fonts = [...document.fonts].map(f => ({family: f.family, weight: f.weight, status: f.status}));
+  const popup = window.open('', '_blank');
+  if (!popup) {
+    r.popup_font = 'POPUP_BLOCKED';
+  } else {
+    popup.document.write('<link rel="stylesheet" href=%(font)s>');
+    r.popup_font = popup.document.querySelector('link').href;
+    popup.close();
+  }
   try {
     new Chart(document.getElementById('canvas'),
               {type: 'doughnut', data: {labels: ['ก'], datasets: [{data: [1]}]}});
@@ -125,14 +133,16 @@ def probe_html_for(urls):
     js = [u for u in urls if u.endswith('.js')]
     tags = [f'<link rel="stylesheet" href="{u}">' for u in css]
     tags += [f'<script src="{u}"></script>' for u in js]
+    font = next((u for u in css if 'sarabun' in u.lower()), css[0])
     return PROBE_PAGE % {'assets': '\n'.join(tags),
-                         'external': json.dumps(REACHABLE_WHILE_OFFLINE)}
+                         'external': json.dumps(REACHABLE_WHILE_OFFLINE),
+                         'font': json.dumps(font)}
 
 
 def run_offline(browser, url, extra):
     profile = tempfile.mkdtemp(prefix='offline_profile_')
     cmd = [browser, '--headless=new', '--disable-gpu', '--no-first-run',
-           '--no-default-browser-check', '--disable-extensions',
+           '--no-default-browser-check', '--disable-extensions', '--disable-popup-blocking',
            f'--user-data-dir={profile}',
            '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
            '--virtual-time-budget=10000'] + extra + [url]
@@ -195,6 +205,9 @@ def main():
          f"ไอคอนไม่มา ::before font-family = {got['icon_font']!r} ฟอนต์ที่โหลดได้ {icons}"),
         ('the thai webfont is loaded', {'400', '700'} <= sarabun,
          f'Sarabun ที่โหลดได้ {sorted(sarabun)} ฟอนต์ไทยตกไปใช้ fallback ของระบบ'),
+        ('the pdf window resolves the font to this machine',
+         got['popup_font'].startswith(base if args.assets == 'local' else 'https://'),
+         f"หน้าต่าง PDF ชี้ฟอนต์ไปที่ {got['popup_font']}"),
         ('the screenshot was written', os.path.getsize(args.shot) > 10000,
          f'{args.shot} เล็กผิดปกติ'),
     ]

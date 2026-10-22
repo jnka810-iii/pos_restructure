@@ -53,9 +53,12 @@ python -m venv .venv
 ```bat
 .venv\Scripts\pyinstaller.exe --noconfirm --onefile --windowed ^
   --add-data "templates;templates" ^
+  --add-data "static;static" ^
   --hidden-import webview ^
   --name "PosRestructure" app.py
 ```
+
+`--add-data "static;static"` คือไลบรารีหน้าเว็บ ถ้าไม่ใส่บรรทัดนี้ `.exe` จะไม่มี Bootstrap, Chart.js, Font Awesome และฟอนต์ Sarabun ติดไปด้วย และแท็บสรุปภาพรวมจะใช้งานไม่ได้
 
 ไฟล์ที่ได้อยู่ใน `dist\PosRestructure.exe` ตอนรัน แอปจะสร้างฐานข้อมูล ไฟล์ log และโฟลเดอร์ `uploads` ไว้ข้างไฟล์ `.exe`
 
@@ -65,7 +68,10 @@ python -m venv .venv
 pos_restructure/
 ├── app.py                 Flask app, API และตัวเปิดหน้าต่าง pywebview
 ├── templates/index.html   หน้าเว็บทั้งหมด (HTML, CSS, JavaScript ในไฟล์เดียว)
+├── static/vendor/         Bootstrap, Chart.js, Font Awesome, ฟอนต์ Sarabun ในเครื่อง
 ├── test_api.py            เทส regression ของ API และฟังก์ชันในหน้าเว็บ
+├── verify_offline.py      เปิดหน้าเว็บในเบราว์เซอร์ที่ตัดเน็ต แล้ววัดว่าไลบรารีมาครบ
+├── vendor_assets.py       ดาวน์โหลดไลบรารีหน้าเว็บมาไว้ใน static/vendor
 ├── migrate_schema.py      ลบคอลัมน์ที่โค้ดไม่ใช้แล้วออกจากฐานข้อมูล
 ├── cleanup_orphans.py     ลบไฟล์ใน uploads/ ที่ไม่มีรายการไหนอ้างถึง
 ├── run.bat / run_browser.bat / run_server.bat
