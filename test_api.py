@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import tempfile
+from datetime import datetime, timezone
 from urllib.parse import urljoin
 
 TMP = tempfile.mkdtemp(prefix='pos_test_')
@@ -456,6 +457,133 @@ def the_build_command_bundles_the_static_folder():
             f'คำสั่ง build ใน {name} ยังไม่ได้ใส่โฟลเดอร์ static'
 
 
+def download_from(exporter, records):
+    """เรียกฟังก์ชัน export ของจริงจากหน้าเว็บ แล้วคืนสิ่งที่ dl กับ toast ได้รับ
+
+    `dl` คือขอบเขตที่ผู้ใช้มองเห็น ไฟล์ที่เบราว์เซอร์บันทึกคือสิ่งที่ส่งเข้ามาตรงนี้
+    เทสจึงวัดที่ซองดาวน์โหลด `{content, name, type}` ไม่ใช่ที่ไส้ในของฟังก์ชัน
+    """
+    body = (
+        'globalThis.allRecords = ' + json.dumps(records, ensure_ascii=False) + ';\n'
+        'globalThis.notes = [];\n'
+        'globalThis.toast = (msg) => { notes.push(msg); };\n'
+        'globalThis.file = null;\n'
+        'globalThis.dl = (content, name, type) => { file = {content, name, type}; };\n'
+        + exporter + '();\n'
+        'console.log(JSON.stringify({file, notes}));'
+    )
+    return run_js(['doExportCSV', 'doExportJSON', 'csvCell', 'dStr'], body)
+
+
+BOM = '﻿'
+
+
+def csv_table(content):
+    """แยกไฟล์ CSV เป็นหัวตารางกับแถวข้อมูล ใช้ได้เพราะค่าที่เทสใส่ไม่มีลูกน้ำ"""
+    lines = content.lstrip(BOM).split('\n')
+    return lines[0].split(','), [line.split(',') for line in lines[1:]]
+
+
+def the_json_export_hands_back_every_record_unchanged():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    records = [
+        {'id': 1, 'p1_title': 'กองการเจ้าหน้าที่', 'p5_salary': 0,
+         'sec1_rows': '[{"s1_no": "001"}]'},
+        {'id': 2, 'p1_title': 'สำนักงานปลัดสำนักนายกรัฐมนตรี "ฯ"', 'p5_salary': None,
+         'sec1_rows': '[]'},
+    ]
+    got = download_from('doExportJSON', records)
+    assert json.loads(got['file']['content']) == records, got['file']['content']
+    assert got['file']['type'] == 'application/json', got['file']['type']
+
+
+def the_json_export_names_the_file_with_the_date():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    before = datetime.now(timezone.utc).strftime('%Y%m%d')
+    got = download_from('doExportJSON', [{'id': 1}])
+    after = datetime.now(timezone.utc).strftime('%Y%m%d')
+    assert got['file']['name'] in (f'pos_{before}.json', f'pos_{after}.json'), got['file']['name']
+
+
+def an_export_with_no_records_warns_instead_of_writing_an_empty_file():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    for exporter in ('doExportCSV', 'doExportJSON'):
+        got = download_from(exporter, [])
+        assert got['file'] is None, f'{exporter} ดาวน์โหลดไฟล์เปล่าออกไป'
+        notes = got['notes']
+        assert notes == ['ไม่มีข้อมูล'], f'{exporter} เตือนว่า {notes}'
+
+
+def the_csv_export_flattens_section_rows_into_columns():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    rows = json.dumps([{'s1_type': 'ข้าราชการ', 's1_no': '001'}], ensure_ascii=False)
+    got = download_from('doExportCSV', [{'id': 1, 'sec1_rows': rows}])
+    header, body = csv_table(got['file']['content'])
+    assert 'sec1_rows' not in header, 'คอลัมน์ JSON ดิบยังติดไปกับไฟล์'
+    assert 'sec1_rows_1_s1_type' in header, header
+    assert body[0][header.index('sec1_rows_1_s1_type')] == '"ข้าราชการ"', body[0]
+    assert body[0][header.index('sec1_rows_1_s1_no')] == '"001"', body[0]
+
+
+def the_csv_export_keeps_a_section_that_is_not_valid_json():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    got = download_from('doExportCSV', [{'id': 1, 'sec1_rows': 'ไม่ใช่ json'}])
+    header, body = csv_table(got['file']['content'])
+    assert 'sec1_rows' in header, 'ข้อมูลที่ parse ไม่ได้หายไปจากไฟล์ทั้งคอลัมน์'
+    assert body[0][header.index('sec1_rows')] == '"ไม่ใช่ json"', body[0]
+
+
+def the_csv_export_keeps_every_row_the_same_width():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    records = [
+        {'id': 1, 'sec1_rows': '[{"s1_no": "001"}, {"s1_no": "002"}]'},
+        {'id': 2, 'sec1_rows': '[]'},
+    ]
+    got = download_from('doExportCSV', records)
+    header, body = csv_table(got['file']['content'])
+    widths = {len(row) for row in body} | {len(header)}
+    assert len(widths) == 1, f'แต่ละแถวมีจำนวนช่องไม่เท่ากัน {widths}'
+
+
+def the_csv_export_starts_with_a_bom_so_excel_reads_thai():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    got = download_from('doExportCSV', [{'id': 1, 'p1_title': 'กองการเจ้าหน้าที่'}])
+    assert got['file']['content'].startswith(BOM), 'ไม่มี BOM นำหน้า Excel จะอ่านภาษาไทยเป็นขยะ'
+    assert 'charset=utf-8' in got['file']['type'], got['file']['type']
+
+
+def the_pdf_export_escapes_markup_from_the_record():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    payload = '<script>alert(1)</script>'
+    record = {
+        'p4_note': payload,
+        'p4_date': '2026-10-22',
+        'sec1_rows': json.dumps([{'s1_type': payload, 's1_no': '001'}], ensure_ascii=False),
+        'sec2_rows': '[]',
+        'sec3_rows': '[]',
+    }
+    body = (
+        'globalThis.getForm = () => (' + json.dumps(record, ensure_ascii=False) + ');\n'
+        'globalThis.written = "";\n'
+        'globalThis.window = {open: () => ({document: '
+        '{write: (s) => { written += s; }, close: () => {}}})};\n'
+        'exportPDFRecord();\n'
+        'console.log(JSON.stringify(written));'
+    )
+    html = run_js(['exportPDFRecord', 'esc', 'fmtDate'], body)
+    assert payload not in html, 'หน้า PDF เขียนแท็กจากข้อมูลผู้ใช้ลงไปตรงๆ'
+    assert html.count('&lt;script&gt;alert(1)&lt;/script&gt;') == 2, html.count('&lt;script&gt;')
+    assert '22/10/2026' in html, 'วันที่ในหน้า PDF ไม่ได้แปลงเป็นรูปแบบไทย'
+
+
 CHECKS = [
     upload_accepts_a_thai_filename,
     upload_keeps_the_extension_when_the_name_has_several_dots,
@@ -495,16 +623,30 @@ CHECKS = [
     the_page_never_loads_a_resource_from_the_internet,
     every_asset_the_page_asks_for_is_served_from_disk,
     the_build_command_bundles_the_static_folder,
+    the_json_export_hands_back_every_record_unchanged,
+    the_json_export_names_the_file_with_the_date,
+    an_export_with_no_records_warns_instead_of_writing_an_empty_file,
+    the_csv_export_flattens_section_rows_into_columns,
+    the_csv_export_keeps_a_section_that_is_not_valid_json,
+    the_csv_export_keeps_every_row_the_same_width,
+    the_csv_export_starts_with_a_bom_so_excel_reads_thai,
+    the_pdf_export_escapes_markup_from_the_record,
 ]
 
 
 def main():
+    """--no-skip ทำให้เคสที่ข้ามนับเป็นตก ใช้ใน CI ที่ต้องมีเครื่องมือครบทุกตัว"""
+    strict = '--no-skip' in sys.argv
     failed = skipped = 0
     for fn in CHECKS:
         try:
             fn()
             print(f'PASS  {fn.__name__}')
         except Skipped as e:
+            if strict:
+                failed += 1
+                print(f'FAIL  {fn.__name__}\n        {e}')
+                continue
             skipped += 1
             print(f'SKIP  {fn.__name__}\n        {e}')
         except AssertionError as e:

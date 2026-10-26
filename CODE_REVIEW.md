@@ -3,12 +3,12 @@
 | หัวข้อ | รายละเอียด |
 | --- | --- |
 | วันที่รีวิว | 20 ตุลาคม 2026 |
-| แก้ไขรอบล่าสุด | 22 ตุลาคม 2026 รอบที่ 5 ครอบ F10 |
+| แก้ไขรอบล่าสุด | 22 ตุลาคม 2026 รอบที่ 6 ครอบ F25 |
 | Commit ที่รีวิว | `6a9f887` |
 | ขอบเขต | `app.py`, `templates/index.html`, `run.bat`, `run_server.bat`, `run_browser.bat`, `requirements.txt`, `.gitignore`, schema ของ `pos_restructure.db` |
 | เวอร์ชันที่ติดตั้ง | Flask 3.1.3, Werkzeug 3.1.9, Jinja2 3.1.6, pywebview 6.2.1, pyinstaller 6.22.3 |
 | วิธีตรวจสอบ | Flask test client, sqlite3 ตรงๆ, Node 22 สำหรับ parse JavaScript, Chrome บนหน้าแอปจริง และ Edge headless ที่ตัดเน็ตทั้งเครื่องสำหรับ F10 |
-| จำนวนที่พบ | 25 ข้อ แก้แล้ว 24 ข้อ ค้างอยู่ 1 ข้อ คือ F25 |
+| จำนวนที่พบ | 25 ข้อ แก้ครบทั้ง 25 ข้อ |
 
 ## วิธีอ่านเอกสารนี้
 
@@ -48,7 +48,7 @@
 | F22 | `app.config['JSON_AS_ASCII']` เป็นบรรทัดตาย | เล็กน้อย | แก้แล้ว |
 | F23 | `doExportCSV` ทำให้เลข 0 หายไป | เล็กน้อย | แก้แล้ว |
 | F24 | route `/uploads/<path>` ซ้ำซ้อนกับ `/static/uploads/` | เล็กน้อย | แก้แล้ว |
-| F25 | ไม่มีเทสครอบส่วนอื่นนอกจากข้อที่แก้ไปแล้ว | ควรแก้ | ค้าง |
+| F25 | ไม่มีเทสครอบส่วนอื่นนอกจากข้อที่แก้ไปแล้ว | ควรแก้ | แก้แล้ว |
 
 ## ส่วนที่ 1 ข้อที่แก้ไปแล้ว
 
@@ -324,6 +324,10 @@ def on_unexpected_error(e):
 sqlite3.ProgrammingError: Error binding parameter 1: type 'dict' is not supported
 ```
 
+### F14 `except: pass` เปล่าในลูป migration
+
+ปิดไปแล้วพร้อม F09 การเขียน `init_db` ใหม่เปลี่ยนจากการลองเพิ่มคอลัมน์แล้วกลืน error ทุกชนิด มาเป็นการอ่าน `PRAGMA table_info` แล้วเพิ่มเฉพาะคอลัมน์ที่ยังไม่มี ไม่เหลือ `except:` เปล่าในไฟล์อีก รายละเอียดอยู่ในหัวข้อ F09
+
 ### F15 `con.close()` ไม่อยู่ใน `finally`
 
 **ตำแหน่ง.** `app.py` context manager `db`
@@ -514,19 +518,34 @@ templates/index.html
 
 **หลักฐาน.** วัดผลแล้วกับฐานข้อมูลจริง `GET /uploads/02079690b0d74f67b47a07de15484c32.pdf` ตอบ 200 ชนิด `application/pdf` ขนาด 153,952 ไบต์ ส่วน `GET /static/uploads/02079690b0d74f67b47a07de15484c32.pdf` ตอบ 404 และ `cleanup_orphans.py` รายงานว่าไฟล์บนดิสก์ 1 ไฟล์ตรงกับที่ระเบียนอ้างถึง 1 ไฟล์ ไม่มีไฟล์กำพร้า ชุดตรวจ `uploads_are_served_by_exactly_one_route` ยืนยันว่า url map มีเพียง `/api/upload` กับ `/uploads/<path:filename>` และไม่มีโฟลเดอร์ `uploads` ใต้ static folder ของ Flask
 
+### F25 ไม่มีเทสครอบส่วนอื่นนอกจากข้อที่แก้ไปแล้ว
+
+**ตำแหน่ง.** `test_api.py` และตอนนั้นยังไม่มีโฟลเดอร์ `.github/`
+
+**อาการ.** ตอนเขียนเอกสารครั้งแรก `test_api.py` มี 16 เคส ครอบเฉพาะ F01 ถึง F09 รอบที่สามกับสี่ขยับไปบ้าง Export CSV ได้เทสที่ระดับ `csvCell` และการนับใน Dashboard ได้เทสครบ แต่ Export JSON ยังไม่มีเทสเลย ส่วน CSV มีเทสเฉพาะการกันสูตร ไม่มีเทสที่ดูไฟล์ที่ออกมาจริง และทั้งชุดต้องสั่งรันเองทุกครั้ง ไม่มีใครรันให้
+
+**การแก้.** เพิ่มแปดเคส แล้ววางเส้นวัดไว้ที่ `dl` ซึ่งเป็นฟังก์ชันเดียวที่ส่งไฟล์ให้เบราว์เซอร์บันทึก เทสจึงอ่านซองดาวน์โหลด `{content, name, type}` ที่ `dl` ได้รับ ไม่ใช่ไส้ในของฟังก์ชัน export ถ้าวันหนึ่งเปลี่ยนวิธีประกอบไฟล์แต่ผลลัพธ์เหมือนเดิม เทสจะยังผ่าน
+
+| เคส | สิ่งที่มันจับ |
+| --- | --- |
+| `the_json_export_hands_back_every_record_unchanged` | ระเบียนครบทุกตัวทุกฟิลด์ รวมเลข 0 และค่า null |
+| `the_json_export_names_the_file_with_the_date` | ชื่อไฟล์ `pos_YYYYMMDD.json` |
+| `an_export_with_no_records_warns_instead_of_writing_an_empty_file` | ไม่มีข้อมูลแล้วต้องเตือน ไม่ใช่ดาวน์โหลดไฟล์เปล่า ครอบทั้ง CSV และ JSON |
+| `the_csv_export_flattens_section_rows_into_columns` | แถวในส่วนที่ 1 ถึง 3 กางเป็นคอลัมน์ และคอลัมน์ JSON ดิบหายไป |
+| `the_csv_export_keeps_a_section_that_is_not_valid_json` | ข้อมูลที่ parse ไม่ได้ยังติดไปในไฟล์ ไม่หายเงียบ |
+| `the_csv_export_keeps_every_row_the_same_width` | ทุกแถวมีจำนวนช่องเท่าหัวตาราง แม้ระเบียนจะมีแถวย่อยไม่เท่ากัน |
+| `the_csv_export_starts_with_a_bom_so_excel_reads_thai` | BOM นำหน้าไฟล์ |
+| `the_pdf_export_escapes_markup_from_the_record` | หน้า PDF หนีแท็กจากข้อมูลผู้ใช้ และแปลงวันที่เป็น d/m/Y |
+
+CI อยู่ที่ `.github/workflows/tests.yml` รันบน `windows-latest` ทุก pull request เพราะแอปส่งมอบเป็น `.exe` บน Windows และหน้าต่าง pywebview ใช้ WebView2 ของ Edge การรันบน ubuntu จะเร็วกว่าแต่เป็นคนละเครื่องกับที่ใช้จริง งานนี้รันสองอย่างคือ `test_api.py --no-skip` กับ `verify_offline.py`
+
+`--no-skip` เป็นธงใหม่ที่เปลี่ยนเคสที่ข้ามให้นับเป็นตก ถ้าไม่มีธงนี้ เครื่องที่ไม่มี Node จะรายงานเขียวทั้งที่เคส JavaScript 12 เคสไม่ได้รันเลย
+
+**หลักฐาน.** วัดผลแล้ว ชุดตรวจขึ้นจาก 38 เป็น 46 เคส ผ่านหมด และรันบน GitHub Actions จริงที่ 46/46 กับ 8/8 รายละเอียดอยู่ในภาคผนวก ฎ
+
 ## ส่วนที่ 2 ข้อที่ยังไม่ได้แก้
 
-### ระดับควรแก้
-
-#### F14 `except: pass` เปล่าในลูป migration
-
-ปิดไปแล้วพร้อม F09 การเขียน `init_db` ใหม่เปลี่ยนจากการลองเพิ่มคอลัมน์แล้วกลืน error ทุกชนิด มาเป็นการอ่าน `PRAGMA table_info` แล้วเพิ่มเฉพาะคอลัมน์ที่ยังไม่มี ไม่เหลือ `except:` เปล่าในไฟล์อีก รายละเอียดอยู่ในหัวข้อ F09
-
-#### F25 ไม่มีเทสครอบส่วนอื่นนอกจากข้อที่แก้ไปแล้ว
-
-`test_api.py` มี 16 เคส ครอบ F01 ถึง F09 ส่วนที่เหลือของระบบยังไม่มีเทส โดยเฉพาะ Export CSV และ JSON กับการคำนวณใน Dashboard และยังไม่มี CI
-
-**แนวทางแก้.** ขยาย `test_api.py` ให้ครอบ Export และ Dashboard ก่อน แล้วค่อยพิจารณา CI
+ไม่เหลือแล้ว ทั้ง 25 ข้อปิดครบ รอบที่ 5 ปิด F10 และรอบที่ 6 ปิด F25 หัวข้อของทุกข้ออยู่ในส่วนที่ 1
 
 ## ส่วนที่ 3 เรื่องที่ตรวจแล้วไม่พบปัญหา
 
@@ -1005,7 +1024,7 @@ DELETE /api/positions/3  200
 
 ### ที่ยังค้าง
 
-เหลือข้อเดียวคือ F25 การขยายชุดตรวจให้ครอบส่วนที่ยังไม่มีเทส ซึ่งรอบที่สามกับสี่ขยับไปแล้วบางส่วน คือ Export CSV และการนับใน Dashboard มีเทสครอบแล้ว ที่ยังไม่มีคือ Export JSON กับ CI ส่วน F10 ปิดไปในรอบที่ห้า รายละเอียดอยู่ในภาคผนวก ญ
+ไม่เหลือข้อไหนแล้ว F10 ปิดในรอบที่ห้า รายละเอียดอยู่ในภาคผนวก ญ และ F25 ปิดในรอบที่หก รายละเอียดอยู่ในภาคผนวก ฎ
 
 นอกจากนี้การล้าง `ANNOUNCEMENT.pdf` ออกจาก git history ตาม F20 ยังไม่ได้ทำ เพราะต้องใช้ `git filter-repo` ซึ่งเขียน commit hash ใหม่ทั้งสาย
 
@@ -1138,3 +1157,46 @@ FAIL  the_build_command_bundles_the_static_folder
 ```
 
 webfont ของ Font Awesome สามไฟล์รวม 138,864 ไบต์ไม่ได้ถูกใช้บนหน้านี้ คือ brands, regular และ v4compatibility วัดผลแล้วจาก CSS ที่ดาวน์โหลดมา ไม่มีกฎไหนเรียกตระกูล `FontAwesome` เลย และไอคอนทุกตัวบนหน้านี้อยู่ในชุด solid น้ำหนัก 900 ชุดเดียว ไฟล์ทั้งสามยังเก็บไว้เพราะ CSS ต้นทางประกาศ `@font-face` ไว้ครบ การตัดไฟล์ออกต้องแก้ CSS ตามไปด้วย ซึ่งแลกกับเนื้อที่ 138 กิโลไบต์แล้วไม่คุ้ม ถ้าวันหนึ่งหน้าเว็บใช้ไอคอน `fab` ขึ้นมา มันจะทำงานได้ทันทีโดยไม่ต้องแก้สคริปต์
+
+## ภาคผนวก ฎ ผลการตรวจรอบที่หก F25
+
+### ไฟล์ที่แตะในรอบนี้
+
+- `test_api.py` เพิ่มแปดเคสกับตัวช่วย `download_from` และ `csv_table` และเพิ่มธง `--no-skip` ให้ตัวรัน
+- `.github/workflows/tests.yml` ไฟล์ใหม่ งาน CI บน `windows-latest`
+- `verify_offline.py` แก้ `--shot` ให้เป็นเส้นทางเต็ม CI เป็นคนหาเจอ
+- `.gitignore` กัน `offline_page.png` ที่ `verify_offline.py` ทิ้งไว้
+
+### ชุดตรวจจับของพังได้จริงหรือไม่
+
+เคสที่ผ่านตั้งแต่ครั้งแรกยังไม่พิสูจน์อะไร รอบนี้จึงแก้ `templates/index.html` ให้พังทีละจุด แล้วดูว่าเคสที่ควรแดงแดงจริงไหม ทุกจุดคืนค่าเดิมหลังรันเสร็จ
+
+| สิ่งที่ทำให้พัง | เคสที่แดง |
+| --- | --- |
+| ตัด BOM ออกจาก `dl` | `the_csv_export_starts_with_a_bom_so_excel_reads_thai` |
+| เลิกกางแถวย่อยเป็นคอลัมน์ | `the_csv_export_flattens_section_rows_into_columns` และ `the_csv_export_keeps_every_row_the_same_width` |
+| ลบคอลัมน์ที่ parse ไม่ได้ทิ้งใน `catch` | `the_csv_export_keeps_a_section_that_is_not_valid_json` |
+| ส่งออกแค่ระเบียนแรก | `the_json_export_hands_back_every_record_unchanged` |
+| ตัดการเตือนตอนไม่มีข้อมูลออกจาก `doExportJSON` | `an_export_with_no_records_warns_instead_of_writing_an_empty_file` |
+| พิมพ์ `p4_note` โดยไม่ผ่าน `esc` | `the_pdf_export_escapes_markup_from_the_record` |
+| ตั้งชื่อไฟล์ JSON โดยไม่มีวันที่ | `the_json_export_names_the_file_with_the_date` |
+| ประกอบแถว CSV จาก `Object.values` แทนหัวตาราง | `the_csv_export_keeps_every_row_the_same_width` |
+
+แปดจุด แปดเคสแดงตามที่ควร ไม่มีจุดไหนที่แก้แล้วทุกเคสยังเขียว
+
+### ธง --no-skip
+
+วัดผลแล้ว รันปกติที่มี Node ได้ 46/46 ส่วนรันด้วย PATH ที่ไม่มี Node ได้ 34/46 และคืน exit code 1 แทนที่จะรายงานเขียวพร้อมคำว่า skipped 12 เคส
+
+### ผลการรันบน GitHub Actions
+
+รันแรกตก สคริปต์ `verify_offline.py` ตายด้วย `FileNotFoundError: offline_page.png` ทั้งที่ข้อตรวจออฟไลน์ทุกข้อผ่าน สาเหตุคือเบราว์เซอร์เป็นคนละโปรเซส เส้นทางแบบสัมพัทธ์ที่ส่งไป `--screenshot` จึงไม่ได้คลี่จากโฟลเดอร์เดียวกับสคริปต์ อาการนี้ทำซ้ำได้บนเครื่องตัวเองด้วยการสั่ง `verify_offline.py --shot offline_page.png` แก้โดยแปลงเป็นเส้นทางเต็มก่อนส่งให้เบราว์เซอร์ และให้ข้อตรวจพิมพ์ exit code กับ stderr ของเบราว์เซอร์เมื่อหาไฟล์ไม่เจอ แทนที่จะโยน exception ทิ้งไป
+
+รันที่สองผ่าน https://github.com/jnka810-iii/pos_restructure/actions/runs/39708571180
+
+```
+ชุดตรวจถดถอย          46/46 passed
+ตรวจว่าใช้งานออฟไลน์ได้   8/8 passed, screenshot D:\a\pos_restructure\pos_restructure\offline_page.png
+```
+
+ผลรอบนี้ยืนยัน F10 ซ้ำอีกทางหนึ่งด้วย เครื่องของ GitHub ไม่เคยรัน `vendor_assets.py` มันเอาไฟล์จาก git ไปตรงๆ แล้วหน้าเว็บก็ยังครบตอนตัดเน็ต

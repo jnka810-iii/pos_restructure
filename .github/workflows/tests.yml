@@ -1,0 +1,38 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # แอปนี้ส่งมอบเป็น .exe บน Windows และหน้าต่าง pywebview ใช้ WebView2 ของ Edge
+    # ชุดตรวจจึงรันบน Windows เท่านั้น ไม่ใช่ ubuntu ที่เร็วกว่าแต่คนละเครื่องกับที่ใช้จริง
+    runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: pip install -r requirements.txt
+
+      - name: ชุดตรวจถดถอย
+        run: python test_api.py --no-skip
+
+      - name: ตรวจว่าใช้งานออฟไลน์ได้
+        run: python verify_offline.py --shot offline_page.png
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-page
+          path: offline_page.png
