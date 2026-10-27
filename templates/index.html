@@ -10,193 +10,276 @@
 <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
 <script src="/static/vendor/chartjs/chart.umd.min.js"></script>
 <style>
+/* ค่าทุกตัวมาจาก DESIGN.md ชื่อตัวแปรตรงกับชื่อ token ในไฟล์นั้น */
 :root{--font:"Noto Sans Thai","Noto Sans","IBM Plex Sans Thai",Tahoma,sans-serif;
-      --pr:#1976D2;--pr2:#1565C0;--ac:#c8a951;--sec:#F5F5F5;--bg:#F5F5F5;
-      --shadow-soft:0 2px 8px rgba(25,118,210,.08),0 1px 3px rgba(0,0,0,.04);
-      --shadow-soft-hover:0 6px 20px rgba(25,118,210,.15),0 2px 6px rgba(0,0,0,.06)}
+      --primary:#0057d2;--primary-hover:#0040b0;--primary-pressed:#022879;--on-primary:#fff;
+      --header:#0040b0;--on-header:#fff;--on-header-muted:#c9dcff;
+      --page:#f5f6f7;--canvas:#fff;--band:#eaecee;--band-blue:#ebf8ff;
+      --field:#f5f6f7;--field-hover:#eaecee;--field-disabled:#eaecee;
+      --ink:#0b1d33;--ink-heading-on-band:#022879;--ink-body:#223548;--ink-label:#354a5f;
+      --ink-meta:#475e75;--ink-nav:#545454;--ink-disabled:#8c8c8c;
+      --hairline:#d5dadd;--border-strong:#8d8d8d;--focus:#0057d2;
+      --success:#198038;--success-bg:#defbe6;--warning:#8e6a00;--warning-fill:#f1c21b;--warning-bg:#fcf4d6;
+      --error:#da1e28;--error-bg:#fff1f1;--info:#0057d2;--info-bg:#ebf8ff;
+      --shadow-float:0 8px 24px rgba(11,29,51,.16);
+      --bs-body-font-family:var(--font);--bs-body-font-size:16px;--bs-body-line-height:1.7;
+      --bs-body-color:var(--ink-body);--bs-body-bg:var(--page);--bs-border-color:var(--hairline)}
 *{box-sizing:border-box}
-body{background:var(--bg);min-height:100vh;font-family:var(--font);font-size:15px;margin:0}
-
-@keyframes fadeInUp{
-  from{opacity:0;transform:translateY(-8px)}
-  to{opacity:1;transform:translateY(0)}
-}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:var(--page);color:var(--ink-body);
+     font-family:var(--font);font-size:16px;line-height:1.7;letter-spacing:0;overflow-wrap:anywhere}
+h1,h2,h3{letter-spacing:0}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 
 /* Header */
-.hdr{background:linear-gradient(135deg,#1976D2 0%,#1565C0 60%,#0D47A1 100%);color:#fff;
-     padding:16px 24px 12px;border-bottom:4px solid var(--ac);box-shadow:0 4px 18px rgba(25,118,210,.35)}
-.hdr h4{font-size:1.05rem;margin:0;font-weight:700}
-.hdr small{font-size:.77rem;opacity:.82}
-.mbadge{background:rgba(255,255,255,.18);border-radius:10px;padding:5px 14px;font-size:.75rem;
-        border:1px solid rgba(255,255,255,.3);white-space:nowrap}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
-.dg{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25);animation:pulse 2s infinite}
-.dy{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.25)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.gov-header{background:var(--header);color:var(--on-header);min-height:64px;padding:8px 24px;
+            display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.gov-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.gov-emblem{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-size:28px}
+.gov-title{font-size:18px;font-weight:600;line-height:1.4;margin:0}
+.gov-subtitle{font-size:14px;line-height:1.5;color:var(--on-header-muted)}
+.status-chip{background:var(--canvas);color:var(--ink-body);font-size:14px;line-height:1.5;border-radius:9999px;
+             padding:4px 12px;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot-wait{background:var(--ink-meta)}
+.dot-ok{background:var(--success)}
+.dot-err{background:var(--error)}
 
 /* Tabs */
-.tnav{background:#fff;border-bottom:2px solid #e0e0e0;padding:0 20px;position:sticky;top:0;
-      z-index:100;box-shadow:0 2px 8px rgba(25,118,210,.1);display:flex;gap:2px;overflow-x:auto}
-.tbtn{border:none;background:none;padding:12px 20px;font-family:var(--font);
-      font-size:.9rem;font-weight:600;color:#777;cursor:pointer;border-bottom:3px solid transparent;
-      transition:.2s;white-space:nowrap}
-.tbtn.active{color:var(--pr);border-bottom-color:var(--ac)}
-.tbtn:hover{color:var(--pr);background:rgba(25,118,210,.04)}
+.tab-bar{background:var(--canvas);border-bottom:1px solid var(--hairline);padding:0 24px;position:sticky;top:0;
+         z-index:100;display:flex;overflow-x:auto}
+.tbtn{border:0;border-bottom:3px solid transparent;margin-bottom:-1px;background:none;min-height:48px;padding:12px 16px;
+      font:inherit;font-size:16px;line-height:1.5;color:var(--ink-nav);white-space:nowrap;cursor:pointer;
+      display:inline-flex;align-items:center;gap:8px}
+.tbtn:hover{background:var(--page)}
+.tbtn.active{color:var(--primary);font-weight:600;border-bottom-color:var(--primary)}
+.tbtn:focus-visible{outline-offset:-2px}
+.count-badge{background:var(--primary);color:var(--on-primary);font-size:13px;font-weight:600;line-height:20px;
+             min-width:20px;height:20px;padding:0 8px;border-radius:9999px;text-align:center}
+
+/* Page */
+.page{width:100%;max-width:1440px;margin:0 auto;padding:24px;flex:1}
+.form-note{font-size:14px;line-height:1.5;color:var(--ink-meta);margin:0 0 16px}
+.req-star{color:var(--error)}
 
 /* Section */
-.sh{background:linear-gradient(90deg,#1976D2,#1565C0);color:#fff;padding:9px 18px;
-    border-radius:10px 10px 0 0;font-size:.92rem;font-weight:700;letter-spacing:.3px;
-    box-shadow:0 2px 8px rgba(25,118,210,.18)}
-.sb{background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 10px 10px;
-    padding:18px 20px 14px;margin-bottom:18px;box-shadow:var(--shadow-soft)}
+.sh{margin:0;background:var(--band-blue);color:var(--ink-heading-on-band);font-size:18px;font-weight:600;line-height:1.5;
+    min-height:52px;padding:12px 24px;display:flex;align-items:center;gap:8px;
+    border:1px solid var(--hairline);border-left:4px solid var(--primary);border-bottom:0;border-radius:8px 8px 0 0}
+.sb{background:var(--canvas);border:1px solid var(--hairline);border-top:0;border-radius:0 0 8px 8px;
+    padding:24px;margin-bottom:24px}
 
 /* Dynamic rows */
-.pos-row{background:linear-gradient(135deg,#fafbfd,var(--sec));border:1px solid #e3eaf3;
-         border-radius:12px;padding:14px 16px;margin-bottom:12px;transition:box-shadow .25s,transform .25s;
-         position:relative;box-shadow:var(--shadow-soft);
-         animation:fadeInUp .35s ease-out both}
-.pos-row:hover{box-shadow:var(--shadow-soft-hover);transform:translateY(-1px)}
-.pos-row-num{display:inline-flex;align-items:center;justify-content:center;background:var(--pr);
-             color:#fff;border-radius:50%;width:24px;height:24px;font-size:.8rem;font-weight:700;margin-right:8px}
+.pos-row{border:1px solid var(--hairline);border-radius:8px;padding:16px;margin-bottom:16px}
+.pos-row-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pos-row-num{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 8px;
+             border-radius:9999px;background:var(--band);color:var(--ink);font-size:13px;font-weight:600;line-height:1.4}
+.row-label{font-size:16px;font-weight:600;line-height:1.5;color:var(--ink)}
 
 /* Form */
-.form-label{font-weight:600;color:var(--pr);margin-bottom:3px;font-size:.84rem}
-.form-control,.form-select{font-size:.88rem;font-family:var(--font);border-color:#d0d8e3;border-radius:7px;transition:.2s}
-.form-control:focus,.form-select:focus{border-color:var(--pr);box-shadow:0 0 0 .22rem rgba(25,118,210,.18)}
-.required::after{content:" *";color:#e53e3e}
-textarea.form-control{resize:vertical}
+.form-label{display:block;font-size:14px;font-weight:500;line-height:1.5;color:var(--ink-label);margin-bottom:4px}
+.required::after{content:"*";color:var(--error);margin-left:2px}
+.form-control,.form-select{min-height:48px;padding:11px 16px;font-family:var(--font);font-size:16px;line-height:1.5;
+     color:var(--ink);background-color:var(--field);border:0;border-bottom:1px solid var(--border-strong);
+     border-radius:4px 4px 0 0;box-shadow:none}
+.form-select{padding-right:40px;background-position:right 16px center}
+.form-control:hover,.form-select:hover{background-color:var(--field-hover)}
+.form-control:focus,.form-select:focus{color:var(--ink);background-color:var(--field);border-bottom-color:var(--border-strong);
+     outline:2px solid var(--focus);outline-offset:-2px;box-shadow:none}
+.form-control::placeholder{color:var(--ink-meta);opacity:1}
+.form-control:disabled,.form-select:disabled{background-color:var(--field-disabled);color:var(--ink-disabled);
+     border-bottom-color:transparent}
+textarea.form-control{min-height:112px;resize:vertical}
+input[type=number]{font-variant-numeric:tabular-nums}
+.input-group-text{background:var(--field);color:var(--ink-meta);font-size:16px;border:0;
+                  border-bottom:1px solid var(--border-strong);border-radius:0}
+.input-group>.input-group-text:first-child{border-top-left-radius:4px}
+.input-group>.input-group-text:last-child{border-top-right-radius:4px}
+.input-group>.form-control{border-radius:0}
+.helper-text{font-size:14px;line-height:1.5;color:var(--ink-meta);margin-top:4px}
 
 /* Buttons */
-.btn{border-radius:8px;font-family:var(--font);transition:transform .15s,box-shadow .15s}
-.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
-.btn:active{transform:translateY(0)}
-.btn-save{background:linear-gradient(135deg,#1976D2,#1565C0);color:#fff;border:none;font-weight:700;padding:9px 30px}
-.btn-save:hover{background:linear-gradient(135deg,#1565C0,#0D47A1);color:#fff}
-.btn-add-row{background:linear-gradient(135deg,#198754,#20c997);color:#fff;border:none;font-size:.88rem}
-.btn-add-row:hover{background:linear-gradient(135deg,#145c38,#198754);color:#fff}
+.btn{--bs-btn-font-family:var(--font);--bs-btn-font-size:16px;--bs-btn-font-weight:500;--bs-btn-line-height:1.5;
+     --bs-btn-padding-x:20px;--bs-btn-padding-y:11px;--bs-btn-border-radius:8px;--bs-btn-focus-box-shadow:none;
+     --bs-btn-disabled-opacity:1;--bs-btn-disabled-bg:var(--field-disabled);--bs-btn-disabled-border-color:var(--field-disabled);
+     --bs-btn-disabled-color:var(--ink-disabled);
+     min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;box-shadow:none}
+.btn-primary{--bs-btn-bg:var(--primary);--bs-btn-border-color:var(--primary);--bs-btn-color:var(--on-primary);
+     --bs-btn-hover-bg:var(--primary-hover);--bs-btn-hover-border-color:var(--primary-hover);--bs-btn-hover-color:var(--on-primary);
+     --bs-btn-active-bg:var(--primary-pressed);--bs-btn-active-border-color:var(--primary-pressed);--bs-btn-active-color:var(--on-primary)}
+.btn-secondary{--bs-btn-bg:var(--canvas);--bs-btn-border-color:var(--primary);--bs-btn-color:var(--primary-hover);
+     --bs-btn-hover-bg:var(--band-blue);--bs-btn-hover-border-color:var(--primary-hover);--bs-btn-hover-color:var(--primary-hover);
+     --bs-btn-active-bg:var(--band-blue);--bs-btn-active-border-color:var(--primary-pressed);--bs-btn-active-color:var(--primary-pressed)}
+.btn-ghost{--bs-btn-padding-x:16px;--bs-btn-bg:transparent;--bs-btn-border-color:transparent;--bs-btn-color:var(--primary);
+     --bs-btn-hover-bg:var(--page);--bs-btn-hover-border-color:transparent;--bs-btn-hover-color:var(--primary-hover);
+     --bs-btn-active-bg:var(--band);--bs-btn-active-border-color:transparent;--bs-btn-active-color:var(--primary-pressed)}
+.btn-icon{--bs-btn-padding-x:0;--bs-btn-padding-y:0;width:44px;min-height:44px}
+/* hover และ pressed ของปุ่มแดงไม่มีใน DESIGN.md ใช้ค่า danger-hover / danger-active ของ Carbon */
+.btn-danger{--bs-btn-bg:var(--error);--bs-btn-border-color:var(--error);--bs-btn-color:var(--on-primary);
+     --bs-btn-hover-bg:#b81921;--bs-btn-hover-border-color:#b81921;--bs-btn-hover-color:var(--on-primary);
+     --bs-btn-active-bg:#750e13;--bs-btn-active-border-color:#750e13;--bs-btn-active-color:var(--on-primary)}
 
-/* Upload/Export zone */
-.upload-zone{background:linear-gradient(135deg,#f5faff,var(--sec));border:2px dashed #90b4e8;
-             border-radius:12px;padding:20px;text-align:center;transition:.3s;cursor:pointer}
-.upload-zone:hover{border-color:var(--pr);background:#e3eeff}
-.upload-zone.has-file{border-style:solid;border-color:#198754;background:linear-gradient(135deg,#f0fff4,#e8f7ee)}
-.export-zone{background:linear-gradient(135deg,#fff8e8,#fff3d0);border:2px solid #f0c040;border-radius:12px;padding:20px}
-.btn-export-pdf{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border:none;font-weight:700}
-.btn-export-pdf:hover{background:linear-gradient(135deg,#922b21,#c0392b);color:#fff}
-.btn-export-csv2{background:linear-gradient(135deg,#1e8449,#27ae60);color:#fff;border:none;font-weight:700}
-.btn-export-csv2:hover{background:linear-gradient(135deg,#196f3d,#1e8449);color:#fff}
-.btn-export-json2{background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;border:none;font-weight:700}
-.btn-export-json2:hover{background:linear-gradient(135deg,#a04000,#d35400);color:#fff}
-.file-info{font-size:.82rem;color:#198754;font-weight:600;margin-top:6px;display:none}
+/* Upload / Export */
+.upload-zone{background:var(--canvas);border:1px dashed var(--border-strong);border-radius:8px;min-height:128px;padding:24px;
+             display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:14px;line-height:1.6}
+.upload-zone:hover{background:var(--page)}
+.upload-zone.drag{background:var(--band-blue);border:2px solid var(--primary)}
+.upload-zone.has-file{border-style:solid;border-color:var(--hairline)}
+.zone-icon{display:block;font-size:24px;color:var(--primary);margin-bottom:8px}
+.zone-link{color:var(--primary);font-weight:500;text-decoration:underline}
+.zone-meta{color:var(--ink-meta)}
+.zone-file{color:var(--ink);font-weight:500}
+.file-info{display:none;align-items:center;gap:8px;min-height:48px;margin-top:8px;padding:4px 4px 4px 12px;
+           background:var(--field);border-radius:4px;font-size:14px;line-height:1.6;color:var(--ink-body)}
+.file-info .fa-file-alt{color:var(--primary)}
+.export-zone{border:1px solid var(--hairline);border-radius:8px;padding:16px}
+
+/* List toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:16px}
+.toolbar .fld{flex:0 1 320px;min-width:200px}
+.rec-count{margin-left:auto;font-size:14px;line-height:1.5;color:var(--ink-meta);padding-bottom:12px}
 
 /* Table */
-#tbl{font-size:.79rem;min-width:1050px}
-#tbl thead th{background:linear-gradient(90deg,#1976D2,#1565C0);color:#fff;white-space:nowrap;
-              font-weight:600;font-size:.77rem;padding:9px 10px}
-#tbl tbody td{vertical-align:middle;padding:7px 10px}
-#tbl tbody tr{animation:fadeInUp .3s ease-out both}
-#tbl tbody tr:hover{background:#e3f2fd}
-.bsm{font-size:.7rem;padding:3px 8px}
+.table-wrap{background:var(--canvas);border:1px solid var(--hairline);border-radius:8px;overflow-x:auto}
+#tbl{width:100%;min-width:1280px;border-collapse:collapse;font-size:15px;line-height:1.6;overflow-wrap:normal}
+#tbl th{background:var(--page);color:var(--ink);font-size:14px;font-weight:600;line-height:1.5;height:48px;padding:12px 16px;
+        text-align:left;white-space:nowrap;border-bottom:1px solid var(--hairline)}
+#tbl td{background:var(--canvas);color:var(--ink-body);height:48px;padding:12px 16px;vertical-align:middle;
+        border-bottom:1px solid var(--hairline);white-space:nowrap}
+#tbl td.wrap{white-space:normal;min-width:160px}
+#tbl tbody tr:last-child td{border-bottom:0}
+#tbl tbody tr:hover td{background:var(--band-blue)}
+#tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+#tbl .sm{font-size:14px}
+#tbl .tnum{font-variant-numeric:tabular-nums;white-space:nowrap}
+#tbl .cell-btn{white-space:nowrap;padding:2px 8px}
+#tbl .actions{text-align:right;white-space:nowrap;padding:2px 8px}
+
+/* Status tags */
+.tag{display:inline-block;font-size:13px;font-weight:600;line-height:1.4;padding:2px 10px;border-radius:9999px;white-space:nowrap}
+.tag-success{background:var(--success-bg);color:var(--success)}
+.tag-warning{background:var(--warning-bg);color:var(--warning)}
+.tag-error{background:var(--error-bg);color:var(--error)}
+.tag-info{background:var(--info-bg);color:var(--primary-hover)}
+.tag-neutral{background:var(--band);color:var(--ink-body)}
 
 /* Dashboard */
-.sc{background:#fff;border-radius:12px;border-left:5px solid var(--pr);
-    padding:18px 20px;box-shadow:var(--shadow-soft);transition:.25s;
-    animation:fadeInUp .35s ease-out both}
-.sc:hover{transform:translateY(-2px);box-shadow:var(--shadow-soft-hover)}
-.sc .val{font-size:2.2rem;font-weight:800;line-height:1.1}
-.sc .lbl{font-size:.8rem;color:#888;margin-top:4px}
-.cc{background:#fff;border-radius:12px;padding:20px;box-shadow:var(--shadow-soft)}
+.sc{background:var(--canvas);border:1px solid var(--hairline);border-radius:8px;padding:24px;height:100%}
+.sc .val{font-size:28px;font-weight:600;line-height:1.4;color:var(--ink);font-variant-numeric:tabular-nums}
+.sc .lbl{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:14px;line-height:1.5;color:var(--ink-meta)}
+.cc{background:var(--canvas);border:1px solid var(--hairline);border-radius:8px;padding:24px}
 
 /* Toast */
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:9999}
+.toast{--bs-toast-bg:var(--canvas);--bs-toast-color:var(--ink-body);--bs-toast-border-width:0;--bs-toast-border-radius:8px;
+       --bs-toast-box-shadow:var(--shadow-float);--bs-toast-font-size:14px;border-left:4px solid var(--success)}
+.toast-body{display:flex;align-items:flex-start;gap:8px;padding:12px 16px;line-height:1.6}
+.t-icon{font-size:20px;line-height:1.1;color:var(--success)}
+.toast.toast-error{border-left-color:var(--error)}
+.toast.toast-error .t-icon{color:var(--error)}
+.toast.toast-info{border-left-color:var(--info)}
+.toast.toast-info .t-icon{color:var(--info)}
+
+/* Footer */
+.ftr{background:var(--band);color:var(--ink-nav);font-size:14px;line-height:1.5;padding:24px;text-align:center}
+
+@media (max-width:671.98px){
+  .gov-header{padding:8px 16px}
+  .gov-subtitle{display:none}
+  .tab-bar{padding:0 8px}
+  .page{padding:16px}
+  .sh{padding:12px 16px}
+  .sb{padding:16px}
+  .form-actions .btn{width:100%}
+  .rec-count{margin-left:0}
+  /* ตารางเลื่อนแนวนอน ตรึงลำดับกับตำแหน่งใหม่ไว้ให้รู้ว่ากำลังดูแถวไหน */
+  #tbl th:nth-child(-n+2),#tbl td:nth-child(-n+2){position:sticky;z-index:1}
+  #tbl th:first-child,#tbl td:first-child{left:0;width:56px;min-width:56px}
+  #tbl th:nth-child(2),#tbl td:nth-child(2){left:56px;box-shadow:1px 0 0 var(--hairline)}
+}
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<div class="hdr d-flex align-items-center justify-content-between flex-wrap gap-2">
-  <div class="d-flex align-items-center gap-3">
-    <i class="fa fa-landmark fa-2x" style="color:var(--ac)"></i>
+<header class="gov-header">
+  <div class="gov-brand">
+    <span class="gov-emblem" aria-hidden="true"><i class="fa fa-landmark"></i></span>
     <div>
-      <h4><i class="fa fa-sitemap me-2"></i>ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</h4>
-      <small>Human Resource Management System &nbsp;|&nbsp; Position Restructuring Database</small>
+      <h1 class="gov-title">ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</h1>
+      <div class="gov-subtitle">Human resource management system · Position restructuring database</div>
     </div>
   </div>
-  <span class="mbadge" id="mode-badge"><span class="dot dy"></span>กำลังเชื่อมต่อ...</span>
-</div>
+  <span class="status-chip" id="mode-badge" role="status"><span class="dot dot-wait"></span>กำลังเชื่อมต่อ...</span>
+</header>
 
 <!-- TAB NAV -->
-<div class="tnav">
-  <button class="tbtn active" onclick="showTab('tab-form',this)"><i class="fa fa-edit me-1"></i>กรอกข้อมูล</button>
-  <button class="tbtn" onclick="showTab('tab-list',this)"><i class="fa fa-list me-1"></i>รายการทั้งหมด <span class="badge bg-danger ms-1" id="badge-count">0</span></button>
-  <button class="tbtn" onclick="showTab('tab-dashboard',this)"><i class="fa fa-chart-bar me-1"></i>สรุปภาพรวม</button>
-</div>
+<nav class="tab-bar" aria-label="เมนูหลัก">
+  <button type="button" class="tbtn active" onclick="showTab('tab-form',this)"><i class="fa fa-edit" aria-hidden="true"></i>กรอกข้อมูล</button>
+  <button type="button" class="tbtn" onclick="showTab('tab-list',this)"><i class="fa fa-list" aria-hidden="true"></i>รายการทั้งหมด <span class="count-badge" id="badge-count">0</span></button>
+  <button type="button" class="tbtn" onclick="showTab('tab-dashboard',this)"><i class="fa fa-chart-bar" aria-hidden="true"></i>สรุปภาพรวม</button>
+</nav>
 
-<div class="container-fluid px-3 px-md-4 py-3">
+<main class="page">
 
 <!-- ==================== TAB FORM ==================== -->
 <div id="tab-form">
 <form id="mainForm" novalidate>
   <input type="hidden" id="rec-id">
+  <p class="form-note">ช่องที่มีเครื่องหมาย <span class="req-star">*</span> ต้องกรอก</p>
 
   <!-- ส่วนที่ 1 -->
-  <div class="sh"><i class="fa fa-plus-circle me-2"></i>ส่วนที่ 1 : คำขอกำหนดตำแหน่ง (ใหม่)</div>
+  <h2 class="sh"><i class="fa fa-plus-circle" aria-hidden="true"></i>ส่วนที่ 1 : คำขอกำหนดตำแหน่ง (ใหม่)</h2>
   <div class="sb">
     <div id="sec1-container"></div>
-    <div class="text-center mt-2">
-      <button type="button" class="btn btn-add-row px-4" onclick="addRow('sec1')">
-        <i class="fa fa-plus me-1"></i> เพิ่มตำแหน่งใหม่
-      </button>
-    </div>
+    <button type="button" class="btn btn-secondary" onclick="addRow('sec1')">
+      <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งใหม่
+    </button>
   </div>
 
   <!-- ส่วนที่ 2 -->
-  <div class="sh"><i class="fa fa-exchange-alt me-2"></i>ส่วนที่ 2 : ตำแหน่งที่นำมาปรับปรุงการกำหนดตำแหน่ง</div>
+  <h2 class="sh"><i class="fa fa-exchange-alt" aria-hidden="true"></i>ส่วนที่ 2 : ตำแหน่งที่นำมาปรับปรุงการกำหนดตำแหน่ง</h2>
   <div class="sb">
     <div id="sec2-container"></div>
-    <div class="text-center mt-2">
-      <button type="button" class="btn btn-add-row px-4" onclick="addRow('sec2')">
-        <i class="fa fa-plus me-1"></i> เพิ่มตำแหน่งที่นำมาปรับปรุง
-      </button>
-    </div>
+    <button type="button" class="btn btn-secondary" onclick="addRow('sec2')">
+      <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งที่นำมาปรับปรุง
+    </button>
   </div>
 
   <!-- ส่วนที่ 3 -->
-  <div class="sh"><i class="fa fa-ban me-2"></i>ส่วนที่ 3 : การยุบเลิกตำแหน่งเพื่อควบคุมค่าใช้จ่าย</div>
+  <h2 class="sh"><i class="fa fa-ban" aria-hidden="true"></i>ส่วนที่ 3 : การยุบเลิกตำแหน่งเพื่อควบคุมค่าใช้จ่าย</h2>
   <div class="sb">
     <div id="sec3-container"></div>
-    <div class="text-center mt-2">
-      <button type="button" class="btn btn-add-row px-4" onclick="addRow('sec3')">
-        <i class="fa fa-plus me-1"></i> เพิ่มตำแหน่งที่ยุบเลิก
-      </button>
-    </div>
+    <button type="button" class="btn btn-secondary" onclick="addRow('sec3')">
+      <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งที่ยุบเลิก
+    </button>
   </div>
 
   <!-- ส่วนที่ 4 -->
-  <div class="sh"><i class="fa fa-gavel me-2"></i>ส่วนที่ 4 : การพิจารณาของ อกพ. สำนักนายกรัฐมนตรี ในคราวประชุม</div>
+  <h2 class="sh"><i class="fa fa-gavel" aria-hidden="true"></i>ส่วนที่ 4 : การพิจารณาของ อกพ. สำนักนายกรัฐมนตรี ในคราวประชุม</h2>
   <div class="sb">
-    <div class="row g-3">
-      <div class="col-6 col-md-2">
-        <label class="form-label">ประชุมครั้งที่</label>
+    <div class="row gx-3 gy-4">
+      <div class="col-12 col-md-6 col-lg-3">
+        <label class="form-label" for="p4_round">ประชุมครั้งที่</label>
         <input type="text" class="form-control" id="p4_round" placeholder="เช่น 3/2567">
       </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">เมื่อวันที่</label>
+      <div class="col-12 col-md-6 col-lg-3">
+        <label class="form-label" for="p4_date">เมื่อวันที่</label>
         <input type="date" class="form-control" id="p4_date">
       </div>
-      <div class="col-12 col-md-3">
-        <label class="form-label">มติที่ประชุม</label>
+      <div class="col-12 col-md-6 col-lg-3">
+        <label class="form-label" for="p4_resolution">มติที่ประชุม</label>
         <select class="form-select" id="p4_resolution">
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>เห็นควรอนุมัติ</option>
           <option>ไม่เห็นควรอนุมัติ</option>
           <option>รอพิจารณาเพิ่มเติม</option>
         </select>
       </div>
-      <div class="col-12 col-md-3">
-        <label class="form-label required">สถานะคำขอ</label>
+      <div class="col-12 col-md-6 col-lg-3">
+        <label class="form-label required" for="p4_status">สถานะคำขอ</label>
         <select class="form-select" id="p4_status" required>
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>อนุมัติ</option>
           <option>ไม่อนุมัติ</option>
           <option>อยู่ระหว่างพิจารณา</option>
@@ -204,130 +287,134 @@ textarea.form-control{resize:vertical}
           <option>ถอนคำขอ</option>
         </select>
       </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">วันที่มีผล</label>
+      <div class="col-12 col-md-6 col-lg-3">
+        <label class="form-label" for="p4_effective">วันที่มีผล</label>
         <input type="date" class="form-control" id="p4_effective">
       </div>
-      <div class="col-12 col-md-9">
-        <label class="form-label">หมายเหตุ</label>
-        <textarea class="form-control" id="p4_note" rows="2" placeholder="หมายเหตุเพิ่มเติม"></textarea>
+      <div class="col-12">
+        <label class="form-label" for="p4_note">หมายเหตุ</label>
+        <textarea class="form-control" id="p4_note" rows="3" placeholder="หมายเหตุเพิ่มเติม"></textarea>
       </div>
     </div>
   </div>
 
   <!-- ส่วนที่ 5 -->
-  <div class="sh"><i class="fa fa-coins me-2"></i>ส่วนที่ 5 : ค่าตอบแทนเฉลี่ยของตำแหน่งคงเหลือ</div>
+  <h2 class="sh"><i class="fa fa-coins" aria-hidden="true"></i>ส่วนที่ 5 : ค่าตอบแทนเฉลี่ยของตำแหน่งคงเหลือ</h2>
   <div class="sb">
-    <div class="row g-3 mb-4">
-      <div class="col-12 col-md-4">
-        <label class="form-label">ค่าตอบแทนเฉลี่ยคงเหลือ (บาท/เดือน)</label>
+    <div class="row gx-3 gy-4 mb-4">
+      <div class="col-12 col-md-6 col-lg-4">
+        <label class="form-label" for="p5_salary">ค่าตอบแทนเฉลี่ยคงเหลือ (บาท/เดือน)</label>
         <div class="input-group">
-          <span class="input-group-text"><i class="fa fa-baht-sign"></i></span>
+          <span class="input-group-text" aria-hidden="true"><i class="fa fa-baht-sign"></i></span>
           <input type="number" class="form-control" id="p5_salary" min="0" step="0.01" placeholder="0.00">
           <span class="input-group-text">บาท</span>
         </div>
       </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">การประชุมครั้งที่</label>
-        <input type="text" class="form-control" id="p5_round" placeholder="เช่น 3/2567">
+      <div class="col-12 col-md-6 col-lg-3">
+        <label class="form-label" for="p5_round">การประชุมครั้งที่</label>
+        <input type="text" class="form-control" id="p5_round" placeholder="เช่น 3/2567" aria-describedby="p5_round_help">
+        <div class="helper-text" id="p5_round_help">ครั้งที่ประชุมที่รับรองค่าตอบแทนเฉลี่ย</div>
       </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">เมื่อวันที่</label>
+      <div class="col-12 col-md-6 col-lg-3">
+        <label class="form-label" for="p5_date">เมื่อวันที่</label>
         <input type="date" class="form-control" id="p5_date">
       </div>
     </div>
 
     <!-- Upload & Export Panel -->
-    <div class="row g-3">
+    <div class="row g-4">
       <!-- Upload Zone -->
       <div class="col-12 col-md-6">
-        <p class="form-label mb-2"><i class="fa fa-paperclip me-1 text-primary"></i>แนบเอกสาร / ไฟล์ประกอบ</p>
+        <p class="form-label mb-2">แนบเอกสาร / ไฟล์ประกอบ</p>
         <div class="upload-zone" id="upload-zone"
              onclick="document.getElementById('file_attach').click()"
-             ondragover="event.preventDefault();this.style.borderColor='#2a5298'"
-             ondragleave="this.style.borderColor='#90b4e8'"
+             ondragover="event.preventDefault();this.classList.add('drag')"
+             ondragleave="this.classList.remove('drag')"
              ondrop="handleDrop(event)">
-          <i class="fa fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
-          <div class="fw-600 text-primary">คลิกเพื่อเลือกไฟล์ หรือลากวางที่นี่</div>
-          <div class="text-muted" style="font-size:.8rem">รองรับ PDF, Word, Excel (ขนาดไม่เกิน 10 MB)</div>
+          <div class="zone-body"></div>
           <input type="file" id="file_attach" style="display:none"
                  accept=".pdf,.doc,.docx,.xls,.xlsx"
                  onchange="handleFileSelect(this)">
         </div>
         <div id="file-info" class="file-info">
-          <i class="fa fa-check-circle text-success me-1"></i>
-          <span id="file-name-display"></span>
-          <button type="button" class="btn btn-sm btn-outline-danger ms-2 py-0" onclick="clearFile()">
-            <i class="fa fa-times"></i>
+          <i class="fa fa-file-alt" aria-hidden="true"></i>
+          <span id="file-name-display" class="me-auto"></span>
+          <button type="button" class="btn btn-ghost btn-icon" onclick="clearFile()" aria-label="ลบไฟล์">
+            <i class="fa fa-times" aria-hidden="true"></i>
           </button>
         </div>
       </div>
 
       <!-- Export Zone -->
       <div class="col-12 col-md-6">
-        <p class="form-label mb-2"><i class="fa fa-file-export me-1 text-warning"></i>ส่งออกข้อมูล (Export)</p>
+        <p class="form-label mb-2">ส่งออกข้อมูล (Export)</p>
         <div class="export-zone">
           <div class="row g-2">
             <div class="col-12">
-              <button type="button" class="btn btn-export-pdf w-100 py-2" onclick="exportPDFRecord()">
-                <i class="fa fa-file-pdf me-2"></i>Export PDF รายการนี้
+              <button type="button" class="btn btn-secondary w-100" onclick="exportPDFRecord()">
+                <i class="fa fa-file-pdf" aria-hidden="true"></i>Export PDF รายการนี้
               </button>
             </div>
             <div class="col-6">
-              <button type="button" class="btn btn-export-csv2 w-100" onclick="doExportCSV()">
-                <i class="fa fa-file-csv me-1"></i>Export CSV ทั้งหมด
+              <button type="button" class="btn btn-secondary w-100" onclick="doExportCSV()">
+                <i class="fa fa-file-csv" aria-hidden="true"></i>Export CSV ทั้งหมด
               </button>
             </div>
             <div class="col-6">
-              <button type="button" class="btn btn-export-json2 w-100" onclick="doExportJSON()">
-                <i class="fa fa-file-code me-1"></i>Export JSON ทั้งหมด
+              <button type="button" class="btn btn-secondary w-100" onclick="doExportJSON()">
+                <i class="fa fa-file-code" aria-hidden="true"></i>Export JSON ทั้งหมด
               </button>
             </div>
           </div>
-          <div class="text-muted mt-2" style="font-size:.78rem">
-            <i class="fa fa-info-circle me-1"></i>บันทึกข้อมูลก่อน แล้วค่อย Export
-          </div>
+          <div class="helper-text mt-2">บันทึกข้อมูลก่อน แล้วค่อย Export</div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Buttons -->
-  <div class="d-flex gap-2 mb-5 flex-wrap">
-    <button type="submit" class="btn btn-save px-4"><i class="fa fa-save me-2"></i>บันทึกข้อมูล</button>
-    <button type="button" class="btn btn-outline-secondary px-3" onclick="clearForm()">
-      <i class="fa fa-times me-1"></i>ล้างฟอร์ม
+  <div class="form-actions d-flex flex-wrap justify-content-end gap-3 mb-5">
+    <button type="button" class="btn btn-secondary" onclick="clearForm()">
+      <i class="fa fa-times" aria-hidden="true"></i>ล้างฟอร์ม
     </button>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i>บันทึกข้อมูล</button>
   </div>
 </form>
 </div>
 
 <!-- ==================== TAB LIST ==================== -->
 <div id="tab-list" style="display:none">
-  <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
-    <input type="text" class="form-control" id="search-input"
-      placeholder="🔍 ค้นหาตำแหน่งเลขที่ ประเภท กอง สถานะ..."
-      style="max-width:340px" oninput="renderTable()">
-    <select class="form-select" id="filter-status" style="max-width:200px" onchange="renderTable()">
-      <option value="">ทุกสถานะ</option>
-      <option>อนุมัติ</option><option>ไม่อนุมัติ</option>
-      <option>อยู่ระหว่างพิจารณา</option>
-      <option>รอเอกสารเพิ่มเติม</option><option>ถอนคำขอ</option>
-    </select>
-    <button class="btn btn-success" onclick="doExportCSV()"><i class="fa fa-file-csv me-1"></i>Export CSV</button>
-    <button class="btn btn-warning text-dark" onclick="doExportJSON()"><i class="fa fa-file-code me-1"></i>Export JSON</button>
-    <button class="btn btn-outline-danger" onclick="clearAll()"><i class="fa fa-trash me-1"></i>ลบทั้งหมด</button>
-    <span class="ms-auto text-muted small">แสดง <b id="rec-shown">0</b> / <b id="rec-total">0</b> รายการ</span>
+  <div class="toolbar">
+    <div class="fld">
+      <label class="form-label" for="search-input">ค้นหา</label>
+      <input type="search" class="form-control" id="search-input"
+        placeholder="เช่น เลขที่ตำแหน่ง ประเภท กอง หรือสถานะ" oninput="renderTable()">
+    </div>
+    <div class="fld">
+      <label class="form-label" for="filter-status">สถานะคำขอ</label>
+      <select class="form-select" id="filter-status" onchange="renderTable()">
+        <option value="">ทุกสถานะ</option>
+        <option>อนุมัติ</option><option>ไม่อนุมัติ</option>
+        <option>อยู่ระหว่างพิจารณา</option>
+        <option>รอเอกสารเพิ่มเติม</option><option>ถอนคำขอ</option>
+      </select>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-secondary" onclick="doExportCSV()"><i class="fa fa-file-csv" aria-hidden="true"></i>Export CSV</button>
+      <button type="button" class="btn btn-secondary" onclick="doExportJSON()"><i class="fa fa-file-code" aria-hidden="true"></i>Export JSON</button>
+      <button type="button" class="btn btn-danger" onclick="clearAll()"><i class="fa fa-trash" aria-hidden="true"></i>ลบทั้งหมด</button>
+    </div>
+    <span class="rec-count">แสดง <b id="rec-shown">0</b> / <b id="rec-total">0</b> รายการ</span>
   </div>
-  <div class="table-responsive rounded shadow-sm">
-    <table class="table table-bordered table-hover table-sm mb-0" id="tbl">
+  <div class="table-wrap">
+    <table id="tbl">
       <thead>
         <tr>
-          <th>#</th>
+          <th class="num">#</th>
           <th>ตำแหน่งใหม่ (ส1)</th><th>ระดับ (ส1)</th><th>เลขที่ (ส1)</th><th>กอง (ส1)</th>
           <th>ปรับปรุง (ส2)</th><th>ยุบเลิก (ส3)</th>
           <th>ครั้งที่</th><th>วันที่ประชุม</th><th>มติ</th>
-          <th>สถานะ</th><th>ค่าตอบแทน</th><th>วันที่บันทึก</th><th>ไฟล์</th><th>จัดการ</th>
+          <th>สถานะ</th><th class="num">ค่าตอบแทน</th><th>วันที่บันทึก</th><th>ไฟล์</th><th class="actions">จัดการ</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -337,8 +424,8 @@ textarea.form-control{resize:vertical}
 
 <!-- ==================== TAB DASHBOARD ==================== -->
 <div id="tab-dashboard" style="display:none">
-  <div class="row g-3 mb-3" id="stat-cards"></div>
-  <div class="row g-3">
+  <div class="row g-4 mb-4" id="stat-cards"></div>
+  <div class="row g-4">
     <div class="col-12 col-lg-5"><div class="cc"><canvas id="chart-status" height="240"></canvas></div></div>
     <div class="col-12 col-lg-7"><div class="cc"><canvas id="chart-type" height="240"></canvas></div></div>
     <div class="col-12 col-lg-6"><div class="cc"><canvas id="chart-div" height="220"></canvas></div></div>
@@ -346,14 +433,16 @@ textarea.form-control{resize:vertical}
   </div>
 </div>
 
-</div><!-- /container -->
+</main>
+
+<footer class="ftr">สำนักนายกรัฐมนตรี · ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่ง · เวอร์ชัน {{ version }}</footer>
 
 <!-- Toast -->
 <div class="toast-container">
-  <div id="myToast" class="toast align-items-center text-white border-0" role="alert">
-    <div class="d-flex">
-      <div class="toast-body" id="toast-msg"></div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+  <div id="myToast" class="toast" role="status" aria-live="polite">
+    <div class="d-flex align-items-start">
+      <div class="toast-body"><i class="fa fa-check-circle t-icon" id="toast-icon" aria-hidden="true"></i><span id="toast-msg"></span></div>
+      <button type="button" class="btn-close ms-auto me-2 mt-2" data-bs-dismiss="toast" aria-label="ปิด"></button>
     </div>
   </div>
 </div>
@@ -361,47 +450,47 @@ textarea.form-control{resize:vertical}
 <!-- ==================== Templates ==================== -->
 <template id="tmpl-sec1">
   <div class="pos-row" data-section="sec1">
-    <div class="d-flex align-items-center mb-2">
+    <div class="pos-row-head">
       <span class="pos-row-num">?</span>
       <strong class="row-label">ตำแหน่งใหม่ ที่ ?</strong>
-      <button type="button" class="btn btn-outline-danger btn-sm ms-auto py-0" onclick="delRow(this)">
-        <i class="fa fa-trash me-1"></i>ลบ
+      <button type="button" class="btn btn-ghost ms-auto" onclick="delRow(this)">
+        <i class="fa fa-trash" aria-hidden="true"></i>ลบ
       </button>
     </div>
-    <div class="row g-3">
-      <div class="col-12 col-md-3">
+    <div class="row gx-3 gy-4">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label required">ประเภทตำแหน่ง</label>
         <select class="form-select" name="s1_type" required>
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>บริหาร</option><option>อำนวยการ</option><option>วิชาการ</option><option>ทั่วไป</option>
         </select>
       </div>
-      <div class="col-12 col-md-3">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label required">ระดับตำแหน่ง</label>
         <select class="form-select" name="s1_level" required>
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>ระดับสูง</option><option>ระดับต้น</option><option>ทรงคุณวุฒิ</option>
           <option>เชี่ยวชาญ</option><option>ชำนาญการพิเศษ</option>
           <option>ปฏิบัติการ / ชำนาญการ</option><option>ทักษะพิเศษ</option>
           <option>อาวุโส</option><option>ปฏิบัติงาน / ชำนาญงาน</option>
         </select>
       </div>
-      <div class="col-6 col-md-2">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label required">ตำแหน่งเลขที่</label>
         <input type="text" class="form-control" name="s1_no" placeholder="เช่น 001" required>
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">สังกัด กลุ่ม/ส่วน/ฝ่าย</label>
         <input type="text" class="form-control" name="s1_group" placeholder="เช่น กลุ่มสรรหาฯ">
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">กอง (สำนัก/กอง/ศูนย์)</label>
         <input type="text" class="form-control" name="s1_division" placeholder="เช่น กองการเจ้าหน้าที่">
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">กรม / หน่วยงาน</label>
         <select class="form-select" name="s1_dept">
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>สำนักงานปลัดสำนักนายกรัฐมนตรี</option>
           <option>กรมประชาสัมพันธ์</option>
           <option>สำนักงานคณะกรรมการคุ้มครองผู้บริโภค</option>
@@ -413,47 +502,47 @@ textarea.form-control{resize:vertical}
 
 <template id="tmpl-sec2">
   <div class="pos-row" data-section="sec2">
-    <div class="d-flex align-items-center mb-2">
+    <div class="pos-row-head">
       <span class="pos-row-num">?</span>
       <strong class="row-label">ตำแหน่งที่นำมาปรับปรุง ที่ ?</strong>
-      <button type="button" class="btn btn-outline-danger btn-sm ms-auto py-0" onclick="delRow(this)">
-        <i class="fa fa-trash me-1"></i>ลบ
+      <button type="button" class="btn btn-ghost ms-auto" onclick="delRow(this)">
+        <i class="fa fa-trash" aria-hidden="true"></i>ลบ
       </button>
     </div>
-    <div class="row g-3">
-      <div class="col-12 col-md-3">
+    <div class="row gx-3 gy-4">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label">ประเภทตำแหน่ง</label>
         <select class="form-select" name="s2_type">
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>บริหาร</option><option>อำนวยการ</option><option>วิชาการ</option><option>ทั่วไป</option>
         </select>
       </div>
-      <div class="col-12 col-md-3">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label">ระดับตำแหน่ง</label>
         <select class="form-select" name="s2_level">
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>ระดับสูง</option><option>ระดับต้น</option><option>ทรงคุณวุฒิ</option>
           <option>เชี่ยวชาญ</option><option>ชำนาญการพิเศษ</option>
           <option>ปฏิบัติการ / ชำนาญการ</option><option>ทักษะพิเศษ</option>
           <option>อาวุโส</option><option>ปฏิบัติงาน / ชำนาญงาน</option>
         </select>
       </div>
-      <div class="col-6 col-md-2">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label">ตำแหน่งเลขที่</label>
         <input type="text" class="form-control" name="s2_no" placeholder="เช่น 001">
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">สังกัด กลุ่ม/ส่วน/ฝ่าย</label>
         <input type="text" class="form-control" name="s2_group" placeholder="เช่น กลุ่มบริหารงานบุคคล">
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">กอง (สำนัก/กอง/ศูนย์)</label>
         <input type="text" class="form-control" name="s2_division" placeholder="เช่น กองการเจ้าหน้าที่">
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">กรม / หน่วยงาน</label>
         <select class="form-select" name="s2_dept">
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>สำนักงานปลัดสำนักนายกรัฐมนตรี</option>
           <option>กรมประชาสัมพันธ์</option>
           <option>สำนักงานคณะกรรมการคุ้มครองผู้บริโภค</option>
@@ -465,47 +554,47 @@ textarea.form-control{resize:vertical}
 
 <template id="tmpl-sec3">
   <div class="pos-row" data-section="sec3">
-    <div class="d-flex align-items-center mb-2">
+    <div class="pos-row-head">
       <span class="pos-row-num">?</span>
       <strong class="row-label">ตำแหน่งที่ยุบเลิก ที่ ?</strong>
-      <button type="button" class="btn btn-outline-danger btn-sm ms-auto py-0" onclick="delRow(this)">
-        <i class="fa fa-trash me-1"></i>ลบ
+      <button type="button" class="btn btn-ghost ms-auto" onclick="delRow(this)">
+        <i class="fa fa-trash" aria-hidden="true"></i>ลบ
       </button>
     </div>
-    <div class="row g-3">
-      <div class="col-12 col-md-3">
+    <div class="row gx-3 gy-4">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label">ประเภทตำแหน่ง</label>
         <select class="form-select" name="s3_type">
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>บริหาร</option><option>อำนวยการ</option><option>วิชาการ</option><option>ทั่วไป</option>
         </select>
       </div>
-      <div class="col-12 col-md-3">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label">ระดับตำแหน่ง</label>
         <select class="form-select" name="s3_level">
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>ระดับสูง</option><option>ระดับต้น</option><option>ทรงคุณวุฒิ</option>
           <option>เชี่ยวชาญ</option><option>ชำนาญการพิเศษ</option>
           <option>ปฏิบัติการ / ชำนาญการ</option><option>ทักษะพิเศษ</option>
           <option>อาวุโส</option><option>ปฏิบัติงาน / ชำนาญงาน</option>
         </select>
       </div>
-      <div class="col-6 col-md-2">
+      <div class="col-12 col-md-6 col-lg-3">
         <label class="form-label">ตำแหน่งเลขที่</label>
         <input type="text" class="form-control" name="s3_no" placeholder="เช่น 002">
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">สังกัด กลุ่ม/ส่วน/ฝ่าย</label>
         <input type="text" class="form-control" name="s3_group">
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">กอง (สำนัก/กอง/ศูนย์)</label>
         <input type="text" class="form-control" name="s3_division" placeholder="เช่น กองการเจ้าหน้าที่">
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="form-label">กรม</label>
         <select class="form-select" name="s3_dept">
-          <option value="">-- เลือก --</option>
+          <option value="">— เลือก —</option>
           <option>สำนักงานปลัดสำนักนายกรัฐมนตรี</option>
           <option>กรมประชาสัมพันธ์</option>
           <option>สำนักงานคณะกรรมการคุ้มครองผู้บริโภค</option>
@@ -525,7 +614,10 @@ let allRecords = [];
 let charts     = {};
 let uploadedServerFile = '';     // UUID filename บนเซิร์ฟเวอร์
 let uploadedOrigName   = '';     // ชื่อไฟล์ดั้งเดิมสำหรับแสดงผล
-const COLORS = ['#1a3a6b','#c8a951','#198754','#dc3545','#0dcaf0','#6f42c1','#fd7e14','#20c997'];
+/* สีสถานะชุดเดียวกับป้ายสถานะในตาราง สีจึงมีความหมายเดียวกันทั้งระบบ */
+const STATUS_TAG = {อนุมัติ:'success',ไม่อนุมัติ:'error','อยู่ระหว่างพิจารณา':'warning','รอเอกสารเพิ่มเติม':'info',ถอนคำขอ:'neutral'};
+const TAG_COLOR  = {success:'#198038',error:'#da1e28',warning:'#f1c21b',info:'#0057d2',neutral:'#8d8d8d'};
+const BAR_COLOR  = '#0057d2';
 
 /* ============================================================
    DYNAMIC ROWS
@@ -589,7 +681,7 @@ function initDefaultRows(){
 async function handleFileSelect(inp){
   const f = inp.files[0];
   if(!f) return;
-  if(f.size > 10*1024*1024){ toast('ไฟล์ขนาดเกิน 10 MB','#dc3545'); inp.value=''; return; }
+  if(f.size > 10*1024*1024){ toast('ไฟล์ขนาดเกิน 10 MB','error'); inp.value=''; return; }
 
   showFileUploading(f.name);
   const fd = new FormData();
@@ -602,13 +694,14 @@ async function handleFileSelect(inp){
     uploadedOrigName   = data.orig_name;
     showFileInfo(data.orig_name, f.size, data.file_name);
   }catch(e){
-    toast('อัปโหลดไฟล์ไม่สำเร็จ: '+e.message,'#dc3545');
+    toast('อัปโหลดไฟล์ไม่สำเร็จ: '+e.message,'error');
     clearFile();
   }
 }
 
 async function handleDrop(ev){
   ev.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
   const f = ev.dataTransfer.files[0];
   if(!f) return;
   const dt = new DataTransfer(); dt.items.add(f);
@@ -618,16 +711,16 @@ async function handleDrop(ev){
 
 function showFileUploading(name){
   const zone = document.getElementById('upload-zone');
-  zone.querySelector('div').innerHTML = `<i class="fa fa-spinner fa-spin fa-2x text-primary mb-2"></i><div class="fw-bold text-primary">กำลังอัปโหลด ${esc(name)}...</div>`;
+  zone.querySelector('.zone-body').innerHTML = `<i class="fa fa-spinner fa-spin zone-icon" aria-hidden="true"></i>กำลังอัปโหลด ${esc(name)}...`;
 }
 
 function showFileInfo(name, size, serverFile){
   const zone = document.getElementById('upload-zone');
   zone.classList.add('has-file');
-  zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${esc(name)}</span>`;
+  zone.querySelector('.zone-body').innerHTML = `<i class="fa fa-file-alt zone-icon" aria-hidden="true"></i><span class="zone-file">${esc(name)}</span>`;
   const fi = document.getElementById('file-info');
-  fi.style.display = 'block';
-  const link = serverFile ? ` <a href="/uploads/${encodeURIComponent(serverFile)}" target="_blank" class="btn btn-sm btn-outline-primary py-0 ms-1"><i class="fa fa-eye me-1"></i>เปิดไฟล์</a>` : '';
+  fi.style.display = 'flex';
+  const link = serverFile ? ` <a href="/uploads/${encodeURIComponent(serverFile)}" target="_blank" class="btn btn-ghost"><i class="fa fa-eye" aria-hidden="true"></i>เปิดไฟล์</a>` : '';
   document.getElementById('file-name-display').innerHTML = `${esc(name)} (${(size/1024).toFixed(1)} KB)${link}`;
 }
 
@@ -637,7 +730,7 @@ function clearFile(){
   document.getElementById('file-info').style.display='none';
   const zone = document.getElementById('upload-zone');
   zone.classList.remove('has-file');
-  zone.querySelector('div').innerHTML = `<i class="fa fa-cloud-upload-alt fa-2x text-primary mb-2"></i><div class="fw-600 text-primary">คลิกเพื่อเลือกไฟล์ หรือลากวางที่นี่</div><div class="text-muted" style="font-size:.8rem">รองรับ PDF, Word, Excel (ขนาดไม่เกิน 10 MB)</div>`;
+  zone.querySelector('.zone-body').innerHTML = `<i class="fa fa-cloud-upload-alt zone-icon" aria-hidden="true"></i><span class="zone-link">คลิกเพื่อเลือกไฟล์</span> หรือลากไฟล์มาวางที่นี่<div class="zone-meta">รองรับ PDF, Word, Excel ขนาดไม่เกิน 10 MB</div>`;
 }
 
 /* ============================================================
@@ -730,7 +823,7 @@ async function apiFetch(path,method='GET',body=null){
 
 function updateModeBadge(online){
   const b=document.getElementById('mode-badge');
-  b.innerHTML=online?'<span class="dot dg"></span>Flask + SQLite ✓':'<span class="dot dy"></span>เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
+  b.innerHTML=online?'<span class="dot dot-ok"></span>เชื่อมต่อแล้ว':'<span class="dot dot-err"></span>เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ — บันทึกไม่ได้';
 }
 (async()=>{
   for(let i=0;i<5;i++){
@@ -746,7 +839,7 @@ async function dbDel(id){ await apiFetch(`${API_BASE}/${id}`,'DELETE'); }
 async function dbClear(){ await apiFetch(API_BASE,'DELETE'); }
 async function loadAll(){
   try{ allRecords=await apiFetch(API_BASE); }
-  catch(e){ toast('โหลดข้อมูลไม่สำเร็จ: '+e.message,'#dc3545'); }
+  catch(e){ toast('โหลดข้อมูลไม่สำเร็จ: '+e.message,'error'); }
   document.getElementById('badge-count').textContent=allRecords.length;
 }
 
@@ -770,7 +863,15 @@ function filledRows(json){
 }
 function cell(v){ return String(v??'').trim()||'-'; }
 function colList(rows,key){ return rows.length ? rows.map(r=>cell(r[key])).join(', ') : '-'; }
-function toast(msg,color='#198754'){ const el=document.getElementById('myToast'); el.style.background=color; document.getElementById('toast-msg').textContent=msg; new bootstrap.Toast(el,{delay:2800}).show(); }
+const TOAST_ICON={success:'fa-check-circle',error:'fa-exclamation-circle',info:'fa-info-circle'};
+function toast(msg,kind='success'){
+  const el=document.getElementById('myToast');
+  el.classList.remove('toast-success','toast-error','toast-info'); el.classList.add('toast-'+kind);
+  el.setAttribute('role',kind==='error'?'alert':'status');
+  document.getElementById('toast-icon').className=`fa ${TOAST_ICON[kind]} t-icon`;
+  document.getElementById('toast-msg').textContent=msg;
+  new bootstrap.Toast(el,{delay:2800}).show();
+}
 
 function showTab(id,el){
   ['tab-form','tab-list','tab-dashboard'].forEach(t=>document.getElementById(t).style.display='none');
@@ -809,10 +910,10 @@ function setForm(r){
     uploadedOrigName   = r.file_orig_name;
     const zone = document.getElementById('upload-zone');
     zone.classList.add('has-file');
-    zone.querySelector('div').innerHTML = `<i class="fa fa-file-alt fa-2x text-success mb-2"></i><br><span class="text-success fw-bold">${esc(r.file_orig_name)}</span>`;
+    zone.querySelector('.zone-body').innerHTML = `<i class="fa fa-file-alt zone-icon" aria-hidden="true"></i><span class="zone-file">${esc(r.file_orig_name)}</span>`;
     const fi = document.getElementById('file-info');
-    fi.style.display = 'block';
-    document.getElementById('file-name-display').innerHTML = `${esc(r.file_orig_name)} <a href="/uploads/${encodeURIComponent(r.file_name)}" target="_blank" class="btn btn-sm btn-outline-primary py-0 ms-1"><i class="fa fa-eye me-1"></i>เปิดไฟล์</a>`;
+    fi.style.display = 'flex';
+    document.getElementById('file-name-display').innerHTML = `${esc(r.file_orig_name)} <a href="/uploads/${encodeURIComponent(r.file_name)}" target="_blank" class="btn btn-ghost"><i class="fa fa-eye" aria-hidden="true"></i>เปิดไฟล์</a>`;
   }
 }
 function clearForm(){
@@ -826,18 +927,18 @@ function clearForm(){
 document.getElementById('mainForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const d=getForm();
-  if(!d.p4_status) return toast('กรุณาเลือกสถานะคำขอ (ส่วนที่ 4)','#dc3545');
+  if(!d.p4_status) return toast('กรุณาเลือกสถานะคำขอ (ส่วนที่ 4)','error');
   const s1=JSON.parse(d.sec1_rows||'[]');
-  if(!s1.length||!s1[0].s1_type||!s1[0].s1_no) return toast('กรุณากรอกตำแหน่งใหม่ ที่ 1 ให้ครบ','#dc3545');
+  if(!s1.length||!s1[0].s1_type||!s1[0].s1_no) return toast('กรุณากรอกตำแหน่งใหม่ ที่ 1 ให้ครบ','error');
   const rid=document.getElementById('rec-id').value;
   const btn=document.querySelector('#mainForm button[type="submit"]');
-  btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin me-2"></i>กำลังบันทึก...';
+  btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>กำลังบันทึก...';
   try{
     if(rid){ await dbUpd(rid,d); toast('อัปเดตข้อมูลเรียบร้อยแล้ว ✓'); }
     else   { await dbAdd(d);     toast('บันทึกข้อมูลเรียบร้อยแล้ว ✓'); }
     clearForm(); await loadAll();
-  }catch(err){ toast('เกิดข้อผิดพลาด: '+err.message,'#dc3545'); }
-  finally{ btn.disabled=false; btn.innerHTML='<i class="fa fa-save me-2"></i>บันทึกข้อมูล'; }
+  }catch(err){ toast('เกิดข้อผิดพลาด: '+err.message,'error'); }
+  finally{ btn.disabled=false; btn.innerHTML='<i class="fa fa-save" aria-hidden="true"></i>บันทึกข้อมูล'; }
 });
 
 /* ============================================================
@@ -852,29 +953,28 @@ function renderTable(){
   });
   document.getElementById('rec-shown').textContent=f.length;
   document.getElementById('rec-total').textContent=allRecords.length;
-  const SC={อนุมัติ:'success',ไม่อนุมัติ:'danger','อยู่ระหว่างพิจารณา':'warning','รอเอกสารเพิ่มเติม':'info',ถอนคำขอ:'secondary'};
   document.getElementById('tbody').innerHTML=f.map((r,i)=>{
     const rid=r.id;
     const s1=filledRows(r.sec1_rows); const s2=filledRows(r.sec2_rows); const s3=filledRows(r.sec3_rows);
-    const sal=r.p5_salary?Number(r.p5_salary).toLocaleString('th-TH')+'฿':'-';
+    const sal=r.p5_salary?Number(r.p5_salary).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}):'-';
     return`<tr>
-      <td>${i+1}</td>
+      <td class="num">${i+1}</td>
       <td>${esc(colList(s1,'s1_type'))}</td>
-      <td>${s1.length?s1.map(x=>`<span class="badge bg-secondary bsm">${esc(cell(x.s1_level))}</span>`).join(' '):'-'}</td>
-      <td><b>${esc(colList(s1,'s1_no'))}</b></td>
-      <td>${esc(colList(s1,'s1_division'))}</td>
-      <td style="font-size:.72rem">${esc(s2.map(x=>x.s2_type||'').filter(Boolean).join(', '))||'-'}</td>
-      <td style="font-size:.72rem">${esc(s3.map(x=>x.s3_no||'').filter(Boolean).join(', '))||'-'}</td>
-      <td>${esc(r.p4_round)||'-'}</td>
-      <td>${fmtDate(r.p4_date)||'-'}</td>
-      <td style="font-size:.75rem">${esc(r.p4_resolution)||'-'}</td>
-      <td>${r.p4_status?`<span class="badge bg-${SC[r.p4_status]||'secondary'} bsm">${esc(r.p4_status)}</span>`:'-'}</td>
-      <td class="text-end">${sal}</td>
-      <td style="white-space:nowrap;font-size:.72rem">${esc(fmtStamp(r.created))}</td>
-      <td style="text-align:center">${r.file_orig_name?`<a href="/uploads/${encodeURIComponent(r.file_name)}" target="_blank" class="btn btn-sm btn-outline-secondary py-0 bsm" title="${esc(r.file_orig_name)}"><i class="fa fa-paperclip me-1"></i>ไฟล์</a>`:'-'}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-outline-primary me-1 py-0" onclick="editRec('${rid}')"><i class="fa fa-edit"></i></button>
-        <button class="btn btn-sm btn-outline-danger py-0" onclick="delRec('${rid}')"><i class="fa fa-trash"></i></button>
+      <td>${esc(colList(s1,'s1_level'))}</td>
+      <td class="tnum">${esc(colList(s1,'s1_no'))}</td>
+      <td class="wrap">${esc(colList(s1,'s1_division'))}</td>
+      <td class="sm">${esc(s2.map(x=>x.s2_type||'').filter(Boolean).join(', '))||'-'}</td>
+      <td class="sm">${esc(s3.map(x=>x.s3_no||'').filter(Boolean).join(', '))||'-'}</td>
+      <td class="tnum">${esc(r.p4_round)||'-'}</td>
+      <td class="tnum">${fmtDate(r.p4_date)||'-'}</td>
+      <td class="sm">${esc(r.p4_resolution)||'-'}</td>
+      <td>${r.p4_status?`<span class="tag tag-${STATUS_TAG[r.p4_status]||'neutral'}">${esc(r.p4_status)}</span>`:'-'}</td>
+      <td class="num">${sal}</td>
+      <td class="tnum sm">${esc(fmtStamp(r.created))}</td>
+      <td class="cell-btn">${r.file_orig_name?`<a href="/uploads/${encodeURIComponent(r.file_name)}" target="_blank" class="btn btn-ghost" title="${esc(r.file_orig_name)}"><i class="fa fa-paperclip" aria-hidden="true"></i>ไฟล์</a>`:'-'}</td>
+      <td class="actions">
+        <button type="button" class="btn btn-ghost btn-icon" onclick="editRec('${rid}')" aria-label="แก้ไขคำขอ"><i class="fa fa-edit" aria-hidden="true"></i></button>
+        <button type="button" class="btn btn-ghost btn-icon" onclick="delRec('${rid}')" aria-label="ลบคำขอ"><i class="fa fa-trash" aria-hidden="true"></i></button>
       </td>
     </tr>`;
   }).join('');
@@ -885,10 +985,10 @@ async function editRec(id){
   const r=allRecords.find(x=>x.id==id);
   if(!r) return;
   document.querySelectorAll('.tbtn')[0].click();
-  setTimeout(()=>{ setForm(r); document.getElementById('rec-id').value=id; window.scrollTo(0,0); toast('โหลดข้อมูลเพื่อแก้ไขแล้ว','#0d6efd'); },100);
+  setTimeout(()=>{ setForm(r); document.getElementById('rec-id').value=id; window.scrollTo(0,0); toast('โหลดข้อมูลเพื่อแก้ไขแล้ว','info'); },100);
 }
-async function delRec(id){ if(!confirm('ต้องการลบรายการนี้?'))return; await dbDel(id); toast('ลบรายการเรียบร้อย','#dc3545'); await loadAll(); renderTable(); }
-async function clearAll(){ if(!confirm('ต้องการลบข้อมูลทั้งหมด?\n(ไม่สามารถย้อนกลับได้)'))return; await dbClear(); toast('ลบข้อมูลทั้งหมดเรียบร้อย','#dc3545'); await loadAll(); renderTable(); }
+async function delRec(id){ if(!confirm('ต้องการลบรายการนี้?'))return; await dbDel(id); toast('ลบรายการเรียบร้อย'); await loadAll(); renderTable(); }
+async function clearAll(){ if(!confirm('ต้องการลบข้อมูลทั้งหมด?\n(ไม่สามารถย้อนกลับได้)'))return; await dbClear(); toast('ลบข้อมูลทั้งหมดเรียบร้อย'); await loadAll(); renderTable(); }
 
 /* ============================================================
    EXPORT CSV / JSON
@@ -902,7 +1002,7 @@ function csvCell(v){
 }
 function dl(c,n,t){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); }
 function doExportCSV(){
-  if(!allRecords.length) return toast('ไม่มีข้อมูล','#dc3545');
+  if(!allRecords.length) return toast('ไม่มีข้อมูล','info');
   const flat=allRecords.map(r=>{
     const b={...r};
     ['sec1_rows','sec2_rows','sec3_rows'].forEach(k=>{
@@ -916,7 +1016,7 @@ function doExportCSV(){
   toast('Export CSV สำเร็จ ✓');
 }
 function doExportJSON(){
-  if(!allRecords.length) return toast('ไม่มีข้อมูล','#dc3545');
+  if(!allRecords.length) return toast('ไม่มีข้อมูล','info');
   dl(JSON.stringify(allRecords,null,2),`pos_${dStr()}.json`,'application/json');
   toast('Export JSON สำเร็จ ✓');
 }
@@ -925,18 +1025,20 @@ function doExportJSON(){
    DASHBOARD
    ============================================================ */
 const CHART_FONT=getComputedStyle(document.body).fontFamily;
+Chart.defaults.color='#223548';
+Chart.defaults.borderColor='#d5dadd';
 function kc(k){ if(charts[k]){charts[k].destroy();delete charts[k];} }
-function mkDoughnut(id,labels,data,title){
+function mkDoughnut(id,labels,data,title,colors){
   kc(id);
   charts[id]=new Chart(document.getElementById(id),{type:'doughnut',
-    data:{labels,datasets:[{data,backgroundColor:COLORS,borderWidth:2,hoverOffset:8}]},
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,hoverOffset:8}]},
     options:{plugins:{title:{display:true,text:title,font:{size:13,family:CHART_FONT}},
       legend:{position:'bottom',labels:{font:{family:CHART_FONT},padding:12}}},cutout:'55%'}});
 }
-function mkBar(id,labels,data,title,color='#1a3a6b'){
+function mkBar(id,labels,data,title,color=BAR_COLOR){
   kc(id);
   charts[id]=new Chart(document.getElementById(id),{type:'bar',
-    data:{labels,datasets:[{label:title,data,backgroundColor:color,borderRadius:6}]},
+    data:{labels,datasets:[{label:title,data,backgroundColor:color,borderRadius:4}]},
     options:{plugins:{title:{display:true,text:title,font:{size:13,family:CHART_FONT}},legend:{display:false}},
       scales:{x:{ticks:{font:{family:CHART_FONT},maxRotation:40}},y:{ticks:{stepSize:1,font:{family:CHART_FONT}},beginAtZero:true}}}});
 }
@@ -957,21 +1059,23 @@ function renderDashboard(){
   });
   const avgSal=salCnt?(salSum/salCnt).toLocaleString('th-TH',{maximumFractionDigits:2}):'-';
   document.getElementById('stat-cards').innerHTML=`
-    <div class="col-6 col-lg-3"><div class="sc"><div class="val text-primary">${total}</div><div class="lbl"><i class="fa fa-folder-open me-1"></i>คำขอทั้งหมด</div></div></div>
-    <div class="col-6 col-lg-3"><div class="sc"><div class="val text-success">${passed}</div><div class="lbl"><i class="fa fa-check-circle me-1"></i>ได้รับอนุมัติ</div></div></div>
-    <div class="col-6 col-lg-3"><div class="sc"><div class="val text-info" style="font-size:1.4rem">${avgSal}${salCnt?' ฿':''}</div><div class="lbl"><i class="fa fa-coins me-1"></i>ค่าตอบแทนเฉลี่ย</div></div></div>
-    <div class="col-6 col-lg-3"><div class="sc"><div class="val text-warning">${total?((passed/total)*100).toFixed(1)+'%':'-'}</div><div class="lbl"><i class="fa fa-percent me-1"></i>อัตราอนุมัติ</div></div></div>`;
+    <div class="col-6 col-lg-3"><div class="sc"><div class="val">${total}</div><div class="lbl"><i class="fa fa-folder-open" aria-hidden="true"></i>คำขอทั้งหมด</div></div></div>
+    <div class="col-6 col-lg-3"><div class="sc"><div class="val">${passed}</div><div class="lbl"><i class="fa fa-check-circle" aria-hidden="true"></i>ได้รับอนุมัติ</div></div></div>
+    <div class="col-6 col-lg-3"><div class="sc"><div class="val">${avgSal}${salCnt?' บาท':''}</div><div class="lbl"><i class="fa fa-coins" aria-hidden="true"></i>ค่าตอบแทนเฉลี่ย</div></div></div>
+    <div class="col-6 col-lg-3"><div class="sc"><div class="val">${total?((passed/total)*100).toFixed(1)+'%':'-'}</div><div class="lbl"><i class="fa fa-percent" aria-hidden="true"></i>อัตราอนุมัติ</div></div></div>`;
   /* ใส่จำนวนตำแหน่งไว้ในหัวกราฟ เพื่อให้ชัดว่าแกนนี้นับตำแหน่ง ไม่ใช่นับคำขอ */
   const pos=` (${posCnt} ตำแหน่ง จาก ${total} คำขอ)`;
-  mkDoughnut('chart-status',Object.keys(sc),Object.values(sc),'สถานะคำขอ');
-  mkBar('chart-type',Object.keys(tc),Object.values(tc),'จำนวนตามประเภทตำแหน่ง'+pos,'#2a5298');
-  mkBar('chart-div',Object.keys(dc),Object.values(dc),'จำนวนตามกอง/สำนัก'+pos,'#c8a951');
-  mkBar('chart-level',Object.keys(lc),Object.values(lc),'จำนวนตามระดับตำแหน่ง'+pos,'#198754');
+  mkDoughnut('chart-status',Object.keys(sc),Object.values(sc),'สถานะคำขอ',
+    Object.keys(sc).map(k=>TAG_COLOR[STATUS_TAG[k]]||'#d5dadd'));
+  mkBar('chart-type',Object.keys(tc),Object.values(tc),'จำนวนตามประเภทตำแหน่ง'+pos);
+  mkBar('chart-div',Object.keys(dc),Object.values(dc),'จำนวนตามกอง/สำนัก'+pos);
+  mkBar('chart-level',Object.keys(lc),Object.values(lc),'จำนวนตามระดับตำแหน่ง'+pos);
 }
 
 /* ============================================================
    INIT
    ============================================================ */
+clearFile();
 initDefaultRows();
 </script>
 </body>
