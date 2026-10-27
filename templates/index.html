@@ -21,6 +21,7 @@
       --hairline:#d5dadd;--border-strong:#8d8d8d;--focus:#0057d2;
       --success:#198038;--success-bg:#defbe6;--warning:#8e6a00;--warning-fill:#f1c21b;--warning-bg:#fcf4d6;
       --error:#da1e28;--error-bg:#fff1f1;--info:#0057d2;--info-bg:#ebf8ff;
+      --add-row:#198754;--add-row-end:#20c997;--add-row-hover:#145c38;
       --shadow-float:0 8px 24px rgba(11,29,51,.16);
       --bs-body-font-family:var(--font);--bs-body-font-size:16px;--bs-body-line-height:1.7;
       --bs-body-color:var(--ink-body);--bs-body-bg:var(--page);--bs-border-color:var(--hairline)}
@@ -71,12 +72,12 @@ h1,h2,h3{letter-spacing:0}
 /* Dynamic rows */
 .pos-row{border:1px solid var(--hairline);border-radius:8px;padding:16px;margin-bottom:16px}
 .pos-row-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.pos-row-num{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 8px;
-             border-radius:9999px;background:var(--band);color:var(--ink);font-size:13px;font-weight:600;line-height:1.4}
+.pos-row-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
+             border-radius:50%;background:var(--primary);color:var(--on-primary);font-size:13px;font-weight:700;line-height:1}
 .row-label{font-size:16px;font-weight:600;line-height:1.5;color:var(--ink)}
 
 /* Form */
-.form-label{display:block;font-size:14px;font-weight:500;line-height:1.5;color:var(--ink-label);margin-bottom:4px}
+.form-label{display:block;font-size:14px;font-weight:600;line-height:1.5;color:var(--primary);margin-bottom:4px}
 .required::after{content:"*";color:var(--error);margin-left:2px}
 .form-control,.form-select{min-height:48px;padding:11px 16px;font-family:var(--font);font-size:16px;line-height:1.5;
      color:var(--ink);background-color:var(--field);border:0;border-bottom:1px solid var(--border-strong);
@@ -131,6 +132,15 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .btn-danger{--bs-btn-bg:var(--error);--bs-btn-border-color:var(--error);--bs-btn-color:var(--on-primary);
      --bs-btn-hover-bg:#b81921;--bs-btn-hover-border-color:#b81921;--bs-btn-hover-color:var(--on-primary);
      --bs-btn-active-bg:#750e13;--bs-btn-active-border-color:#750e13;--bs-btn-active-color:var(--on-primary)}
+/* ข้อยกเว้นของระบบนี้ใน DESIGN.md: ปุ่มลบแถวตำแหน่งและปุ่มเพิ่มตำแหน่งคงหน้าตาแบบเดิมของระบบ */
+.btn-danger-outline{--bs-btn-padding-x:12px;--bs-btn-padding-y:4px;--bs-btn-font-size:14px;
+     --bs-btn-bg:transparent;--bs-btn-border-color:var(--error);--bs-btn-color:var(--error);
+     --bs-btn-hover-bg:var(--error-bg);--bs-btn-hover-border-color:var(--error);--bs-btn-hover-color:var(--error);
+     --bs-btn-active-bg:var(--error-bg);--bs-btn-active-border-color:#a2191f;--bs-btn-active-color:#a2191f;min-height:36px}
+.btn-add-row{--bs-btn-color:var(--on-primary);--bs-btn-hover-color:var(--on-primary);--bs-btn-active-color:var(--on-primary);
+     --bs-btn-border-color:transparent;--bs-btn-hover-border-color:transparent;--bs-btn-active-border-color:transparent;
+     background-image:linear-gradient(135deg,var(--add-row),var(--add-row-end))}
+.btn-add-row:hover,.btn-add-row:active{background-image:linear-gradient(135deg,var(--add-row-hover),var(--add-row))}
 
 /* Upload / Export */
 .upload-zone{background:var(--canvas);border:1px dashed var(--border-strong);border-radius:8px;min-height:128px;padding:24px;
@@ -258,27 +268,33 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <h2 class="sh"><i class="fa fa-plus-circle" aria-hidden="true"></i>ส่วนที่ 1 : คำขอกำหนดตำแหน่ง (ใหม่)</h2>
   <div class="sb">
     <div id="sec1-container"></div>
-    <button type="button" class="btn btn-secondary" onclick="addRow('sec1')">
-      <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งใหม่
-    </button>
+    <div class="text-center">
+      <button type="button" class="btn btn-add-row" onclick="addRow('sec1')">
+        <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งใหม่
+      </button>
+    </div>
   </div>
 
   <!-- ส่วนที่ 2 -->
   <h2 class="sh"><i class="fa fa-exchange-alt" aria-hidden="true"></i>ส่วนที่ 2 : ตำแหน่งที่นำมาปรับปรุงการกำหนดตำแหน่ง</h2>
   <div class="sb">
     <div id="sec2-container"></div>
-    <button type="button" class="btn btn-secondary" onclick="addRow('sec2')">
-      <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งที่นำมาปรับปรุง
-    </button>
+    <div class="text-center">
+      <button type="button" class="btn btn-add-row" onclick="addRow('sec2')">
+        <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งที่นำมาปรับปรุง
+      </button>
+    </div>
   </div>
 
   <!-- ส่วนที่ 3 -->
   <h2 class="sh"><i class="fa fa-ban" aria-hidden="true"></i>ส่วนที่ 3 : การยุบเลิกตำแหน่งเพื่อควบคุมค่าใช้จ่าย</h2>
   <div class="sb">
     <div id="sec3-container"></div>
-    <button type="button" class="btn btn-secondary" onclick="addRow('sec3')">
-      <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งที่ยุบเลิก
-    </button>
+    <div class="text-center">
+      <button type="button" class="btn btn-add-row" onclick="addRow('sec3')">
+        <i class="fa fa-plus" aria-hidden="true"></i>เพิ่มตำแหน่งที่ยุบเลิก
+      </button>
+    </div>
   </div>
 
   <!-- ส่วนที่ 4 -->
@@ -477,7 +493,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
     <div class="pos-row-head">
       <span class="pos-row-num">?</span>
       <strong class="row-label">ตำแหน่งใหม่ ที่ ?</strong>
-      <button type="button" class="btn btn-ghost ms-auto" onclick="delRow(this)">
+      <button type="button" class="btn btn-danger-outline ms-auto" onclick="delRow(this)">
         <i class="fa fa-trash" aria-hidden="true"></i>ลบ
       </button>
     </div>
@@ -529,7 +545,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
     <div class="pos-row-head">
       <span class="pos-row-num">?</span>
       <strong class="row-label">ตำแหน่งที่นำมาปรับปรุง ที่ ?</strong>
-      <button type="button" class="btn btn-ghost ms-auto" onclick="delRow(this)">
+      <button type="button" class="btn btn-danger-outline ms-auto" onclick="delRow(this)">
         <i class="fa fa-trash" aria-hidden="true"></i>ลบ
       </button>
     </div>
@@ -581,7 +597,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
     <div class="pos-row-head">
       <span class="pos-row-num">?</span>
       <strong class="row-label">ตำแหน่งที่ยุบเลิก ที่ ?</strong>
-      <button type="button" class="btn btn-ghost ms-auto" onclick="delRow(this)">
+      <button type="button" class="btn btn-danger-outline ms-auto" onclick="delRow(this)">
         <i class="fa fa-trash" aria-hidden="true"></i>ลบ
       </button>
     </div>

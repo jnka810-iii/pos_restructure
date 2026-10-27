@@ -37,6 +37,9 @@ colors:
   error-bg: "#fff1f1"
   info: "#0057d2"
   info-bg: "#ebf8ff"
+  add-row: "#198754"
+  add-row-end: "#20c997"
+  add-row-hover: "#145c38"
 
 typography:
   page-title:
@@ -84,7 +87,7 @@ typography:
   label:
     fontFamily: Noto Sans Thai
     fontSize: 14px
-    fontWeight: 500
+    fontWeight: 600
     lineHeight: 1.5
     letterSpacing: 0
   input:
@@ -227,7 +230,7 @@ components:
     height: 52px
   field-label:
     backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink-label}"
+    textColor: "{colors.primary}"
     typography: "{typography.label}"
     rounded: "{rounded.none}"
   required-mark:
@@ -364,6 +367,26 @@ components:
     rounded: "{rounded.md}"
     padding: 12px 20px
     height: 48px
+  button-danger-outline:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.error}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.md}"
+    padding: 4px 12px
+    height: 36px
+  button-add-row:
+    backgroundColor: "{colors.add-row}"
+    textColor: "{colors.on-primary}"
+    typography: "{typography.button}"
+    rounded: "{rounded.md}"
+    padding: 12px 20px
+    height: 48px
+  pos-row-num:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    typography: "{typography.badge}"
+    rounded: "{rounded.pill}"
+    height: 24px
   button-disabled:
     backgroundColor: "{colors.field-disabled}"
     textColor: "{colors.ink-disabled}"
@@ -491,7 +514,7 @@ components:
 | `{colors.ink}` | #0b1d33 | หัวข้อ ข้อความที่ผู้ใช้พิมพ์ในช่องกรอก |
 | `{colors.ink-heading-on-band}` | #022879 | หัวข้อส่วนที่วางบน `band-blue` |
 | `{colors.ink-body}` | #223548 | เนื้อหาทั่วไป ข้อความในตาราง |
-| `{colors.ink-label}` | #354a5f | label ของช่องกรอก |
+| `{colors.ink-label}` | #354a5f | (ไม่ใช้กับ label แล้ว label ใช้ `{colors.primary}` ดูข้อยกเว้นของระบบนี้) |
 | `{colors.ink-meta}` | #475e75 | ข้อความช่วยเหลือ คำอธิบาย placeholder |
 | `{colors.ink-nav}` | #545454 | แท็บที่ไม่ได้เลือก และ footer |
 | `{colors.ink-disabled}` | #8c8c8c | ข้อความในช่องที่ปิดใช้งาน (ได้รับยกเว้นเรื่องความต่างของสี) |
@@ -643,7 +666,7 @@ components:
 - `textarea`: สูงขั้นต่ำ 112px (ประมาณ 3 บรรทัด) ให้ผู้ใช้ปรับความสูงได้อย่างเดียว (`resize: vertical`)
 
 ### Label, ช่องบังคับ และข้อความช่วยเหลือ
-- `field-label` สี `{colors.ink-label}` **ไม่ใช้สีน้ำเงิน** เพื่อไม่ให้แย่งความสนใจจากปุ่มและลิงก์ ไม่ต่อท้าย label ด้วย ":"
+- `field-label` สี `{colors.primary}` น้ำหนัก 600 ตามหน้าตาเดิมของระบบ (ข้อยกเว้นของระบบนี้) ไม่ต่อท้าย label ด้วย ":"
 - `required-mark`: เครื่องหมาย `*` สี `{colors.error}` ต่อท้าย label เว้นวรรค 2px และมี `aria-hidden="true"` คู่กับ `required` บนช่องกรอก
 - ใส่คำอธิบาย "ช่องที่มีเครื่องหมาย * ต้องกรอก" หนึ่งครั้งที่ด้านบนของฟอร์ม
 - `helper-text` ใต้ช่องกรอก สี `{colors.ink-meta}` เชื่อมกับช่องด้วย `aria-describedby`
@@ -697,6 +720,18 @@ components:
 - ข้อผิดพลาดต้องบอกด้วยข้อความและไอคอน ไม่ใช่สีอย่างเดียว ช่องที่ผิดมี `aria-invalid="true"`
 - ใส่ `lang="th"` ที่ `<html>` เพื่อให้โปรแกรมอ่านหน้าจออ่านภาษาไทยได้ถูกต้อง
 
+## ข้อยกเว้นของระบบนี้
+
+เมื่อ 27 ต.ค. 2569 ผู้ใช้ขอให้ส่วนประกอบสามอย่างในฟอร์มกลับไปเป็นหน้าตาเดิมของระบบ ซึ่งขัดกับกฎทั่วไปในไฟล์นี้ จึงบันทึกเป็นข้อยกเว้นไว้ที่นี่ ส่วนอื่นของหน้ายังใช้กฎปกติ
+
+| ส่วนประกอบ | หน้าตา | กฎที่ยกเว้น |
+|---|---|---|
+| `field-label` | สี `{colors.primary}` น้ำหนัก 600 ทุก label ในระบบ | ห้ามใช้สีน้ำเงินกับ label |
+| `pos-row-num` และปุ่มลบแถวตำแหน่ง (`button-danger-outline`) | วงกลมน้ำเงินทึบเลขขาว และปุ่ม "ลบ" ขอบแดงตัวแดง ไม่มี modal เพราะแถวยังไม่ถูกบันทึก | — (ปุ่มลบใช้สีแดงตามกฎอยู่แล้ว) |
+| `button-add-row` | ไล่สีเขียว `{colors.add-row}` → `{colors.add-row-end}` ตัวอักษรขาว จัดกลางใต้แถว | ห้ามไล่สี และสีที่ใช้ทำงานคือน้ำเงิน |
+
+ตัวอักษรขาวบนปลายสีเขียวอ่อน `{colors.add-row-end}` มีความต่างของสีประมาณ 2.1:1 ต่ำกว่าเกณฑ์ 4.5:1 ของ WCAG AA ฝั่งเขียวเข้มผ่านเกณฑ์ ถ้าต้องผ่าน AA ทั้งปุ่ม ให้เปลี่ยน `{colors.add-row-end}` เป็นสีที่เข้มพอ
+
 ## Do's and Don'ts
 
 ### Do
@@ -710,8 +745,9 @@ components:
 
 ### Don't
 - ห้ามใช้แถบหัวแบบไล่สี และห้ามเพิ่มสีที่สอง เช่น เส้นทองใต้แถบหัว
+- ห้ามใช้สีไล่ระดับกับส่วนอื่น ยกเว้น `button-add-row`
 - ห้ามใช้ปุ่มสีแดงกับการกระทำปกติ เช่น ดาวน์โหลด หรือพิมพ์
-- ห้ามใช้สีน้ำเงินกับ label หรือข้อความทั่วไป
+- ห้ามใช้สีน้ำเงินกับข้อความทั่วไป (label เป็นข้อยกเว้นของระบบนี้)
 - ห้ามใส่เงาให้การ์ด ปุ่ม หรือช่องกรอก
 - ห้ามใช้ปุ่มทรง pill และห้ามใช้มุมเกิน 12px
 - ห้ามใช้ฟอนต์น้ำหนักต่ำกว่า 350 หรือขนาดต่ำกว่า 14px กับข้อความไทยทั่วไป
