@@ -231,11 +231,49 @@ def legacy_slash_timestamps_are_migrated_and_the_migration_is_idempotent():
 def the_page_renders_iso_timestamps_in_thai_format():
     if not NODE:
         raise Skipped('node is not on PATH')
-    got = run_js(['fmtStamp'], "console.log(JSON.stringify(["
+    got = run_js(['fmtStamp', 'thDate'], "console.log(JSON.stringify(["
                  "fmtStamp('2026-04-29T14:03:00'),"
                  "fmtStamp('2026-10-20T09:05:00'),"
                  "fmtStamp(''), fmtStamp(null)]))")
-    assert got == ['29/04/2026 14:03', '20/10/2026 09:05', '', ''], got
+    assert got == ['29 เม.ย. 2569 14:03', '20 ต.ค. 2569 09:05', '', ''], got
+
+
+def the_page_shows_dates_in_the_buddhist_era():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    got = run_js(['fmtDateTH', 'thDate'], "console.log(JSON.stringify(["
+                 "fmtDateTH('2026-10-27'), fmtDateTH('2027-01-05'), fmtDateTH(''), fmtDateTH(null)]))")
+    assert got == ['27 ต.ค. 2569', '5 ม.ค. 2570', '', ''], got
+
+
+def validation_errors_for(record):
+    body = ('const d = ' + json.dumps(record, ensure_ascii=False) + ';\n'
+            'console.log(JSON.stringify(validateRequest(d)));')
+    return run_js(['validateRequest'], body)
+
+
+def a_request_needs_a_status_and_one_complete_new_position():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    full = {'s1_type': 'วิชาการ', 's1_level': 'ชำนาญการ', 's1_no': '001'}
+    blank = {'s1_type': '', 's1_level': '', 's1_no': '', 's1_division': ''}
+    ok = validation_errors_for({'p4_status': 'อนุมัติ',
+                                'sec1_rows': json.dumps([full, blank], ensure_ascii=False)})
+    assert ok == [], f'a complete request with one blank row was rejected: {ok}'
+
+    none = validation_errors_for({'p4_status': '', 'sec1_rows': json.dumps([blank])})
+    assert [e.get('name') or e.get('id') for e in none] == ['s1_type', 'p4_status'], none
+
+
+def every_started_position_row_must_be_complete():
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    rows = [{'s1_type': 'วิชาการ', 's1_level': 'ชำนาญการ', 's1_no': '001'},
+            {'s1_type': 'ทั่วไป', 's1_level': '', 's1_no': ''}]
+    got = validation_errors_for({'p4_status': 'อนุมัติ',
+                                 'sec1_rows': json.dumps(rows, ensure_ascii=False)})
+    assert [(e['row'], e['name']) for e in got] == [(1, 's1_level'), (1, 's1_no')], got
+    assert all('ที่ 2' in e['msg'] for e in got), 'the message does not say which position is incomplete'
 
 
 def the_csv_export_neutralises_spreadsheet_formulas():
@@ -514,7 +552,7 @@ def an_export_with_no_records_warns_instead_of_writing_an_empty_file():
         got = download_from(exporter, [])
         assert got['file'] is None, f'{exporter} ดาวน์โหลดไฟล์เปล่าออกไป'
         notes = got['notes']
-        assert notes == ['ไม่มีข้อมูล'], f'{exporter} เตือนว่า {notes}'
+        assert notes == ['ยังไม่มีคำขอให้ส่งออก'], f'{exporter} เตือนว่า {notes}'
 
 
 def the_csv_export_flattens_section_rows_into_columns():
@@ -613,6 +651,9 @@ CHECKS = [
     iso_timestamps_let_sqlite_sort_by_recency,
     legacy_slash_timestamps_are_migrated_and_the_migration_is_idempotent,
     the_page_renders_iso_timestamps_in_thai_format,
+    the_page_shows_dates_in_the_buddhist_era,
+    a_request_needs_a_status_and_one_complete_new_position,
+    every_started_position_row_must_be_complete,
     the_csv_export_neutralises_spreadsheet_formulas,
     the_csv_export_keeps_a_zero_instead_of_blanking_it,
     requirements_txt_is_utf8_without_a_bom,

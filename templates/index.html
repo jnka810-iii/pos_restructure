@@ -96,6 +96,19 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .input-group>.input-group-text:last-child{border-top-right-radius:4px}
 .input-group>.form-control{border-radius:0}
 .helper-text{font-size:14px;line-height:1.5;color:var(--ink-meta);margin-top:4px}
+.form-control.invalid,.form-select.invalid{border-bottom-color:var(--error);outline:2px solid var(--error);outline-offset:-2px}
+.error-text{display:flex;align-items:flex-start;gap:4px;font-size:14px;line-height:1.5;color:var(--error);margin-top:4px}
+.error-text i{font-size:16px;line-height:1.4}
+
+/* Inline notification */
+.inline-notification{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;margin-bottom:24px;border-radius:4px;
+                     border-left:4px solid;font-size:14px;line-height:1.6;color:var(--ink-body)}
+.inline-notification:focus-visible{outline-offset:2px}
+.inline-notification .n-icon{font-size:20px;line-height:1.2}
+.inline-notification ul{margin:4px 0 0;padding-left:20px}
+.inline-notification a{color:var(--primary)}
+.inline-error{background:var(--error-bg);border-left-color:var(--error)}
+.inline-error .n-icon{color:var(--error)}
 
 /* Buttons */
 .btn{--bs-btn-font-family:var(--font);--bs-btn-font-size:16px;--bs-btn-font-weight:500;--bs-btn-line-height:1.5;
@@ -123,7 +136,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .upload-zone{background:var(--canvas);border:1px dashed var(--border-strong);border-radius:8px;min-height:128px;padding:24px;
              display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:14px;line-height:1.6}
 .upload-zone:hover{background:var(--page)}
-.upload-zone.drag{background:var(--band-blue);border:2px solid var(--primary)}
+.upload-zone.drag,.upload-zone:focus-visible{background:var(--band-blue);border:2px solid var(--primary);outline:none}
 .upload-zone.has-file{border-style:solid;border-color:var(--hairline)}
 .zone-icon{display:block;font-size:24px;color:var(--primary);margin-bottom:8px}
 .zone-link{color:var(--primary);font-weight:500;text-decoration:underline}
@@ -132,7 +145,6 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .file-info{display:none;align-items:center;gap:8px;min-height:48px;margin-top:8px;padding:4px 4px 4px 12px;
            background:var(--field);border-radius:4px;font-size:14px;line-height:1.6;color:var(--ink-body)}
 .file-info .fa-file-alt{color:var(--primary)}
-.export-zone{border:1px solid var(--hairline);border-radius:8px;padding:16px}
 
 /* List toolbar */
 .toolbar{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:16px}
@@ -154,6 +166,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 #tbl .tnum{font-variant-numeric:tabular-nums;white-space:nowrap}
 #tbl .cell-btn{white-space:nowrap;padding:2px 8px}
 #tbl .actions{text-align:right;white-space:nowrap;padding:2px 8px}
+.empty-state{background:var(--canvas);border:1px solid var(--hairline);border-radius:8px;padding:48px 24px;text-align:center}
+.empty-state p{margin:0 0 16px;color:var(--ink-body)}
 
 /* Status tags */
 .tag{display:inline-block;font-size:13px;font-weight:600;line-height:1.4;padding:2px 10px;border-radius:9999px;white-space:nowrap}
@@ -168,6 +182,17 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .sc .val{font-size:28px;font-weight:600;line-height:1.4;color:var(--ink);font-variant-numeric:tabular-nums}
 .sc .lbl{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:14px;line-height:1.5;color:var(--ink-meta)}
 .cc{background:var(--canvas);border:1px solid var(--hairline);border-radius:8px;padding:24px}
+
+/* Modal */
+.modal{--bs-modal-width:560px;--bs-modal-bg:var(--canvas);--bs-modal-border-width:0;--bs-modal-border-radius:12px;--bs-modal-padding:0 32px;
+       --bs-modal-header-padding:32px 32px 16px;--bs-modal-header-border-width:0;--bs-modal-footer-border-width:0;
+       --bs-modal-footer-gap:16px;--bs-modal-color:var(--ink-body)}
+.modal-content{box-shadow:var(--shadow-float)}
+.modal-title{font-size:18px;font-weight:600;line-height:1.5;color:var(--ink);margin:0}
+.modal-body{white-space:pre-line}
+.modal-footer{padding:24px 32px 32px}
+.modal-footer>*{margin:0}
+.modal-backdrop{--bs-backdrop-bg:#0b1d33;--bs-backdrop-opacity:.5}
 
 /* Toast */
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:9999}
@@ -216,7 +241,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 <!-- TAB NAV -->
 <nav class="tab-bar" aria-label="เมนูหลัก">
   <button type="button" class="tbtn active" onclick="showTab('tab-form',this)"><i class="fa fa-edit" aria-hidden="true"></i>กรอกข้อมูล</button>
-  <button type="button" class="tbtn" onclick="showTab('tab-list',this)"><i class="fa fa-list" aria-hidden="true"></i>รายการทั้งหมด <span class="count-badge" id="badge-count">0</span></button>
+  <button type="button" class="tbtn" onclick="showTab('tab-list',this)"><i class="fa fa-list" aria-hidden="true"></i>คำขอทั้งหมด <span class="count-badge" id="badge-count">0</span></button>
   <button type="button" class="tbtn" onclick="showTab('tab-dashboard',this)"><i class="fa fa-chart-bar" aria-hidden="true"></i>สรุปภาพรวม</button>
 </nav>
 
@@ -227,6 +252,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 <form id="mainForm" novalidate>
   <input type="hidden" id="rec-id">
   <p class="form-note">ช่องที่มีเครื่องหมาย <span class="req-star">*</span> ต้องกรอก</p>
+  <div id="form-errors" class="inline-notification inline-error" role="alert" tabindex="-1" hidden></div>
 
   <!-- ส่วนที่ 1 -->
   <h2 class="sh"><i class="fa fa-plus-circle" aria-hidden="true"></i>ส่วนที่ 1 : คำขอกำหนดตำแหน่ง (ใหม่)</h2>
@@ -326,8 +352,9 @@ input[type=number]{font-variant-numeric:tabular-nums}
       <!-- Upload Zone -->
       <div class="col-12 col-md-6">
         <p class="form-label mb-2">แนบเอกสาร / ไฟล์ประกอบ</p>
-        <div class="upload-zone" id="upload-zone"
+        <div class="upload-zone" id="upload-zone" role="button" tabindex="0"
              onclick="document.getElementById('file_attach').click()"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
              ondragover="event.preventDefault();this.classList.add('drag')"
              ondragleave="this.classList.remove('drag')"
              ondrop="handleDrop(event)">
@@ -345,39 +372,18 @@ input[type=number]{font-variant-numeric:tabular-nums}
         </div>
       </div>
 
-      <!-- Export Zone -->
-      <div class="col-12 col-md-6">
-        <p class="form-label mb-2">ส่งออกข้อมูล (Export)</p>
-        <div class="export-zone">
-          <div class="row g-2">
-            <div class="col-12">
-              <button type="button" class="btn btn-secondary w-100" onclick="exportPDFRecord()">
-                <i class="fa fa-file-pdf" aria-hidden="true"></i>Export PDF รายการนี้
-              </button>
-            </div>
-            <div class="col-6">
-              <button type="button" class="btn btn-secondary w-100" onclick="doExportCSV()">
-                <i class="fa fa-file-csv" aria-hidden="true"></i>Export CSV ทั้งหมด
-              </button>
-            </div>
-            <div class="col-6">
-              <button type="button" class="btn btn-secondary w-100" onclick="doExportJSON()">
-                <i class="fa fa-file-code" aria-hidden="true"></i>Export JSON ทั้งหมด
-              </button>
-            </div>
-          </div>
-          <div class="helper-text mt-2">บันทึกข้อมูลก่อน แล้วค่อย Export</div>
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- Buttons -->
-  <div class="form-actions d-flex flex-wrap justify-content-end gap-3 mb-5">
-    <button type="button" class="btn btn-secondary" onclick="clearForm()">
-      <i class="fa fa-times" aria-hidden="true"></i>ล้างฟอร์ม
+  <div class="form-actions d-flex flex-wrap gap-3 mb-5">
+    <button type="button" class="btn btn-danger" onclick="askClearForm()">
+      <i class="fa fa-eraser" aria-hidden="true"></i>ล้างฟอร์ม
     </button>
-    <button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i>บันทึกข้อมูล</button>
+    <button type="button" class="btn btn-secondary" onclick="exportPDFRecord()">
+      <i class="fa fa-file-pdf" aria-hidden="true"></i>ดูตัวอย่าง / พิมพ์ PDF
+    </button>
+    <button type="submit" class="btn btn-primary ms-auto"><i class="fa fa-save" aria-hidden="true"></i>บันทึกคำขอ</button>
   </div>
 </form>
 </div>
@@ -404,9 +410,10 @@ input[type=number]{font-variant-numeric:tabular-nums}
       <button type="button" class="btn btn-secondary" onclick="doExportJSON()"><i class="fa fa-file-code" aria-hidden="true"></i>Export JSON</button>
       <button type="button" class="btn btn-danger" onclick="clearAll()"><i class="fa fa-trash" aria-hidden="true"></i>ลบทั้งหมด</button>
     </div>
-    <span class="rec-count">แสดง <b id="rec-shown">0</b> / <b id="rec-total">0</b> รายการ</span>
+    <span class="rec-count">แสดง <b id="rec-shown">0</b> / <b id="rec-total">0</b> คำขอ</span>
   </div>
-  <div class="table-wrap">
+  <div id="list-empty" class="empty-state" hidden></div>
+  <div class="table-wrap" id="table-wrap">
     <table id="tbl">
       <thead>
         <tr>
@@ -436,6 +443,23 @@ input[type=number]{font-variant-numeric:tabular-nums}
 </main>
 
 <footer class="ftr">สำนักนายกรัฐมนตรี · ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่ง · เวอร์ชัน {{ version }}</footer>
+
+<!-- Confirm modal: ใช้กับการกระทำที่ลบหรือย้อนกลับไม่ได้ -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="confirmTitle"></h2>
+        <button type="button" class="btn btn-ghost btn-icon ms-auto" data-bs-dismiss="modal" aria-label="ปิด"><i class="fa fa-times" aria-hidden="true"></i></button>
+      </div>
+      <div class="modal-body" id="confirmBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <button type="button" class="btn btn-danger" id="confirmOk"></button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Toast -->
 <div class="toast-container">
@@ -631,6 +655,7 @@ const SEC_CFG = {
          names:['s3_type','s3_level','s3_no','s3_group','s3_division','s3_dept'] },
 };
 
+let fieldSeq = 0;
 function addRow(secId, vals=null){
   const cfg = SEC_CFG[secId];
   const ctr = document.getElementById(cfg.ctr);
@@ -640,6 +665,11 @@ function addRow(secId, vals=null){
   row.querySelector('.pos-row-num').textContent = idx;
   row.querySelector('.row-label').textContent   = `${cfg.lbl} ${idx}`;
   if(vals) cfg.names.forEach(n=>{ const el=row.querySelector(`[name="${n}"]`); if(el&&vals[n]!==undefined) el.value=vals[n]; });
+  /* ชื่อช่องซ้ำกันทุกแถว จึงต้องมี id ไม่ซ้ำให้ label for และลิงก์ในสรุปข้อผิดพลาดชี้ถึง */
+  row.querySelectorAll('[name]').forEach(el=>{
+    el.id=`${el.name}-${++fieldSeq}`;
+    el.parentElement.querySelector('label').htmlFor=el.id;
+  });
   ctr.appendChild(row);
 }
 
@@ -849,11 +879,20 @@ async function loadAll(){
 function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 function dStr(){ return new Date().toISOString().slice(0,10).replace(/-/g,''); }
 function fmtDate(s){ if(!s)return''; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; }
-/* timestamp ถูกเก็บเป็น ISO 8601 ค.ศ. ในฐานข้อมูล แปลงเป็นรูปแบบไทยที่จุดแสดงผลเท่านั้น */
+/* วันที่ถูกเก็บเป็น ISO 8601 ค.ศ. ในฐานข้อมูลและไฟล์ส่งออก แปลงเป็น พ.ศ. ที่จุดแสดงผลบนหน้าจอเท่านั้น
+   หน้าต่าง PDF ยังใช้ fmtDate เพราะรูปแบบเอกสารอยู่นอกขอบเขตของ DESIGN.md */
+function thDate(y,m,d){
+  const MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return `${Number(d)} ${MONTHS[Number(m)-1]} ${Number(y)+543}`;
+}
+function fmtDateTH(s){
+  const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? thDate(m[1],m[2],m[3]) : String(s||'');
+}
 function fmtStamp(s){
   if(!s) return '';
   const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
-  return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : String(s);
+  return m ? `${thDate(m[1],m[2],m[3])} ${m[4]}:${m[5]}` : String(s);
 }
 /* คำขอหนึ่งใบมีตำแหน่งใหม่ได้หลายรายการ ทั้งตารางและ Dashboard ต้องอ่านทุกแถว ไม่ใช่แถวแรก
    getRows เก็บแถวเปล่าที่ผู้ใช้กดเพิ่มแต่ไม่ได้กรอกไว้ด้วย จึงกรองออกก่อนทุกครั้ง */
@@ -870,7 +909,26 @@ function toast(msg,kind='success'){
   el.setAttribute('role',kind==='error'?'alert':'status');
   document.getElementById('toast-icon').className=`fa ${TOAST_ICON[kind]} t-icon`;
   document.getElementById('toast-msg').textContent=msg;
-  new bootstrap.Toast(el,{delay:2800}).show();
+  /* ข้อผิดพลาดต้องปิดเอง ข้อความอื่นหายไปเองหลัง 5 วินาที */
+  bootstrap.Toast.getInstance(el)?.dispose();
+  new bootstrap.Toast(el,{autohide:kind!=='error',delay:5000}).show();
+}
+
+function confirmDanger(title,body,okText,icon='fa-trash'){
+  return new Promise(resolve=>{
+    const el=document.getElementById('confirmModal');
+    document.getElementById('confirmTitle').textContent=title;
+    document.getElementById('confirmBody').textContent=body;
+    const ok=document.getElementById('confirmOk');
+    ok.innerHTML=`<i class="fa ${icon}" aria-hidden="true"></i>${esc(okText)}`;
+    const modal=bootstrap.Modal.getOrCreateInstance(el);
+    let yes=false;
+    ok.onclick=()=>{ yes=true; modal.hide(); };
+    /* focus เริ่มที่ปุ่มยกเลิก กด Enter โดยไม่ตั้งใจจึงไม่ลบอะไร */
+    el.addEventListener('shown.bs.modal',()=>el.querySelector('.modal-footer .btn-secondary').focus(),{once:true});
+    el.addEventListener('hidden.bs.modal',()=>resolve(yes),{once:true});
+    modal.show();
+  });
 }
 
 function showTab(id,el){
@@ -898,6 +956,7 @@ function getForm(){
   return d;
 }
 function setForm(r){
+  clearErrors();
   SF.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=r[id]||''; });
   ['sec1','sec2','sec3'].forEach(sec=>{
     clearRows(sec);
@@ -917,6 +976,7 @@ function setForm(r){
   }
 }
 function clearForm(){
+  clearErrors();
   SF.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('rec-id').value='';
   ['sec1','sec2','sec3'].forEach(clearRows);
@@ -924,21 +984,91 @@ function clearForm(){
   initDefaultRows();
 }
 
+async function askClearForm(){
+  if(await confirmDanger('ล้างฟอร์ม?','ข้อมูลที่กรอกไว้ในฟอร์มนี้และยังไม่ได้บันทึกจะหายทั้งหมด','ล้างฟอร์ม','fa-eraser')) clearForm();
+}
+
+/* คำขอต้องมีตำแหน่งใหม่อย่างน้อยหนึ่งตำแหน่ง และแถวที่เริ่มกรอกแล้วต้องครบทุกช่องที่มีเครื่องหมาย *
+   แถวที่ว่างทั้งแถวไม่นับ แบบเดียวกับที่ filledRows ข้ามแถวเปล่า คืนรายการข้อผิดพลาดตามลำดับที่เห็นบนหน้า
+   msg ใช้ในสรุปด้านบนจึงบอกว่าเป็นแถวไหน hint อยู่ใต้ช่องที่ผิดจึงสั้นกว่า */
+function validateRequest(d){
+  const REQUIRED=[['s1_type','กรุณาเลือกประเภทตำแหน่ง'],['s1_level','กรุณาเลือกระดับตำแหน่ง'],['s1_no','กรุณากรอกตำแหน่งเลขที่']];
+  let rows=[]; try{ rows=JSON.parse(d.sec1_rows||'[]'); }catch{}
+  if(!Array.isArray(rows)) rows=[];
+  const errs=[];
+  const started=rows.map((r,i)=>({r,i})).filter(({r})=>r&&Object.values(r).some(v=>String(v??'').trim()!==''));
+  if(!started.length) errs.push({sec:'sec1',row:0,name:'s1_type',hint:'กรุณากรอกตำแหน่งใหม่อย่างน้อย 1 ตำแหน่ง',msg:'กรุณากรอกตำแหน่งใหม่อย่างน้อย 1 ตำแหน่ง (ส่วนที่ 1)'});
+  started.forEach(({r,i})=>REQUIRED.forEach(([n,msg])=>{
+    if(String(r[n]??'').trim()==='') errs.push({sec:'sec1',row:i,name:n,hint:msg,msg:`${msg} ของตำแหน่งใหม่ ที่ ${i+1}`});
+  }));
+  if(!String(d.p4_status??'').trim()) errs.push({id:'p4_status',hint:'กรุณาเลือกสถานะคำขอ',msg:'กรุณาเลือกสถานะคำขอ (ส่วนที่ 4)'});
+  return errs;
+}
+
+function errorField(err){
+  if(err.id) return document.getElementById(err.id);
+  const row=document.querySelectorAll(`#${SEC_CFG[err.sec].ctr} .pos-row`)[err.row];
+  return row ? row.querySelector(`[name="${err.name}"]`) : null;
+}
+function clearFieldError(el){
+  el.classList.remove('invalid');
+  el.removeAttribute('aria-invalid');
+  document.getElementById(el.id+'-err')?.remove();
+  const rest=(el.getAttribute('aria-describedby')||'').split(' ').filter(x=>x&&x!==el.id+'-err');
+  rest.length ? el.setAttribute('aria-describedby',rest.join(' ')) : el.removeAttribute('aria-describedby');
+}
+function clearErrors(){
+  document.querySelectorAll('#mainForm .invalid').forEach(clearFieldError);
+  const box=document.getElementById('form-errors'); box.hidden=true; box.innerHTML='';
+}
+function showErrors(errs){
+  clearErrors();
+  if(!document.querySelector('#sec1-container .pos-row')) addRow('sec1');
+  const items=errs.map(err=>{
+    const el=errorField(err);
+    if(!el) return `<li>${esc(err.msg)}</li>`;
+    el.classList.add('invalid');
+    el.setAttribute('aria-invalid','true');
+    const note=document.createElement('div');
+    note.className='error-text'; note.id=el.id+'-err';
+    note.innerHTML=`<i class="fa fa-exclamation-circle" aria-hidden="true"></i><span>${esc(err.hint)}</span>`;
+    el.insertAdjacentElement('afterend',note);
+    el.setAttribute('aria-describedby',[el.getAttribute('aria-describedby'),note.id].filter(Boolean).join(' '));
+    return `<li><a href="#${el.id}" data-field="${el.id}">${esc(err.msg)}</a></li>`;
+  });
+  const box=document.getElementById('form-errors');
+  box.innerHTML=`<i class="fa fa-exclamation-circle n-icon" aria-hidden="true"></i>
+    <div><strong>กรุณาแก้ไข ${errs.length} จุดก่อนบันทึกคำขอ</strong><ul>${items.join('')}</ul></div>`;
+  box.hidden=false;
+  box.focus();
+}
+document.getElementById('form-errors').addEventListener('click',e=>{
+  const a=e.target.closest('a[data-field]'); if(!a) return;
+  e.preventDefault();
+  const el=document.getElementById(a.dataset.field);
+  el.scrollIntoView({block:'center'}); el.focus();
+});
+/* แก้ช่องที่ผิดแล้ว ข้อความใต้ช่องหายทันที สรุปด้านบนคงไว้จนกดบันทึกครั้งต่อไป */
+['input','change'].forEach(ev=>document.getElementById('mainForm').addEventListener(ev,e=>{
+  const el=e.target;
+  if(el.classList&&el.classList.contains('invalid')&&String(el.value).trim()!=='') clearFieldError(el);
+}));
+
 document.getElementById('mainForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const d=getForm();
-  if(!d.p4_status) return toast('กรุณาเลือกสถานะคำขอ (ส่วนที่ 4)','error');
-  const s1=JSON.parse(d.sec1_rows||'[]');
-  if(!s1.length||!s1[0].s1_type||!s1[0].s1_no) return toast('กรุณากรอกตำแหน่งใหม่ ที่ 1 ให้ครบ','error');
+  const errs=validateRequest(d);
+  if(errs.length) return showErrors(errs);
+  clearErrors();
   const rid=document.getElementById('rec-id').value;
   const btn=document.querySelector('#mainForm button[type="submit"]');
   btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>กำลังบันทึก...';
   try{
-    if(rid){ await dbUpd(rid,d); toast('อัปเดตข้อมูลเรียบร้อยแล้ว ✓'); }
-    else   { await dbAdd(d);     toast('บันทึกข้อมูลเรียบร้อยแล้ว ✓'); }
+    if(rid){ await dbUpd(rid,d); toast('อัปเดตคำขอเรียบร้อยแล้ว'); }
+    else   { await dbAdd(d);     toast('บันทึกคำขอเรียบร้อยแล้ว'); }
     clearForm(); await loadAll();
   }catch(err){ toast('เกิดข้อผิดพลาด: '+err.message,'error'); }
-  finally{ btn.disabled=false; btn.innerHTML='<i class="fa fa-save" aria-hidden="true"></i>บันทึกข้อมูล'; }
+  finally{ btn.disabled=false; btn.innerHTML='<i class="fa fa-save" aria-hidden="true"></i>บันทึกคำขอ'; }
 });
 
 /* ============================================================
@@ -953,6 +1083,12 @@ function renderTable(){
   });
   document.getElementById('rec-shown').textContent=f.length;
   document.getElementById('rec-total').textContent=allRecords.length;
+  const empty=document.getElementById('list-empty');
+  empty.hidden=f.length>0;
+  document.getElementById('table-wrap').hidden=f.length===0;
+  empty.innerHTML=allRecords.length
+    ? `<p>ไม่พบคำขอที่ตรงกับการค้นหา</p><button type="button" class="btn btn-secondary" onclick="resetFilter()"><i class="fa fa-times" aria-hidden="true"></i>ล้างการค้นหา</button>`
+    : `<p>ยังไม่มีคำขอ</p><button type="button" class="btn btn-secondary" onclick="showTab('tab-form',document.querySelector('.tbtn'))"><i class="fa fa-plus" aria-hidden="true"></i>เพิ่มคำขอ</button>`;
   document.getElementById('tbody').innerHTML=f.map((r,i)=>{
     const rid=r.id;
     const s1=filledRows(r.sec1_rows); const s2=filledRows(r.sec2_rows); const s3=filledRows(r.sec3_rows);
@@ -966,7 +1102,7 @@ function renderTable(){
       <td class="sm">${esc(s2.map(x=>x.s2_type||'').filter(Boolean).join(', '))||'-'}</td>
       <td class="sm">${esc(s3.map(x=>x.s3_no||'').filter(Boolean).join(', '))||'-'}</td>
       <td class="tnum">${esc(r.p4_round)||'-'}</td>
-      <td class="tnum">${fmtDate(r.p4_date)||'-'}</td>
+      <td class="tnum">${esc(fmtDateTH(r.p4_date))||'-'}</td>
       <td class="sm">${esc(r.p4_resolution)||'-'}</td>
       <td>${r.p4_status?`<span class="tag tag-${STATUS_TAG[r.p4_status]||'neutral'}">${esc(r.p4_status)}</span>`:'-'}</td>
       <td class="num">${sal}</td>
@@ -985,10 +1121,31 @@ async function editRec(id){
   const r=allRecords.find(x=>x.id==id);
   if(!r) return;
   document.querySelectorAll('.tbtn')[0].click();
-  setTimeout(()=>{ setForm(r); document.getElementById('rec-id').value=id; window.scrollTo(0,0); toast('โหลดข้อมูลเพื่อแก้ไขแล้ว','info'); },100);
+  setTimeout(()=>{ setForm(r); document.getElementById('rec-id').value=id; window.scrollTo(0,0); toast('โหลดคำขอเพื่อแก้ไขแล้ว','info'); },100);
 }
-async function delRec(id){ if(!confirm('ต้องการลบรายการนี้?'))return; await dbDel(id); toast('ลบรายการเรียบร้อย'); await loadAll(); renderTable(); }
-async function clearAll(){ if(!confirm('ต้องการลบข้อมูลทั้งหมด?\n(ไม่สามารถย้อนกลับได้)'))return; await dbClear(); toast('ลบข้อมูลทั้งหมดเรียบร้อย'); await loadAll(); renderTable(); }
+function resetFilter(){
+  document.getElementById('search-input').value='';
+  document.getElementById('filter-status').value='';
+  renderTable();
+}
+async function delRec(id){
+  const r=allRecords.find(x=>x.id==id);
+  if(!r) return;
+  const s1=filledRows(r.sec1_rows);
+  const what=`คำขอที่มีตำแหน่งใหม่ ${s1.length} ตำแหน่ง (เลขที่ ${colList(s1,'s1_no')}) สถานะ ${r.p4_status||'-'}`;
+  const tail=r.file_orig_name?`\nไฟล์แนบ ${r.file_orig_name} จะถูกลบด้วย`:'';
+  if(!await confirmDanger('ลบคำขอนี้?',`${what}${tail}\nลบแล้วย้อนกลับไม่ได้`,'ลบคำขอ')) return;
+  try{ await dbDel(id); toast('ลบคำขอเรียบร้อย'); }
+  catch(err){ toast('ลบคำขอไม่สำเร็จ: '+err.message,'error'); }
+  await loadAll(); renderTable();
+}
+async function clearAll(){
+  if(!allRecords.length) return toast('ยังไม่มีคำขอ','info');
+  if(!await confirmDanger('ลบคำขอทั้งหมด?',`คำขอทั้ง ${allRecords.length} คำขอและไฟล์แนบทุกไฟล์จะถูกลบ\nลบแล้วย้อนกลับไม่ได้`,'ลบทั้งหมด')) return;
+  try{ await dbClear(); toast('ลบคำขอทั้งหมดเรียบร้อย'); }
+  catch(err){ toast('ลบคำขอไม่สำเร็จ: '+err.message,'error'); }
+  await loadAll(); renderTable();
+}
 
 /* ============================================================
    EXPORT CSV / JSON
@@ -1002,7 +1159,7 @@ function csvCell(v){
 }
 function dl(c,n,t){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); }
 function doExportCSV(){
-  if(!allRecords.length) return toast('ไม่มีข้อมูล','info');
+  if(!allRecords.length) return toast('ยังไม่มีคำขอให้ส่งออก','info');
   const flat=allRecords.map(r=>{
     const b={...r};
     ['sec1_rows','sec2_rows','sec3_rows'].forEach(k=>{
@@ -1013,12 +1170,12 @@ function doExportCSV(){
   const keys=[...new Set(flat.flatMap(r=>Object.keys(r)))];
   const rows=flat.map(r=>keys.map(k=>csvCell(r[k])).join(','));
   dl('\uFEFF'+[keys.join(','),...rows].join('\n'),`pos_${dStr()}.csv`,'text/csv;charset=utf-8');
-  toast('Export CSV สำเร็จ ✓');
+  toast('Export CSV สำเร็จ');
 }
 function doExportJSON(){
-  if(!allRecords.length) return toast('ไม่มีข้อมูล','info');
+  if(!allRecords.length) return toast('ยังไม่มีคำขอให้ส่งออก','info');
   dl(JSON.stringify(allRecords,null,2),`pos_${dStr()}.json`,'application/json');
-  toast('Export JSON สำเร็จ ✓');
+  toast('Export JSON สำเร็จ');
 }
 
 /* ============================================================

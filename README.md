@@ -12,16 +12,17 @@
   5. ค่าตอบแทนเฉลี่ยคงเหลือ
 
   ส่วนที่ 1 ถึง 3 เพิ่มได้หลายตำแหน่งต่อคำขอ
-- แนบเอกสารประกอบได้หนึ่งไฟล์ต่อรายการ รองรับ PDF, Word และ Excel ขนาดไม่เกิน 10 MB
-- แท็บรายการทั้งหมด สำหรับแก้ไขและลบรายการ
+- แนบเอกสารประกอบได้หนึ่งไฟล์ต่อคำขอ รองรับ PDF, Word และ Excel ขนาดไม่เกิน 10 MB
+- แท็บคำขอทั้งหมด สำหรับแก้ไขและลบคำขอ
 - แท็บสรุปภาพรวม แสดงกราฟด้วย Chart.js
-- ส่งออกเป็น CSV, JSON และพิมพ์หรือบันทึกเป็น PDF ทีละรายการ
+- ส่งออกเป็น CSV, JSON และพิมพ์หรือบันทึกเป็น PDF ทีละคำขอ
+- หน้าตาตาม [DESIGN.md](DESIGN.md) และใช้คำตาม [GLOSSARY.md](GLOSSARY.md)
 
 ## ความต้องการของระบบ
 
 - Windows 10 หรือ 11
 - Python 3.10 ขึ้นไป
-- อินเทอร์เน็ต ตอนนี้หน้าเว็บยังโหลด Bootstrap, Font Awesome, Chart.js และฟอนต์ Sarabun จาก CDN (ดูหัวข้อ [ข้อจำกัดที่ทราบ](#ข้อจำกัดที่ทราบ))
+- ไม่ต้องต่ออินเทอร์เน็ต ไลบรารีหน้าเว็บและฟอนต์อยู่ใน `static/vendor` ทั้งหมด
 - Node.js (ไม่บังคับ) ใช้เฉพาะเทสที่รันฟังก์ชัน JavaScript ของหน้าเว็บ ถ้าไม่มี เทสกลุ่มนั้นจะถูกข้าม
 
 ## ติดตั้ง
@@ -58,7 +59,7 @@ python -m venv .venv
   --name "PosRestructure" app.py
 ```
 
-`--add-data "static;static"` คือไลบรารีหน้าเว็บ ถ้าไม่ใส่บรรทัดนี้ `.exe` จะไม่มี Bootstrap, Chart.js, Font Awesome และฟอนต์ Sarabun ติดไปด้วย และแท็บสรุปภาพรวมจะใช้งานไม่ได้
+`--add-data "static;static"` คือไลบรารีหน้าเว็บ ถ้าไม่ใส่บรรทัดนี้ `.exe` จะไม่มี Bootstrap, Chart.js, Font Awesome และฟอนต์ Noto Sans Thai กับ Sarabun ติดไปด้วย และแท็บสรุปภาพรวมจะใช้งานไม่ได้
 
 ไฟล์ที่ได้อยู่ใน `dist\PosRestructure.exe` ตอนรัน แอปจะสร้างฐานข้อมูล ไฟล์ log และโฟลเดอร์ `uploads` ไว้ข้างไฟล์ `.exe`
 
@@ -68,7 +69,9 @@ python -m venv .venv
 pos_restructure/
 ├── app.py                 Flask app, API และตัวเปิดหน้าต่าง pywebview
 ├── templates/index.html   หน้าเว็บทั้งหมด (HTML, CSS, JavaScript ในไฟล์เดียว)
-├── static/vendor/         Bootstrap, Chart.js, Font Awesome, ฟอนต์ Sarabun ในเครื่อง
+├── DESIGN.md              ระบบออกแบบของหน้าเว็บ (DESIGN-sap.md, DESIGN-ibm.md คือต้นทาง)
+├── GLOSSARY.md            ความหมายของคำในโดเมน เช่น คำขอ มติที่ประชุม สถานะคำขอ
+├── static/vendor/         Bootstrap, Chart.js, Font Awesome, ฟอนต์ Noto Sans Thai และ Sarabun ในเครื่อง
 ├── test_api.py            เทส regression ของ API และฟังก์ชันในหน้าเว็บ
 ├── verify_offline.py      เปิดหน้าเว็บในเบราว์เซอร์ที่ตัดเน็ต แล้ววัดว่าไลบรารีมาครบ
 ├── vendor_assets.py       ดาวน์โหลดไลบรารีหน้าเว็บมาไว้ใน static/vendor
@@ -155,7 +158,7 @@ REM ลบคอลัมน์ที่โค้ดไม่ใช้แล้�
 .venv\Scripts\python.exe migrate_schema.py --apply
 ```
 
-ส่วน `vendor_assets.py` ดาวน์โหลดไลบรารีหน้าเว็บลง `static/vendor` ใหม่ทั้งโฟลเดอร์ ต้องต่อเน็ตตอนรัน ใช้เมื่อขึ้นเวอร์ชัน Bootstrap, Chart.js, Font Awesome หรือฟอนต์ Sarabun โดยแก้ตาราง `ASSETS` ในสคริปต์ก่อน แล้วรัน `verify_offline.py` ซ้ำ
+ส่วน `vendor_assets.py` ดาวน์โหลดไลบรารีหน้าเว็บลง `static/vendor` ใหม่ทั้งโฟลเดอร์ ต้องต่อเน็ตตอนรัน ใช้เมื่อขึ้นเวอร์ชัน Bootstrap, Chart.js, Font Awesome หรือฟอนต์ Noto Sans Thai และ Sarabun โดยแก้ตาราง `ASSETS` ในสคริปต์ก่อน แล้วรัน `verify_offline.py` ซ้ำ
 
 ```bat
 .venv\Scripts\python.exe vendor_assets.py
