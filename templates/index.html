@@ -812,10 +812,10 @@ function exportPDFRecord(){
   <h3>ส่วนที่ 4 : การพิจารณา อกพ.</h3>
   <div class="info-row">
     <div class="info-item"><div class="info-label">ประชุมครั้งที่</div><div class="info-val">${esc(d.p4_round)||'-'}</div></div>
-    <div class="info-item"><div class="info-label">เมื่อวันที่</div><div class="info-val">${fmtDate(d.p4_date)||'-'}</div></div>
+    <div class="info-item"><div class="info-label">เมื่อวันที่</div><div class="info-val">${esc(fmtDateTH(d.p4_date))||'-'}</div></div>
     <div class="info-item"><div class="info-label">มติที่ประชุม</div><div class="info-val">${esc(d.p4_resolution)||'-'}</div></div>
     <div class="info-item"><div class="info-label">สถานะคำขอ</div><div class="info-val">${esc(d.p4_status)||'-'}</div></div>
-    <div class="info-item"><div class="info-label">วันที่มีผล</div><div class="info-val">${fmtDate(d.p4_effective)||'-'}</div></div>
+    <div class="info-item"><div class="info-label">วันที่มีผล</div><div class="info-val">${esc(fmtDateTH(d.p4_effective))||'-'}</div></div>
   </div>
   <div class="info-item"><div class="info-label">หมายเหตุ</div><div class="info-val">${esc(d.p4_note)||'-'}</div></div>
 
@@ -823,7 +823,7 @@ function exportPDFRecord(){
   <div class="info-row">
     <div class="info-item"><div class="info-label">ค่าตอบแทนเฉลี่ย (บาท)</div><div class="info-val">${d.p5_salary?Number(d.p5_salary).toLocaleString('th-TH'):'- '}</div></div>
     <div class="info-item"><div class="info-label">ประชุมครั้งที่</div><div class="info-val">${esc(d.p5_round)||'-'}</div></div>
-    <div class="info-item"><div class="info-label">เมื่อวันที่</div><div class="info-val">${fmtDate(d.p5_date)||'-'}</div></div>
+    <div class="info-item"><div class="info-label">เมื่อวันที่</div><div class="info-val">${esc(fmtDateTH(d.p5_date))||'-'}</div></div>
   </div>
 
   <div style="text-align:center;margin-top:20px">
@@ -878,9 +878,8 @@ async function loadAll(){
    ============================================================ */
 function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 function dStr(){ return new Date().toISOString().slice(0,10).replace(/-/g,''); }
-function fmtDate(s){ if(!s)return''; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; }
-/* วันที่ถูกเก็บเป็น ISO 8601 ค.ศ. ในฐานข้อมูลและไฟล์ส่งออก แปลงเป็น พ.ศ. ที่จุดแสดงผลบนหน้าจอเท่านั้น
-   หน้าต่าง PDF ยังใช้ fmtDate เพราะรูปแบบเอกสารอยู่นอกขอบเขตของ DESIGN.md */
+/* วันที่ถูกเก็บเป็น ISO 8601 ค.ศ. ในฐานข้อมูลและไฟล์ส่งออก แปลงเป็น พ.ศ. ที่จุดแสดงผลเท่านั้น
+   ทั้งบนหน้าจอและในหน้าต่าง PDF */
 function thDate(y,m,d){
   const MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   return `${Number(d)} ${MONTHS[Number(m)-1]} ${Number(y)+543}`;
