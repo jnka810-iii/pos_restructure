@@ -72,7 +72,8 @@ h1,h2,h3{letter-spacing:0}
 
 /* Dynamic rows */
 /* แถวตำแหน่งเป็นการ์ดพื้นเทาอ่อน ช่องกรอกสีขาวจึงเด่นขึ้นมาจากพื้น ตามหน้าตาเดิมของระบบ */
-.pos-row{background:var(--band);border:1px solid var(--hairline);border-radius:8px;padding:16px;margin-bottom:16px}
+.pos-row,.field-card{background:var(--band);border:1px solid var(--hairline);border-radius:8px;padding:16px;margin-bottom:16px}
+.field-card{margin-bottom:0}
 .pos-row-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .pos-row-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
              border-radius:50%;background:var(--primary);color:var(--on-primary);font-size:13px;font-weight:700;line-height:1}
@@ -300,42 +301,44 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <!-- ส่วนที่ 4 -->
   <h2 class="sh"><i class="fa fa-gavel" aria-hidden="true"></i>ส่วนที่ 4 : การพิจารณาของ อกพ. สำนักนายกรัฐมนตรี ในคราวประชุม</h2>
   <div class="sb">
-    <div class="row gx-3 gy-4">
-      <div class="col-12 col-md-6 col-lg-3">
-        <label class="form-label" for="p4_round">ประชุมครั้งที่</label>
-        <input type="text" class="form-control" id="p4_round" placeholder="เช่น 3/2567">
-      </div>
-      <div class="col-12 col-md-6 col-lg-3">
-        <label class="form-label" for="p4_date">เมื่อวันที่</label>
-        <input type="date" class="form-control" id="p4_date">
-      </div>
-      <div class="col-12 col-md-6 col-lg-3">
-        <label class="form-label" for="p4_resolution">มติที่ประชุม</label>
-        <select class="form-select" id="p4_resolution">
-          <option value="">— เลือก —</option>
-          <option>เห็นควรอนุมัติ</option>
-          <option>ไม่เห็นควรอนุมัติ</option>
-          <option>รอพิจารณาเพิ่มเติม</option>
-        </select>
-      </div>
-      <div class="col-12 col-md-6 col-lg-3">
-        <label class="form-label required" for="p4_status">สถานะคำขอ</label>
-        <select class="form-select" id="p4_status" required>
-          <option value="">— เลือก —</option>
-          <option>อนุมัติ</option>
-          <option>ไม่อนุมัติ</option>
-          <option>อยู่ระหว่างพิจารณา</option>
-          <option>รอเอกสารเพิ่มเติม</option>
-          <option>ถอนคำขอ</option>
-        </select>
-      </div>
-      <div class="col-12 col-md-6 col-lg-3">
-        <label class="form-label" for="p4_effective">วันที่มีผล</label>
-        <input type="date" class="form-control" id="p4_effective">
-      </div>
-      <div class="col-12">
-        <label class="form-label" for="p4_note">หมายเหตุ</label>
-        <textarea class="form-control" id="p4_note" rows="3" placeholder="หมายเหตุเพิ่มเติม"></textarea>
+    <div class="field-card">
+      <div class="row gx-3 gy-4">
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label" for="p4_round">ประชุมครั้งที่</label>
+          <input type="text" class="form-control" id="p4_round" placeholder="เช่น 3/2567">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label" for="p4_date">เมื่อวันที่</label>
+          <input type="date" class="form-control" id="p4_date">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label" for="p4_resolution">มติที่ประชุม</label>
+          <select class="form-select" id="p4_resolution">
+            <option value="">— เลือก —</option>
+            <option>เห็นควรอนุมัติ</option>
+            <option>ไม่เห็นควรอนุมัติ</option>
+            <option>รอพิจารณาเพิ่มเติม</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label required" for="p4_status">สถานะคำขอ</label>
+          <select class="form-select" id="p4_status" required>
+            <option value="">— เลือก —</option>
+            <option>อนุมัติ</option>
+            <option>ไม่อนุมัติ</option>
+            <option>อยู่ระหว่างพิจารณา</option>
+            <option>รอเอกสารเพิ่มเติม</option>
+            <option>ถอนคำขอ</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label" for="p4_effective">วันที่มีผล</label>
+          <input type="date" class="form-control" id="p4_effective">
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="p4_note">หมายเหตุ</label>
+          <textarea class="form-control" id="p4_note" rows="3" placeholder="หมายเหตุเพิ่มเติม"></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -343,51 +346,53 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <!-- ส่วนที่ 5 -->
   <h2 class="sh"><i class="fa fa-coins" aria-hidden="true"></i>ส่วนที่ 5 : ค่าตอบแทนเฉลี่ยของตำแหน่งคงเหลือ</h2>
   <div class="sb">
-    <div class="row gx-3 gy-4 mb-4">
-      <div class="col-12 col-md-6 col-lg-4">
-        <label class="form-label" for="p5_salary">ค่าตอบแทนเฉลี่ยคงเหลือ (บาท/เดือน)</label>
-        <div class="input-group">
-          <span class="input-group-text" aria-hidden="true"><i class="fa fa-baht-sign"></i></span>
-          <input type="number" class="form-control" id="p5_salary" min="0" step="0.01" placeholder="0.00">
-          <span class="input-group-text">บาท</span>
+    <div class="field-card">
+      <div class="row gx-3 gy-4 mb-4">
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="form-label" for="p5_salary">ค่าตอบแทนเฉลี่ยคงเหลือ (บาท/เดือน)</label>
+          <div class="input-group">
+            <span class="input-group-text" aria-hidden="true"><i class="fa fa-baht-sign"></i></span>
+            <input type="number" class="form-control" id="p5_salary" min="0" step="0.01" placeholder="0.00">
+            <span class="input-group-text">บาท</span>
+          </div>
         </div>
-      </div>
-      <div class="col-12 col-md-6 col-lg-3">
-        <label class="form-label" for="p5_round">การประชุมครั้งที่</label>
-        <input type="text" class="form-control" id="p5_round" placeholder="เช่น 3/2567" aria-describedby="p5_round_help">
-        <div class="helper-text" id="p5_round_help">ครั้งที่ประชุมที่รับรองค่าตอบแทนเฉลี่ย</div>
-      </div>
-      <div class="col-12 col-md-6 col-lg-3">
-        <label class="form-label" for="p5_date">เมื่อวันที่</label>
-        <input type="date" class="form-control" id="p5_date">
-      </div>
-    </div>
-
-    <!-- Upload & Export Panel -->
-    <div class="row g-4">
-      <!-- Upload Zone -->
-      <div class="col-12 col-md-6">
-        <p class="form-label mb-2">แนบเอกสาร / ไฟล์ประกอบ</p>
-        <div class="upload-zone" id="upload-zone" role="button" tabindex="0"
-             onclick="document.getElementById('file_attach').click()"
-             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
-             ondragover="event.preventDefault();this.classList.add('drag')"
-             ondragleave="this.classList.remove('drag')"
-             ondrop="handleDrop(event)">
-          <div class="zone-body"></div>
-          <input type="file" id="file_attach" style="display:none"
-                 accept=".pdf,.doc,.docx,.xls,.xlsx"
-                 onchange="handleFileSelect(this)">
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label" for="p5_round">การประชุมครั้งที่</label>
+          <input type="text" class="form-control" id="p5_round" placeholder="เช่น 3/2567" aria-describedby="p5_round_help">
+          <div class="helper-text" id="p5_round_help">ครั้งที่ประชุมที่รับรองค่าตอบแทนเฉลี่ย</div>
         </div>
-        <div id="file-info" class="file-info">
-          <i class="fa fa-file-alt" aria-hidden="true"></i>
-          <span id="file-name-display" class="me-auto"></span>
-          <button type="button" class="btn btn-ghost btn-icon" onclick="clearFile()" aria-label="ลบไฟล์">
-            <i class="fa fa-times" aria-hidden="true"></i>
-          </button>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label" for="p5_date">เมื่อวันที่</label>
+          <input type="date" class="form-control" id="p5_date">
         </div>
       </div>
 
+      <!-- Upload & Export Panel -->
+      <div class="row g-4">
+        <!-- Upload Zone -->
+        <div class="col-12 col-md-6">
+          <p class="form-label mb-2">แนบเอกสาร / ไฟล์ประกอบ</p>
+          <div class="upload-zone" id="upload-zone" role="button" tabindex="0"
+               onclick="document.getElementById('file_attach').click()"
+               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
+               ondragover="event.preventDefault();this.classList.add('drag')"
+               ondragleave="this.classList.remove('drag')"
+               ondrop="handleDrop(event)">
+            <div class="zone-body"></div>
+            <input type="file" id="file_attach" style="display:none"
+                   accept=".pdf,.doc,.docx,.xls,.xlsx"
+                   onchange="handleFileSelect(this)">
+          </div>
+          <div id="file-info" class="file-info">
+            <i class="fa fa-file-alt" aria-hidden="true"></i>
+            <span id="file-name-display" class="me-auto"></span>
+            <button type="button" class="btn btn-ghost btn-icon" onclick="clearFile()" aria-label="ลบไฟล์">
+              <i class="fa fa-times" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
