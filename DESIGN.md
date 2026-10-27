@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Thai-Gov-Form-System
-description: "A Thai-language design system for government data-entry applications, merged from the SAP and IBM Carbon analyses on getdesign.md. SAP supplies the look — a white working surface on a light-grey page, one acting blue, 8px control corners, a slate text ladder and zero letter-spacing. IBM Carbon supplies the form machinery — boxed 48px fields with a full border-strong outline and a 2px blue focus ring, a full semantic palette for validation, a 4px spacing grid and 48px touch targets. Typography is rebuilt for Thai: Noto Sans Thai Variable, no tracking, line-height never below 1.4, and nothing smaller than 14px for running text. A solid deep-blue header keeps the page recognisably governmental."
+description: "A Thai-language design system for government data-entry applications, merged from the SAP and IBM Carbon analyses on getdesign.md. SAP supplies the look — a white working surface on a light-grey page, one acting blue, 8px control corners, a slate text ladder and zero letter-spacing. IBM Carbon supplies the form machinery — field states, a full semantic palette for validation; the fields themselves keep this system's original white boxes with a soft border and a blue focus halo, a full semantic palette for validation, a 4px spacing grid and 48px touch targets. Typography is rebuilt for Thai: Noto Sans Thai Variable, no tracking, line-height never below 1.4, and nothing smaller than 14px for running text. A solid deep-blue header keeps the page recognisably governmental."
 
 colors:
   primary: "#0057d2"
@@ -37,6 +37,10 @@ colors:
   error-bg: "#fff1f1"
   info: "#0057d2"
   info-bg: "#ebf8ff"
+  add-row: "#198754"
+  add-row-end: "#20c997"
+  add-row-hover: "#145c38"
+  field-border: "#d0d8e3"
 
 typography:
   page-title:
@@ -84,7 +88,7 @@ typography:
   label:
     fontFamily: Noto Sans Thai
     fontSize: 14px
-    fontWeight: 500
+    fontWeight: 600
     lineHeight: 1.5
     letterSpacing: 0
   input:
@@ -227,7 +231,7 @@ components:
     height: 52px
   field-label:
     backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink-label}"
+    textColor: "{colors.primary}"
     typography: "{typography.label}"
     rounded: "{rounded.none}"
   required-mark:
@@ -239,56 +243,56 @@ components:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.input}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 11px 16px
     height: 48px
   text-input-hover:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.input}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 11px 16px
     height: 48px
   text-input-focused:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.input}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 11px 16px
     height: 48px
   text-input-error:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.input}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 11px 16px
     height: 48px
   text-input-disabled:
     backgroundColor: "{colors.field-disabled}"
     textColor: "{colors.ink-disabled}"
     typography: "{typography.input}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 11px 16px
     height: 48px
   text-input-readonly:
-    backgroundColor: "{colors.page}"
+    backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink-body}"
     typography: "{typography.input}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 11px 16px
     height: 48px
   select:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.input}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 11px 40px 11px 16px
     height: 48px
   textarea:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.input}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 11px 16px
     height: 112px
   helper-text:
@@ -364,6 +368,26 @@ components:
     rounded: "{rounded.md}"
     padding: 12px 20px
     height: 48px
+  button-danger-outline:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.error}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.md}"
+    padding: 4px 12px
+    height: 36px
+  button-add-row:
+    backgroundColor: "{colors.add-row}"
+    textColor: "{colors.on-primary}"
+    typography: "{typography.button}"
+    rounded: "{rounded.md}"
+    padding: 12px 20px
+    height: 48px
+  pos-row-num:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    typography: "{typography.badge}"
+    rounded: "{rounded.pill}"
+    height: 24px
   button-disabled:
     backgroundColor: "{colors.field-disabled}"
     textColor: "{colors.ink-disabled}"
@@ -455,7 +479,7 @@ components:
 ที่มาของแต่ละส่วน:
 
 - **จาก SAP (หน้าตา):** ใช้พื้นขาวเป็นพื้นที่ทำงาน วางบนหน้าเทาอ่อน `{colors.page}` ใช้น้ำเงิน `{colors.primary}` สีเดียวกับทุกสิ่งที่กดได้ ปุ่มและช่องต่าง ๆ มุม 8px ตัวอักษรไล่โทนเทาอมน้ำเงิน (slate) และไม่ใช้ letter-spacing
-- **จาก IBM Carbon (กลไกฟอร์ม):** ช่องกรอกเป็นกล่องพื้นขาวมีกรอบครบสี่ด้าน เมื่อ focus มีกรอบน้ำเงิน 2px มีสีสถานะครบ (สำเร็จ / เตือน / ผิดพลาด / ข้อมูล) ใช้กริด 4px และปุ่มหรือช่องที่กดได้สูงอย่างน้อย 48px
+- **จาก IBM Carbon (กลไกฟอร์ม):** กลไกสถานะของช่องกรอก (focus, error, disabled) มีสีสถานะครบ (สำเร็จ / เตือน / ผิดพลาด / ข้อมูล) ใช้กริด 4px และปุ่มหรือช่องที่กดได้สูงอย่างน้อย 48px
 - **ปรับเพิ่มสำหรับไทยและราชการ:** ใช้ฟอนต์ Noto Sans Thai, ระยะบรรทัดเผื่อสระบนสระล่าง, ตัวอักษรเนื้อหาขั้นต่ำ 14px และใช้แถบหัวสีน้ำเงินเข้ม `{colors.header}` เพื่อให้ยังดูเป็นเว็บของหน่วยงานรัฐ
 
 **ลักษณะสำคัญ:**
@@ -476,13 +500,14 @@ components:
 ### พื้นผิว
 - **Page** (`{colors.page}` #f5f6f7): พื้นหลังของหน้าทั้งหมด หัวตาราง
 - **Canvas** (`{colors.canvas}` #ffffff): การ์ดฟอร์ม แถบแท็บ ตาราง และ modal
-- **Field** (`{colors.field}` #f5f6f7): พื้นของรายการไฟล์ที่อัปโหลด (ช่องกรอกใช้พื้น `{colors.canvas}` ดูหัวข้อช่องกรอก)
+- **Field** (`{colors.field}` #f5f6f7): พื้นของรายการไฟล์ที่อัปโหลด (ช่องกรอกใช้พื้น `{colors.canvas}` ดูข้อยกเว้นของระบบนี้)
 - **Band Blue** (`{colors.band-blue}` #ebf8ff): หัวข้อแต่ละส่วนแบบปกติ แถวตารางเมื่อ hover และพื้นของช่องอัปโหลดเมื่อลากไฟล์มาวาง
 - **Band** (`{colors.band}` #eaecee): footer และช่องที่ปิดใช้งาน
 
 ### เส้น
 - **Hairline** (`{colors.hairline}` #d5dadd): ขอบการ์ด เส้นแบ่งแถวตาราง และเส้นใต้แถบแท็บ เป็นเส้นตกแต่ง ไม่ได้ใช้ระบุขอบเขตของส่วนที่ต้องโต้ตอบ
-- **Border Strong** (`{colors.border-strong}` #8d8d8d): กรอบช่องกรอกและขอบช่องอัปโหลด ความต่างของสีกับพื้นอย่างน้อย 3:1 ตาม WCAG 1.4.11
+- **Field Border** (`{colors.field-border}` #d0d8e3): กรอบช่องกรอก ตามหน้าตาเดิมของระบบ (ข้อยกเว้นของระบบนี้)
+- **Border Strong** (`{colors.border-strong}` #8d8d8d): ขอบช่องอัปโหลด ความต่างของสีกับพื้นอย่างน้อย 3:1 ตาม WCAG 1.4.11
 - **Focus** (`{colors.focus}` #0057d2): กรอบ 2px รอบส่วนที่กำลัง focus
 
 ### ตัวอักษร
@@ -491,7 +516,7 @@ components:
 | `{colors.ink}` | #0b1d33 | หัวข้อ ข้อความที่ผู้ใช้พิมพ์ในช่องกรอก |
 | `{colors.ink-heading-on-band}` | #022879 | หัวข้อส่วนที่วางบน `band-blue` |
 | `{colors.ink-body}` | #223548 | เนื้อหาทั่วไป ข้อความในตาราง |
-| `{colors.ink-label}` | #354a5f | label ของช่องกรอก |
+| `{colors.ink-label}` | #354a5f | (ไม่ใช้กับ label แล้ว label ใช้ `{colors.primary}` ดูข้อยกเว้นของระบบนี้) |
 | `{colors.ink-meta}` | #475e75 | ข้อความช่วยเหลือ คำอธิบาย placeholder |
 | `{colors.ink-nav}` | #545454 | แท็บที่ไม่ได้เลือก และ footer |
 | `{colors.ink-disabled}` | #8c8c8c | ข้อความในช่องที่ปิดใช้งาน (ได้รับยกเว้นเรื่องความต่างของสี) |
@@ -599,7 +624,7 @@ components:
 | Token | ค่า | ใช้กับ |
 |---|---|---|
 | `{rounded.none}` | 0 | แถบหัว แถบแท็บ แถวตาราง footer (ทุกอย่างที่กว้างเต็มจอ) |
-| `{rounded.sm}` | 4px | ช่องกรอก select textarea (ทั้งสี่มุม) ข้อความแจ้งเตือน |
+| `{rounded.sm}` | 4px | ข้อความแจ้งเตือน |
 | `{rounded.md}` | 8px | ปุ่ม การ์ดฟอร์ม หัวข้อส่วน (เฉพาะมุมบน) ช่องอัปโหลด toast |
 | `{rounded.lg}` | 12px | modal |
 | `{rounded.pill}` | 9999px | ป้ายตัวเลข ป้ายสถานะ ป้ายสถานะการเชื่อมต่อบนแถบหัว **เท่านั้น** ห้ามใช้กับปุ่ม |
@@ -624,20 +649,18 @@ components:
 
 ### การ์ดฟอร์มและหัวข้อส่วน
 - `form-section`: พื้นขาว ขอบ 1px `{colors.hairline}` มุม 8px ไม่มีเงา
+- การ์ดย่อยที่ห่อช่องกรอก (แถวตำแหน่งในส่วนที่ 1 ถึง 3 และเนื้อหาของส่วนที่ 4 และ 5): พื้น `{colors.band}` ขอบ 1px `{colors.hairline}` มุม 8px ไม่มีเงา ช่องกรอกสีขาวจึงเด่นขึ้นมาจากพื้นการ์ด
 - `section-header` (แบบปกติ): อยู่ด้านบนของการ์ด พื้น `{colors.band-blue}` ตัวอักษร `{colors.ink-heading-on-band}` มี **แถบซ้าย 4px สี `{colors.primary}`** มุมบน 8px มุมล่าง 0
 - `section-header-solid` (แบบทางเลือก): พื้น `{colors.primary}` ตัวอักษรขาว ใช้เมื่อหน่วยงานต้องการคงหน้าตาแถบน้ำเงินทึบแบบเดิม **เลือกใช้แบบใดแบบหนึ่งทั้งระบบ ห้ามสลับกัน**
 - ไอคอนหน้าหัวข้อ 18px รูปแบบ "ส่วนที่ 1 : ชื่อส่วน" มีช่องว่างหน้าและหลัง ":"
 
 ### ช่องกรอก (`text-input` และสถานะต่าง ๆ)
-กล่องเต็มสี่ด้าน กลไกสถานะตาม Carbon:
-
-> เดิมใช้ช่องพื้นเทามีแต่เส้นใต้ตามแบบ Carbon เปลี่ยนเป็นกล่องเต็มสี่ด้านเมื่อ 27 ต.ค. 2569 เพราะผู้ใช้เห็นว่าขอบเขตของช่องไม่ชัดเท่ากรอบแบบเดิมของระบบ
-- พื้น `{colors.canvas}` **กรอบ 1px `{colors.border-strong}` ครบสี่ด้าน** มุม 4px สูง 48px
-- **Hover:** กรอบเข้มขึ้นเป็น `{colors.ink-meta}`
-- **Focus:** กรอบ 2px `{colors.focus}` รอบช่อง (`border-color` + `outline: 2px solid; outline-offset: -1px`) ห้ามลบ outline โดยไม่ใส่ตัวแทน
-- **Error:** กรอบ 2px `{colors.error}` มีไอคอนเตือนขนาด 16px ด้านขวาในช่อง และ `error-text` ใต้ช่องที่บอกวิธีแก้ เช่น "กรุณากรอกนามสกุล" ไม่ใช่แค่ "ข้อมูลไม่ถูกต้อง"
-- **Disabled:** พื้น `{colors.field-disabled}` ตัวอักษร `{colors.ink-disabled}` กรอบ `{colors.hairline}`
-- **Read-only:** พื้น `{colors.page}` กรอบ 1px `{colors.hairline}` ใช้กับข้อมูลที่ระบบดึงมาและแก้ไขไม่ได้
+กล่องขาวขอบอ่อนตามหน้าตาเดิมของระบบ (ข้อยกเว้นของระบบนี้):
+- พื้น `{colors.canvas}` **กรอบ 1px `{colors.field-border}` ครบสี่ด้าน** มุม 8px สูง 48px
+- **Focus:** กรอบเป็น `{colors.focus}` และมีวงแสงจาง 4px `rgba(0, 87, 210, 0.18)` รอบช่อง วงแสงนี้คือสิ่งที่ใช้แทน outline ห้ามเอาออกโดยไม่ใส่ตัวแทน
+- **Error:** กรอบ `{colors.error}` และวงแสงจางสีแดง มีไอคอนเตือนขนาด 16px ด้านขวาในช่อง และ `error-text` ใต้ช่องที่บอกวิธีแก้ เช่น "กรุณากรอกนามสกุล" ไม่ใช่แค่ "ข้อมูลไม่ถูกต้อง"
+- **Disabled:** พื้น `{colors.field-disabled}` ตัวอักษร `{colors.ink-disabled}`
+- **Read-only:** พื้น `{colors.page}` ใช้กับข้อมูลที่ระบบดึงมาและแก้ไขไม่ได้
 - **Placeholder:** สี `{colors.ink-meta}` ใช้เป็นตัวอย่างการกรอกเท่านั้น เช่น "เช่น นักวิเคราะห์นโยบายและแผน" **ห้ามใช้ placeholder แทน label**
 
 ### Select และ textarea
@@ -645,7 +668,7 @@ components:
 - `textarea`: สูงขั้นต่ำ 112px (ประมาณ 3 บรรทัด) ให้ผู้ใช้ปรับความสูงได้อย่างเดียว (`resize: vertical`)
 
 ### Label, ช่องบังคับ และข้อความช่วยเหลือ
-- `field-label` สี `{colors.ink-label}` **ไม่ใช้สีน้ำเงิน** เพื่อไม่ให้แย่งความสนใจจากปุ่มและลิงก์ ไม่ต่อท้าย label ด้วย ":"
+- `field-label` สี `{colors.primary}` น้ำหนัก 600 ตามหน้าตาเดิมของระบบ (ข้อยกเว้นของระบบนี้) ไม่ต่อท้าย label ด้วย ":"
 - `required-mark`: เครื่องหมาย `*` สี `{colors.error}` ต่อท้าย label เว้นวรรค 2px และมี `aria-hidden="true"` คู่กับ `required` บนช่องกรอก
 - ใส่คำอธิบาย "ช่องที่มีเครื่องหมาย * ต้องกรอก" หนึ่งครั้งที่ด้านบนของฟอร์ม
 - `helper-text` ใต้ช่องกรอก สี `{colors.ink-meta}` เชื่อมกับช่องด้วย `aria-describedby`
@@ -699,6 +722,21 @@ components:
 - ข้อผิดพลาดต้องบอกด้วยข้อความและไอคอน ไม่ใช่สีอย่างเดียว ช่องที่ผิดมี `aria-invalid="true"`
 - ใส่ `lang="th"` ที่ `<html>` เพื่อให้โปรแกรมอ่านหน้าจออ่านภาษาไทยได้ถูกต้อง
 
+## ข้อยกเว้นของระบบนี้
+
+เมื่อ 27 ต.ค. 2569 ผู้ใช้ขอให้ส่วนประกอบสี่อย่างในฟอร์มกลับไปเป็นหน้าตาเดิมของระบบ ซึ่งขัดกับกฎทั่วไปในไฟล์นี้ จึงบันทึกเป็นข้อยกเว้นไว้ที่นี่ ส่วนอื่นของหน้ายังใช้กฎปกติ
+
+| ส่วนประกอบ | หน้าตา | กฎที่ยกเว้น |
+|---|---|---|
+| `field-label` | สี `{colors.primary}` น้ำหนัก 600 ทุก label ในระบบ | ห้ามใช้สีน้ำเงินกับ label |
+| `text-input`, `select`, `textarea` | กล่องขาว กรอบ `{colors.field-border}` มุม 8px focus เป็นขอบน้ำเงินกับวงแสงจาง | ช่องพื้นเทามีเส้นใต้ของ Carbon และเกณฑ์ 3:1 ของขอบ |
+| `pos-row-num` และปุ่มลบแถวตำแหน่ง (`button-danger-outline`) | วงกลมน้ำเงินทึบเลขขาว และปุ่ม "ลบ" ขอบแดงตัวแดง ไม่มี modal เพราะแถวยังไม่ถูกบันทึก | — (ปุ่มลบใช้สีแดงตามกฎอยู่แล้ว) |
+| `button-add-row` | ไล่สีเขียว `{colors.add-row}` → `{colors.add-row-end}` ตัวอักษรขาว จัดกลางใต้แถว | ห้ามไล่สี และสีที่ใช้ทำงานคือน้ำเงิน |
+
+กรอบช่องกรอก `{colors.field-border}` ต่างจากพื้นขาวประมาณ 1.4:1 ต่ำกว่าเกณฑ์ 3:1 ของ WCAG 1.4.11 ผู้ใช้ยังเห็นช่องได้จาก label และพื้นการ์ด แต่ถ้าต้องผ่านเกณฑ์ ให้เปลี่ยน `{colors.field-border}` เป็น `{colors.border-strong}`
+
+ตัวอักษรขาวบนปลายสีเขียวอ่อน `{colors.add-row-end}` มีความต่างของสีประมาณ 2.1:1 ต่ำกว่าเกณฑ์ 4.5:1 ของ WCAG AA ฝั่งเขียวเข้มผ่านเกณฑ์ ถ้าต้องผ่าน AA ทั้งปุ่ม ให้เปลี่ยน `{colors.add-row-end}` เป็นสีที่เข้มพอ
+
 ## Do's and Don'ts
 
 ### Do
@@ -712,8 +750,9 @@ components:
 
 ### Don't
 - ห้ามใช้แถบหัวแบบไล่สี และห้ามเพิ่มสีที่สอง เช่น เส้นทองใต้แถบหัว
+- ห้ามใช้สีไล่ระดับกับส่วนอื่น ยกเว้น `button-add-row`
 - ห้ามใช้ปุ่มสีแดงกับการกระทำปกติ เช่น ดาวน์โหลด หรือพิมพ์
-- ห้ามใช้สีน้ำเงินกับ label หรือข้อความทั่วไป
+- ห้ามใช้สีน้ำเงินกับข้อความทั่วไป (label เป็นข้อยกเว้นของระบบนี้)
 - ห้ามใส่เงาให้การ์ด ปุ่ม หรือช่องกรอก
 - ห้ามใช้ปุ่มทรง pill และห้ามใช้มุมเกิน 12px
 - ห้ามใช้ฟอนต์น้ำหนักต่ำกว่า 350 หรือขนาดต่ำกว่า 14px กับข้อความไทยทั่วไป
