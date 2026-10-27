@@ -604,6 +604,7 @@ def the_pdf_export_escapes_markup_from_the_record():
     record = {
         'p4_note': payload,
         'p4_date': '2026-10-22',
+        'p4_effective': payload,
         'sec1_rows': json.dumps([{'s1_type': payload, 's1_no': '001'}], ensure_ascii=False),
         'sec2_rows': '[]',
         'sec3_rows': '[]',
@@ -616,10 +617,10 @@ def the_pdf_export_escapes_markup_from_the_record():
         'exportPDFRecord();\n'
         'console.log(JSON.stringify(written));'
     )
-    html = run_js(['exportPDFRecord', 'esc', 'fmtDate'], body)
+    html = run_js(['exportPDFRecord', 'esc', 'fmtDateTH', 'thDate'], body)
     assert payload not in html, 'หน้า PDF เขียนแท็กจากข้อมูลผู้ใช้ลงไปตรงๆ'
-    assert html.count('&lt;script&gt;alert(1)&lt;/script&gt;') == 2, html.count('&lt;script&gt;')
-    assert '22/10/2026' in html, 'วันที่ในหน้า PDF ไม่ได้แปลงเป็นรูปแบบไทย'
+    assert html.count('&lt;script&gt;alert(1)&lt;/script&gt;') == 3, html.count('&lt;script&gt;')
+    assert '22 ต.ค. 2569' in html, 'วันที่ในหน้า PDF ไม่ได้แปลงเป็น พ.ศ.'
 
 
 CHECKS = [
