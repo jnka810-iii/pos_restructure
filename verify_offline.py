@@ -44,7 +44,7 @@ REACHABLE_WHILE_OFFLINE = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1
 PROBE_PAGE = """<!doctype html>
 <html lang="th"><head><meta charset="UTF-8">
 %(assets)s
-</head><body style="font-family:'Sarabun',sans-serif">
+</head><body style="font-family:'Noto Sans Thai',sans-serif">
 <button id="btn" class="btn btn-primary">ปุ่ม</button>
 <i id="icon" class="fa fa-landmark"></i>
 <canvas id="canvas" width="120" height="120"></canvas>
@@ -63,6 +63,8 @@ PROBE_PAGE = """<!doctype html>
   r.button_radius = getComputedStyle(document.getElementById('btn')).borderRadius;
   r.icon_font = getComputedStyle(document.getElementById('icon'), '::before').fontFamily;
   try {
+    await document.fonts.load('400 16px "Noto Sans Thai"');
+    await document.fonts.load('350 16px "Noto Sans Thai"');
     await document.fonts.load('400 16px Sarabun');
     await document.fonts.load('700 16px Sarabun');
     await document.fonts.load('900 16px "Font Awesome 6 Free"');
@@ -168,6 +170,8 @@ def main():
     parser.add_argument('--assets', choices=['local', 'cdn'], default='local')
     parser.add_argument('--shot', default=os.path.join(tempfile.gettempdir(), 'offline_page.png'))
     args = parser.parse_args()
+    # เบราว์เซอร์เป็นคนละโปรเซส เส้นทางแบบสัมพัทธ์ของมันไม่ใช่ที่เดียวกับของสคริปต์
+    args.shot = os.path.abspath(args.shot)
 
     browser = find_browser()
     port = free_port()
@@ -185,9 +189,12 @@ def main():
     got = read_probe(browser, f'{base}/__probe__')
     print('probe     ' + json.dumps(got, ensure_ascii=False))
 
-    run_offline(browser, f'{base}/', ['--window-size=1280,900', f'--screenshot={args.shot}'])
+    shot = run_offline(browser, f'{base}/',
+                       ['--window-size=1280,900', f'--screenshot={args.shot}'])
     shutil.rmtree(tmp, ignore_errors=True)
 
+    noto = {f['weight'] for f in got['fonts']
+            if 'Noto Sans Thai' in f['family'] and f['status'] == 'loaded'}
     sarabun = {f['weight'] for f in got['fonts']
                if 'Sarabun' in f['family'] and f['status'] == 'loaded'}
     icons = [f for f in got['fonts']
@@ -203,13 +210,18 @@ def main():
          f"border-radius ของปุ่ม = {got['button_radius']!r} หน้าเว็บไม่มี style"),
         ('the icon webfont is loaded', bool(icons) and 'Font Awesome' in got['icon_font'],
          f"ไอคอนไม่มา ::before font-family = {got['icon_font']!r} ฟอนต์ที่โหลดได้ {icons}"),
-        ('the thai webfont is loaded', {'400', '700'} <= sarabun,
-         f'Sarabun ที่โหลดได้ {sorted(sarabun)} ฟอนต์ไทยตกไปใช้ fallback ของระบบ'),
+        ('the screen webfont is loaded as a variable font', '100 900' in noto,
+         f'Noto Sans Thai ที่โหลดได้ {sorted(noto)} หน้าจอตกไปใช้ fallback ของระบบ '
+         f'หรือได้ฟอนต์ที่ไม่ใช่ variable จึงใช้น้ำหนัก 350 ไม่ได้'),
+        ('the pdf webfont is loaded', {'400', '700'} <= sarabun,
+         f'Sarabun ที่โหลดได้ {sorted(sarabun)} หน้าต่าง PDF ตกไปใช้ fallback ของระบบ'),
         ('the pdf window resolves the font to this machine',
          got['popup_font'].startswith(base if args.assets == 'local' else 'https://'),
          f"หน้าต่าง PDF ชี้ฟอนต์ไปที่ {got['popup_font']}"),
-        ('the screenshot was written', os.path.getsize(args.shot) > 10000,
-         f'{args.shot} เล็กผิดปกติ'),
+        ('the screenshot was written',
+         os.path.exists(args.shot) and os.path.getsize(args.shot) > 10000,
+         f'{args.shot} ไม่ถูกสร้างหรือเล็กผิดปกติ '
+         f'เบราว์เซอร์จบด้วย {shot.returncode} {shot.stderr.strip()[:300]}'),
     ]
     failed = 0
     for name, ok, why in checks:

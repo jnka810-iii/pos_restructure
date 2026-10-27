@@ -45,6 +45,7 @@ DB_PATH      = os.path.join(BASE_DIR, 'pos_restructure.db')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 LOG_PATH     = os.path.join(BASE_DIR, 'pos_restructure.log')
 ALLOWED_EXT  = {'pdf', 'doc', 'docx', 'xls', 'xlsx'}
+APP_VERSION  = '1.0.0'  # แสดงที่ footer ของหน้าเว็บ
 
 # แอปที่ build เป็น .exe แบบ windowed ไม่มี console ให้ดู error ไฟล์ log จึงเป็นทางเดียว
 # ที่จะรู้ว่าเกิดอะไรขึ้น เพราะข้อความที่ส่งกลับไปให้ผู้ใช้ตั้งใจให้ไม่มีรายละเอียดภายใน
@@ -176,7 +177,7 @@ def block_cross_site_writes():
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 @app.route('/')
-def index(): return render_template('index.html')
+def index(): return render_template('index.html', version=APP_VERSION)
 
 @app.route('/api/positions', methods=['GET'])
 def get_all():
