@@ -5,16 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="/static/vendor/sarabun/sarabun.css">
+<link rel="stylesheet" href="/static/vendor/noto-sans-thai/noto-sans-thai.css">
 <link rel="stylesheet" href="/static/vendor/bootstrap/css/bootstrap.min.css">
 <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
 <script src="/static/vendor/chartjs/chart.umd.min.js"></script>
 <style>
-:root{--pr:#1976D2;--pr2:#1565C0;--ac:#c8a951;--sec:#F5F5F5;--bg:#F5F5F5;
+:root{--font:"Noto Sans Thai","Noto Sans","IBM Plex Sans Thai",Tahoma,sans-serif;
+      --pr:#1976D2;--pr2:#1565C0;--ac:#c8a951;--sec:#F5F5F5;--bg:#F5F5F5;
       --shadow-soft:0 2px 8px rgba(25,118,210,.08),0 1px 3px rgba(0,0,0,.04);
       --shadow-soft-hover:0 6px 20px rgba(25,118,210,.15),0 2px 6px rgba(0,0,0,.06)}
 *{box-sizing:border-box}
-body{background:var(--bg);min-height:100vh;font-family:'Sarabun','Segoe UI',sans-serif;font-size:15px;margin:0}
+body{background:var(--bg);min-height:100vh;font-family:var(--font);font-size:15px;margin:0}
 
 @keyframes fadeInUp{
   from{opacity:0;transform:translateY(-8px)}
@@ -36,7 +37,7 @@ body{background:var(--bg);min-height:100vh;font-family:'Sarabun','Segoe UI',sans
 /* Tabs */
 .tnav{background:#fff;border-bottom:2px solid #e0e0e0;padding:0 20px;position:sticky;top:0;
       z-index:100;box-shadow:0 2px 8px rgba(25,118,210,.1);display:flex;gap:2px;overflow-x:auto}
-.tbtn{border:none;background:none;padding:12px 20px;font-family:'Sarabun',sans-serif;
+.tbtn{border:none;background:none;padding:12px 20px;font-family:var(--font);
       font-size:.9rem;font-weight:600;color:#777;cursor:pointer;border-bottom:3px solid transparent;
       transition:.2s;white-space:nowrap}
 .tbtn.active{color:var(--pr);border-bottom-color:var(--ac)}
@@ -60,13 +61,13 @@ body{background:var(--bg);min-height:100vh;font-family:'Sarabun','Segoe UI',sans
 
 /* Form */
 .form-label{font-weight:600;color:var(--pr);margin-bottom:3px;font-size:.84rem}
-.form-control,.form-select{font-size:.88rem;font-family:'Sarabun',sans-serif;border-color:#d0d8e3;border-radius:7px;transition:.2s}
+.form-control,.form-select{font-size:.88rem;font-family:var(--font);border-color:#d0d8e3;border-radius:7px;transition:.2s}
 .form-control:focus,.form-select:focus{border-color:var(--pr);box-shadow:0 0 0 .22rem rgba(25,118,210,.18)}
 .required::after{content:" *";color:#e53e3e}
 textarea.form-control{resize:vertical}
 
 /* Buttons */
-.btn{border-radius:8px;font-family:'Sarabun',sans-serif;transition:transform .15s,box-shadow .15s}
+.btn{border-radius:8px;font-family:var(--font);transition:transform .15s,box-shadow .15s}
 .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
 .btn:active{transform:translateY(0)}
 .btn-save{background:linear-gradient(135deg,#1976D2,#1565C0);color:#fff;border:none;font-weight:700;padding:9px 30px}
@@ -923,20 +924,21 @@ function doExportJSON(){
 /* ============================================================
    DASHBOARD
    ============================================================ */
+const CHART_FONT=getComputedStyle(document.body).fontFamily;
 function kc(k){ if(charts[k]){charts[k].destroy();delete charts[k];} }
 function mkDoughnut(id,labels,data,title){
   kc(id);
   charts[id]=new Chart(document.getElementById(id),{type:'doughnut',
     data:{labels,datasets:[{data,backgroundColor:COLORS,borderWidth:2,hoverOffset:8}]},
-    options:{plugins:{title:{display:true,text:title,font:{size:13,family:'Sarabun'}},
-      legend:{position:'bottom',labels:{font:{family:'Sarabun'},padding:12}}},cutout:'55%'}});
+    options:{plugins:{title:{display:true,text:title,font:{size:13,family:CHART_FONT}},
+      legend:{position:'bottom',labels:{font:{family:CHART_FONT},padding:12}}},cutout:'55%'}});
 }
 function mkBar(id,labels,data,title,color='#1a3a6b'){
   kc(id);
   charts[id]=new Chart(document.getElementById(id),{type:'bar',
     data:{labels,datasets:[{label:title,data,backgroundColor:color,borderRadius:6}]},
-    options:{plugins:{title:{display:true,text:title,font:{size:13,family:'Sarabun'}},legend:{display:false}},
-      scales:{x:{ticks:{font:{family:'Sarabun'},maxRotation:40}},y:{ticks:{stepSize:1,font:{family:'Sarabun'}},beginAtZero:true}}}});
+    options:{plugins:{title:{display:true,text:title,font:{size:13,family:CHART_FONT}},legend:{display:false}},
+      scales:{x:{ticks:{font:{family:CHART_FONT},maxRotation:40}},y:{ticks:{stepSize:1,font:{family:CHART_FONT}},beginAtZero:true}}}});
 }
 function renderDashboard(){
   const total=allRecords.length;

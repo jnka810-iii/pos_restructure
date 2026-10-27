@@ -21,6 +21,7 @@ VENDOR_DIR = os.path.join(HERE, 'static', 'vendor')
 
 CDNJS = 'https://cdnjs.cloudflare.com/ajax/libs/'
 SARABUN_CSS = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap'
+NOTO_SANS_THAI_CSS = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap'
 
 # Google ส่ง CSS คนละชุดตาม User-Agent เบราว์เซอร์เก่าจะได้ ttf ที่ใหญ่กว่า woff2 หลายเท่า
 CHROME_UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
@@ -60,17 +61,22 @@ def font_awesome(data, rel_path):
     return css.encode('utf-8')
 
 
-def sarabun(data, rel_path):
-    """ตั้งชื่อไฟล์ฟอนต์ตามน้ำหนักและช่วงอักษร ชื่อจาก Google เป็นแฮชที่เปลี่ยนได้ทุกเมื่อ"""
-    css = data.decode('utf-8')
-    base = os.path.dirname(rel_path)
-    for subset, body in FONT_FACE.findall(css):
-        weight = re.search(r'font-weight:\s*(\d+)', body).group(1)
-        url = re.search(r'url\((https://[^)]+)\)', body).group(1)
-        name = f'sarabun-{weight}-{subset}.woff2'
-        save(f'{base}/{name}', fetch(url))
-        css = css.replace(url, name)
-    return css.encode('utf-8')
+def google_font(prefix):
+    """ตั้งชื่อไฟล์ฟอนต์ตามน้ำหนักและช่วงอักษร ชื่อจาก Google เป็นแฮชที่เปลี่ยนได้ทุกเมื่อ
+
+    ฟอนต์แบบ variable ได้ font-weight เป็นช่วง เช่น 100 900 ชื่อไฟล์จึงเป็น 100-900
+    """
+    def rewrite(data, rel_path):
+        css = data.decode('utf-8')
+        base = os.path.dirname(rel_path)
+        for subset, body in FONT_FACE.findall(css):
+            weight = re.search(r'font-weight:\s*(\d+(?:\s+\d+)?)', body).group(1).replace(' ', '-')
+            url = re.search(r'url\((https://[^)]+)\)', body).group(1)
+            name = f'{prefix}-{weight}-{subset}.woff2'
+            save(f'{base}/{name}', fetch(url))
+            css = css.replace(url, name)
+        return css.encode('utf-8')
+    return rewrite
 
 
 ASSETS = [
@@ -78,7 +84,8 @@ ASSETS = [
     ('bootstrap/js/bootstrap.bundle.min.js', CDNJS + 'bootstrap/5.3.2/js/bootstrap.bundle.min.js', as_is),
     ('fontawesome/css/all.min.css', CDNJS + 'font-awesome/6.4.2/css/all.min.css', font_awesome),
     ('chartjs/chart.umd.min.js', CDNJS + 'Chart.js/4.4.1/chart.umd.min.js', as_is),
-    ('sarabun/sarabun.css', SARABUN_CSS, sarabun),
+    ('sarabun/sarabun.css', SARABUN_CSS, google_font('sarabun')),
+    ('noto-sans-thai/noto-sans-thai.css', NOTO_SANS_THAI_CSS, google_font('noto-sans-thai')),
 ]
 
 
