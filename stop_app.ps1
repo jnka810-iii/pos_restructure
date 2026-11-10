@@ -4,7 +4,7 @@
 # Only Python processes are stopped; the .venv python.exe is a launcher, so its
 # parent is stopped too. A copy that is still starting may not be listening yet,
 # so the port is checked again until no Python process holds it.
-param([int]$Port = 5050)
+param([int]$Port = 5020)
 
 for ($pass = 0; $pass -lt 5; $pass++) {
     $owners = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue |

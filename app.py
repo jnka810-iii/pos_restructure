@@ -248,7 +248,7 @@ def serve_upload(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
 # ── Desktop ───────────────────────────────────────────────────────────────────
-PORT = 5050
+PORT = 5020
 
 def run_flask():
     app.run(host='127.0.0.1', port=PORT, debug=False, use_reloader=False)
