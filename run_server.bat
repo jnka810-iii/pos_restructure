@@ -28,6 +28,8 @@ echo [PosRestructure] Server running on port %PORT%  (Ctrl+C to stop)
 echo [PosRestructure] Other machines on the LAN open:
 REM Only networks with a gateway, so virtual adapters (WSL, Hyper-V, VirtualBox) are left out
 powershell -NoProfile -Command "Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -and $_.NetAdapter.Status -eq 'Up' } | ForEach-Object { '    http://' + $_.IPv4Address[0].IPAddress + ':%PORT%   (' + $_.InterfaceAlias + ')' }"
+REM A real network port with an address but no cable shows nothing above, so say so
+powershell -NoProfile -Command "Get-NetAdapter | Where-Object { $_.HardwareInterface -and $_.Status -ne 'Up' } | ForEach-Object { $ip = (Get-NetIPAddress -InterfaceIndex $_.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '169.254.*' }).IPAddress; if ($ip) { '[PosRestructure] WARNING: ' + $_.Name + ' (' + ($ip -join ', ') + ') is not connected - plug in the LAN cable to serve that network' } }"
 echo [PosRestructure] This machine opens:  http://127.0.0.1:%PORT%
 echo.
 "%PY%" -c "import app; app.init_db(); app.app.run(host='0.0.0.0', port=app.PORT, debug=False)"
