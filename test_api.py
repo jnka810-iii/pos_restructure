@@ -11,13 +11,14 @@ import subprocess
 import sys
 import threading
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
 
 TMP = tempfile.mkdtemp(prefix='pos_test_')
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import app
+from werkzeug.security import generate_password_hash
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,6 +27,31 @@ app.UPLOAD_FOLDER = os.path.join(TMP, 'uploads')
 app.init_db()
 
 client = app.app.test_client()
+
+# บัญชีสำหรับเทสที่ต้องเข้าสู่ระบบ สร้างตรงนี้แทนการเรียก manage_users.py ซึ่งถามรหัสผ่านทางแป้นพิมพ์
+LAN_IP   = '192.168.1.50'
+USERNAME = 'somchai'
+PASSWORD = 'ความลับที่ยาวพอ'
+FULLNAME = 'สมชาย ใจดี'
+_con = app.get_db()
+_con.execute('INSERT INTO users (username, display_name, password_hash, created) VALUES (?,?,?,?)',
+             [USERNAME, FULLNAME, generate_password_hash(PASSWORD), app.now_iso()])
+_con.commit()
+_con.close()
+
+
+def lan_client(logged_in=False):
+    """client ที่ดูเหมือนเครื่องอื่นในวง LAN จึงต้องผ่านด่านเข้าสู่ระบบ
+
+    client ตัวหลักของไฟล์นี้เป็น 127.0.0.1 ตามค่าปริยายของ Flask ซึ่งนับเป็นเครื่องแม่ข่าย
+    เทสเดิมทุกตัวจึงไม่ต้องรู้จักการเข้าสู่ระบบเลย
+    """
+    c = app.app.test_client()
+    c.environ_base['REMOTE_ADDR'] = LAN_IP
+    if logged_in:
+        r = c.post('/login', json={'username': USERNAME, 'password': PASSWORD})
+        assert r.status_code == 200, f'the fixture could not log in: {r.status_code} {r.get_json()}'
+    return c
 APP_SOURCE = open(os.path.join(HERE, 'app.py'), encoding='utf-8').read()
 PAGE_SOURCE = open(os.path.join(HERE, 'templates', 'index.html'), encoding='utf-8').read()
 
@@ -393,6 +419,81 @@ def reading_is_never_blocked_by_the_origin_check():
     assert r.status_code == 200, f'a GET was blocked: {r.status_code}'
 
 
+def a_machine_on_the_lan_must_log_in_first():
+    c = lan_client()
+    r = c.get('/api/positions')
+    assert r.status_code == 401, f'expected 401, got {r.status_code}'
+    assert r.get_json()['ok'] is False, r.get_json()
+    r = c.get('/')
+    assert r.status_code == 302, f'expected a redirect to the login page, got {r.status_code}'
+    assert r.headers['Location'].endswith('/login'), r.headers['Location']
+
+
+def this_machine_never_has_to_log_in():
+    assert client.get('/').status_code == 200, 'the server machine was asked to log in'
+    assert client.get('/api/positions').status_code == 200, 'the server machine was asked to log in'
+
+
+def an_attachment_is_behind_the_login_too():
+    name = post_file('เอกสารแนบ.pdf').get_json()['file_name']
+    r = lan_client().get(f'/uploads/{name}')
+    assert r.status_code == 302, f'an attachment was served to a machine that never logged in: {r.status_code}'
+    r = lan_client(logged_in=True).get(f'/uploads/{name}')
+    assert r.status_code == 200, f'a logged in machine could not read the attachment: {r.status_code}'
+
+
+def a_wrong_password_hands_out_no_session():
+    c = lan_client()
+    r = c.post('/login', json={'username': USERNAME, 'password': PASSWORD + 'x'})
+    assert r.status_code == 401, f'expected 401, got {r.status_code}'
+    assert r.get_json()['ok'] is False, r.get_json()
+    assert c.get('/api/positions').status_code == 401, 'a failed login still opened the door'
+
+
+def a_record_remembers_who_saved_it():
+    c = lan_client(logged_in=True)
+    rid = c.post('/api/positions', json={'p4_status': 'อนุมัติ'}).get_json()['id']
+    row = next(r for r in client.get('/api/positions').get_json() if r['id'] == rid)
+    assert row['created_by'] == FULLNAME, f"expected {FULLNAME!r}, got {row['created_by']!r}"
+    assert row['updated_by'] == '', f"a new record already has an editor: {row['updated_by']!r}"
+
+    c.put(f'/api/positions/{rid}', json={'p4_status': 'ไม่อนุมัติ'})
+    row = next(r for r in client.get('/api/positions').get_json() if r['id'] == rid)
+    assert row['updated_by'] == FULLNAME, f"expected {FULLNAME!r}, got {row['updated_by']!r}"
+    assert row['created_by'] == FULLNAME, 'editing overwrote who created the record'
+
+    local = client.post('/api/positions', json={'p4_status': 'อนุมัติ'}).get_json()['id']
+    row = next(r for r in client.get('/api/positions').get_json() if r['id'] == local)
+    assert row['created_by'] == app.LOCAL_RECORDER, f"expected {app.LOCAL_RECORDER!r}, got {row['created_by']!r}"
+
+
+def the_page_can_never_set_who_saved_a_record():
+    rid = client.post('/api/positions',
+                      json={'p4_status': 'อนุมัติ', 'created_by': 'คนอื่น', 'updated_by': 'คนอื่น'}).get_json()['id']
+    row = next(r for r in client.get('/api/positions').get_json() if r['id'] == rid)
+    assert row['created_by'] == app.LOCAL_RECORDER, f"the page chose its own name: {row['created_by']!r}"
+    assert row['updated_by'] == '', f"the page chose its own name: {row['updated_by']!r}"
+
+
+def clearing_every_record_is_refused_from_the_lan():
+    client.post('/api/positions', json={'p4_status': 'อนุมัติ'})
+    before = len(client.get('/api/positions').get_json())
+    assert before, 'the check needs at least one record to protect'
+    r = lan_client(logged_in=True).delete('/api/positions')
+    assert r.status_code == 403, f'expected 403, got {r.status_code}'
+    assert len(client.get('/api/positions').get_json()) == before, 'records were cleared from the LAN'
+
+
+def a_session_older_than_twelve_hours_is_rejected():
+    c = lan_client(logged_in=True)
+    with c.session_transaction() as sess:
+        sess['since'] = (datetime.now() - timedelta(hours=app.SESSION_HOURS - 1)).strftime('%Y-%m-%dT%H:%M:%S')
+    assert c.get('/api/positions').status_code == 200, 'a session inside the window was rejected'
+    with c.session_transaction() as sess:
+        sess['since'] = (datetime.now() - timedelta(hours=app.SESSION_HOURS + 1)).strftime('%Y-%m-%dT%H:%M:%S')
+    assert c.get('/api/positions').status_code == 401, 'an expired session still worked'
+
+
 def an_unknown_page_still_answers_with_html_not_json():
     r = client.get('/ไม่มีหน้านี้')
     assert r.status_code == 404, r.status_code
@@ -457,10 +558,14 @@ def external_asset_urls(text):
 
 
 def the_page_never_loads_a_resource_from_the_internet():
-    """แอปนี้ build เป็น .exe ไว้ใช้บนเครื่องที่ไม่มีเน็ต ทุกไฟล์ที่หน้าเว็บใช้ต้องมาจากเครื่องเอง"""
-    page = client.get('/').get_data(as_text=True)
-    outside = external_asset_urls(page)
-    assert not outside, 'หน้าเว็บยังโหลดจากอินเทอร์เน็ต ' + ', '.join(outside)
+    """แอปนี้ build เป็น .exe ไว้ใช้บนเครื่องที่ไม่มีเน็ต ทุกไฟล์ที่หน้าเว็บใช้ต้องมาจากเครื่องเอง
+
+    หน้าเข้าสู่ระบบอยู่ในข้อนี้ด้วย เพราะเป็นหน้าแรกที่คนในวง LAN เห็น
+    """
+    for name, page in (('หน้าหลัก', client.get('/').get_data(as_text=True)),
+                       ('หน้าเข้าสู่ระบบ', lan_client().get('/login').get_data(as_text=True))):
+        outside = external_asset_urls(page)
+        assert not outside, f'{name} ยังโหลดจากอินเทอร์เน็ต ' + ', '.join(outside)
 
 
 def every_asset_the_page_asks_for_is_served_from_disk():
@@ -646,6 +751,14 @@ CHECKS = [
     a_cross_site_write_is_rejected,
     a_cross_site_upload_never_reaches_the_disk,
     reading_is_never_blocked_by_the_origin_check,
+    a_machine_on_the_lan_must_log_in_first,
+    this_machine_never_has_to_log_in,
+    an_attachment_is_behind_the_login_too,
+    a_wrong_password_hands_out_no_session,
+    a_record_remembers_who_saved_it,
+    the_page_can_never_set_who_saved_a_record,
+    clearing_every_record_is_refused_from_the_lan,
+    a_session_older_than_twelve_hours_is_rejected,
     an_unknown_page_still_answers_with_html_not_json,
     the_entry_point_waits_for_the_port_instead_of_sleeping,
     new_records_store_timestamps_as_iso_8601,

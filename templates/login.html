@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เข้าสู่ระบบ · ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/vendor/noto-sans-thai/noto-sans-thai.css">
+<link rel="stylesheet" href="/static/vendor/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
+<style>
+/* ค่าทุกตัวมาจาก DESIGN.md หัวข้อ "หน้าเข้าสู่ระบบ" ชื่อตัวแปรตรงกับชื่อ token ในไฟล์นั้น
+   หน้านี้คัดเฉพาะกฎที่ใช้จริงมาจาก index.html ไม่ได้แยกไฟล์ css กลาง เพราะทั้งระบบมีแค่สองหน้า */
+:root{--font:"Noto Sans Thai","Noto Sans","IBM Plex Sans Thai",Tahoma,sans-serif;
+      --primary:#0057d2;--primary-hover:#0040b0;--primary-pressed:#022879;--on-primary:#fff;
+      --header:#0040b0;--on-header:#fff;--on-header-muted:#c9dcff;
+      --page:#f5f6f7;--canvas:#fff;--band:#eaecee;
+      --ink:#0b1d33;--ink-body:#223548;--ink-meta:#475e75;--ink-nav:#545454;--ink-disabled:#8c8c8c;
+      --hairline:#d5dadd;--focus:#0057d2;--field-disabled:#eaecee;
+      --error:#da1e28;--error-bg:#fff1f1;
+      --field-border:#d0d8e3;--focus-halo:rgba(0,87,210,.18);
+      --bs-body-font-family:var(--font);--bs-body-font-size:16px;--bs-body-line-height:1.7;
+      --bs-body-color:var(--ink-body);--bs-body-bg:var(--page);--bs-border-color:var(--hairline)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:var(--page);color:var(--ink-body);
+     font-family:var(--font);font-size:16px;line-height:1.7;overflow-wrap:anywhere}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.gov-header{background:var(--header);color:var(--on-header);min-height:64px;padding:8px 24px;
+            display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.gov-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.gov-emblem{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-size:28px}
+.gov-title{font-size:18px;font-weight:600;line-height:1.4;margin:0}
+.gov-subtitle{font-size:14px;line-height:1.5;color:var(--on-header-muted)}
+
+.login-page{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{width:100%;max-width:420px;background:var(--canvas);border:1px solid var(--hairline);
+            border-radius:8px;padding:32px}
+.login-card h2{font-size:20px;font-weight:600;line-height:1.5;color:var(--ink);margin:0 0 4px}
+.login-lead{font-size:14px;line-height:1.5;color:var(--ink-meta);margin:0 0 24px}
+.fld{margin-bottom:16px}
+.form-label{display:block;font-size:14px;font-weight:600;line-height:1.5;color:var(--primary);margin-bottom:4px}
+.form-control{min-height:48px;padding:11px 16px;font-family:var(--font);font-size:16px;line-height:1.5;
+     color:var(--ink);background-color:var(--canvas);border:1px solid var(--field-border);
+     border-radius:8px;box-shadow:none;transition:border-color .15s,box-shadow .15s}
+.form-control:focus{color:var(--ink);background-color:var(--canvas);border-color:var(--focus);
+     outline:0;box-shadow:0 0 0 4px var(--focus-halo)}
+.btn{--bs-btn-font-family:var(--font);--bs-btn-font-size:16px;--bs-btn-font-weight:500;--bs-btn-line-height:1.5;
+     --bs-btn-padding-x:20px;--bs-btn-padding-y:11px;--bs-btn-border-radius:8px;--bs-btn-focus-box-shadow:none;
+     --bs-btn-disabled-opacity:1;--bs-btn-disabled-bg:var(--field-disabled);--bs-btn-disabled-border-color:var(--field-disabled);
+     --bs-btn-disabled-color:var(--ink-disabled);
+     min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;box-shadow:none}
+.btn-primary{--bs-btn-bg:var(--primary);--bs-btn-border-color:var(--primary);--bs-btn-color:var(--on-primary);
+     --bs-btn-hover-bg:var(--primary-hover);--bs-btn-hover-border-color:var(--primary-hover);--bs-btn-hover-color:var(--on-primary);
+     --bs-btn-active-bg:var(--primary-pressed);--bs-btn-active-border-color:var(--primary-pressed);--bs-btn-active-color:var(--on-primary)}
+/* ที่ว่างของข้อความผิดพลาดซ่อนไว้จนกว่าจะมีข้อความ ไม่ดันการ์ดให้ขยับตอนปกติ */
+.inline-notification{display:none;align-items:flex-start;gap:12px;padding:12px 16px;margin-bottom:16px;
+     border-radius:4px;border-left:4px solid var(--error);background:var(--error-bg);
+     font-size:14px;line-height:1.6;color:var(--ink-body)}
+.inline-notification.show{display:flex}
+.inline-notification .n-icon{color:var(--error);font-size:16px;line-height:1.5}
+.ftr{background:var(--band);color:var(--ink-nav);font-size:14px;line-height:1.5;padding:24px;text-align:center}
+@media (max-width:599px){.gov-header{padding:8px 16px}.gov-subtitle{display:none}.login-card{padding:24px}}
+</style>
+</head>
+<body>
+
+<header class="gov-header">
+  <div class="gov-brand">
+    <span class="gov-emblem" aria-hidden="true"><i class="fa fa-landmark"></i></span>
+    <div>
+      <h1 class="gov-title">ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่งในสำนักนายกรัฐมนตรี</h1>
+      <div class="gov-subtitle">Human resource management system · Position restructuring database</div>
+    </div>
+  </div>
+</header>
+
+<main class="login-page">
+  <form class="login-card" id="login-form">
+    <h2>เข้าสู่ระบบ</h2>
+    <p class="login-lead">กรอกชื่อผู้ใช้งานและรหัสผ่านที่ผู้ดูแลเครื่องแม่ข่ายออกให้</p>
+
+    <div class="inline-notification" id="login-error" role="alert">
+      <i class="fa fa-exclamation-circle n-icon" aria-hidden="true"></i><span id="login-error-msg"></span>
+    </div>
+
+    <div class="fld">
+      <label class="form-label" for="username">ชื่อผู้ใช้งาน</label>
+      <input class="form-control" id="username" name="username" autocomplete="username"
+             autocapitalize="none" spellcheck="false" required autofocus>
+    </div>
+    <div class="fld">
+      <label class="form-label" for="password">รหัสผ่าน</label>
+      <input class="form-control" id="password" name="password" type="password"
+             autocomplete="current-password" required>
+    </div>
+
+    <button class="btn btn-primary" type="submit" id="login-submit">
+      <i class="fa fa-right-to-bracket" aria-hidden="true"></i>เข้าสู่ระบบ
+    </button>
+  </form>
+</main>
+
+<footer class="ftr">สำนักนายกรัฐมนตรี · ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่ง · เวอร์ชัน {{ version }}</footer>
+
+<script>
+const loginForm   = document.getElementById('login-form');
+const loginErrBox = document.getElementById('login-error');
+const loginSubmit = document.getElementById('login-submit');
+
+loginForm.addEventListener('submit', async ev => {
+  ev.preventDefault();
+  loginErrBox.classList.remove('show');
+  loginSubmit.disabled = true;
+  try{
+    const r = await fetch('/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        username: document.getElementById('username').value.trim(),
+        password: document.getElementById('password').value,
+      }),
+    });
+    const data = await r.json();
+    if(!data.ok) throw new Error(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
+    location.href = '/';
+    return;                         /* ไม่เปิดปุ่มคืน เพราะหน้ากำลังเปลี่ยนไปแล้ว */
+  }catch(e){
+    const offline = (e instanceof TypeError);   /* fetch ล้มเหลวตั้งแต่ต่อไม่ติด */
+    document.getElementById('login-error-msg').textContent =
+      offline ? 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' : e.message;
+    loginErrBox.classList.add('show');
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
+  }
+  loginSubmit.disabled = false;
+});
+</script>
+</body>
+</html>

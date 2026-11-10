@@ -39,6 +39,12 @@ h1,h2,h3{letter-spacing:0}
 .gov-emblem{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-size:28px}
 .gov-title{font-size:18px;font-weight:600;line-height:1.4;margin:0}
 .gov-subtitle{font-size:14px;line-height:1.5;color:var(--on-header-muted)}
+.gov-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* ปุ่มออกจากระบบอยู่บนพื้นน้ำเงินของ header จึงใช้ตัวอักษรสีบนหัวแทนสีหลัก */
+.btn-logout{--bs-btn-font-size:14px;--bs-btn-padding-x:12px;--bs-btn-bg:transparent;--bs-btn-border-color:transparent;
+     --bs-btn-color:var(--on-header);--bs-btn-hover-color:var(--on-header);--bs-btn-active-color:var(--on-header);
+     --bs-btn-hover-bg:var(--primary-pressed);--bs-btn-hover-border-color:transparent;
+     --bs-btn-active-bg:var(--primary-pressed);--bs-btn-active-border-color:transparent;min-height:40px}
 .status-chip{background:var(--canvas);color:var(--ink-body);font-size:14px;line-height:1.5;border-radius:9999px;
              padding:4px 12px;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;border-radius:50%;flex:none}
@@ -160,6 +166,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 /* List toolbar */
 .toolbar{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:16px}
 .toolbar .fld{flex:0 1 320px;min-width:200px}
+.rec-by{font-size:13px;line-height:1.5;color:var(--ink-meta)}
 .rec-count{margin-left:auto;font-size:14px;line-height:1.5;color:var(--ink-meta);padding-bottom:12px}
 
 /* Table */
@@ -246,7 +253,14 @@ input[type=number]{font-variant-numeric:tabular-nums}
       <div class="gov-subtitle">Human resource management system · Position restructuring database</div>
     </div>
   </div>
-  <span class="status-chip" id="mode-badge" role="status"><span class="dot dot-wait"></span>กำลังเชื่อมต่อ...</span>
+  <div class="gov-actions">
+    <span class="status-chip" id="mode-badge" role="status"><span class="dot dot-wait"></span>กำลังเชื่อมต่อ...</span>
+    {# ว่างเมื่อเปิดจากเครื่องแม่ข่าย ซึ่งไม่ต้องเข้าสู่ระบบ #}
+    {% if user %}
+    <span class="status-chip"><i class="fa fa-user" aria-hidden="true"></i><span id="user-name">{{ user }}</span></span>
+    <button type="button" class="btn btn-logout" onclick="logout()"><i class="fa fa-right-from-bracket" aria-hidden="true"></i>ออกจากระบบ</button>
+    {% endif %}
+  </div>
 </header>
 
 <!-- TAB NAV -->
@@ -442,7 +456,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
           <th>ตำแหน่งใหม่ (ส1)</th><th>ระดับ (ส1)</th><th>เลขที่ (ส1)</th><th>กอง (ส1)</th>
           <th>ปรับปรุง (ส2)</th><th>ยุบเลิก (ส3)</th>
           <th>ครั้งที่</th><th>วันที่ประชุม</th><th>มติ</th>
-          <th>สถานะ</th><th class="num">ค่าตอบแทน</th><th>วันที่บันทึก</th><th>ไฟล์</th><th class="actions">จัดการ</th>
+          <th>สถานะ</th><th class="num">ค่าตอบแทน</th><th>การบันทึก</th><th>ไฟล์</th><th class="actions">จัดการ</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -478,6 +492,36 @@ input[type=number]{font-variant-numeric:tabular-nums}
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
         <button type="button" class="btn btn-danger" id="confirmOk"></button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- กล่องเข้าสู่ระบบ: ใช้เมื่อเซสชันหมดอายุระหว่างใช้งาน ปิดเองไม่ได้เพราะยังทำอะไรต่อไม่ได้อยู่ดี -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="reloginTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="relogin-form">
+        <div class="modal-header">
+          <h2 class="modal-title" id="reloginTitle">เข้าสู่ระบบอีกครั้ง</h2>
+        </div>
+        <div class="modal-body">
+          <p class="form-note">เซสชันหมดอายุแล้ว ข้อมูลที่กรอกค้างไว้ยังอยู่ครบ เข้าสู่ระบบแล้วระบบจะบันทึกต่อให้เอง</p>
+          <div class="inline-notification inline-error" id="relogin-error" role="alert" style="display:none">
+            <i class="fa fa-exclamation-circle n-icon" aria-hidden="true"></i><span id="relogin-error-msg"></span>
+          </div>
+          <div class="fld mb-3">
+            <label class="form-label" for="relogin-username">ชื่อผู้ใช้งาน</label>
+            <input class="form-control" id="relogin-username" autocomplete="username" autocapitalize="none" spellcheck="false">
+          </div>
+          <div class="fld">
+            <label class="form-label" for="relogin-password">รหัสผ่าน</label>
+            <input class="form-control" id="relogin-password" type="password" autocomplete="current-password">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" id="relogin-submit"><i class="fa fa-right-to-bracket" aria-hidden="true"></i>เข้าสู่ระบบ</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -738,7 +782,7 @@ async function handleFileSelect(inp){
   const fd = new FormData();
   fd.append('file', f);
   try{
-    const res = await fetch('/api/upload',{method:'POST',body:fd});
+    const res = await withSession(()=>fetch('/api/upload',{method:'POST',body:fd}));
     const data = await res.json();
     if(!data.ok) throw new Error(data.error||'อัปโหลดไม่สำเร็จ');
     uploadedServerFile = data.file_name;
@@ -855,13 +899,70 @@ function exportPDFRecord(){
 }
 
 /* ============================================================
+   SESSION
+   ============================================================ */
+/* ว่างเมื่อเปิดจากเครื่องแม่ข่าย ซึ่งไม่ต้องเข้าสู่ระบบ */
+let currentUser = {{ user|tojson }};
+
+/* เซสชันหมดอายุกลางคันระหว่างกรอกแบบ บอ.1 ได้ ถ้าเด้งออกไปหน้าเข้าสู่ระบบ ข้อมูลที่กรอก
+   ค้างไว้จะหายทั้งหมด จึงเปิดกล่องเข้าสู่ระบบซ้อนทับหน้าเดิม แล้วส่งคำขอที่ค้างซ้ำให้แทน */
+async function withSession(send){
+  const r=await send();
+  if(r.status!==401) return r;
+  await promptLogin();
+  return send();
+}
+
+function promptLogin(){
+  return new Promise(resolve=>{
+    const el=document.getElementById('loginModal');
+    const err=document.getElementById('relogin-error');
+    const user=document.getElementById('relogin-username');
+    const pass=document.getElementById('relogin-password');
+    const btn=document.getElementById('relogin-submit');
+    err.style.display='none'; pass.value='';
+    /* ปิดเองไม่ได้ ทุกคำขอหลังจากนี้ต้องผ่านการเข้าสู่ระบบอยู่ดี */
+    const modal=bootstrap.Modal.getOrCreateInstance(el,{backdrop:'static',keyboard:false});
+    document.getElementById('relogin-form').onsubmit=async ev=>{
+      ev.preventDefault();
+      err.style.display='none'; btn.disabled=true;
+      try{
+        const r=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},
+                 body:JSON.stringify({username:user.value.trim(),password:pass.value})});
+        const data=await r.json();
+        if(!data.ok) throw new Error(data.error||'เข้าสู่ระบบไม่สำเร็จ');
+        currentUser=data.display_name;
+        const chip=document.getElementById('user-name');
+        if(chip) chip.textContent=data.display_name;
+        modal.hide();
+        resolve();
+      }catch(e){
+        /* fetch โยน TypeError เมื่อต่อเซิร์ฟเวอร์ไม่ติด ซึ่งคนละเรื่องกับรหัสผ่านผิด */
+        document.getElementById('relogin-error-msg').textContent=
+          (e instanceof TypeError)?'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้':e.message;
+        err.style.display='flex';
+        pass.value=''; pass.focus();
+      }
+      btn.disabled=false;
+    };
+    el.addEventListener('shown.bs.modal',()=>(user.value?pass:user).focus(),{once:true});
+    modal.show();
+  });
+}
+
+async function logout(){
+  try{ await fetch('/logout',{method:'POST'}); }catch{}
+  location.href='/login';
+}
+
+/* ============================================================
    STORAGE LAYER
    ============================================================ */
 async function apiFetch(path,method='GET',body=null){
   const opt={method,headers:{'Content-Type':'application/json'}};
   if(body) opt.body=JSON.stringify(body);
   let r;
-  try{ r=await fetch(path,opt); }
+  try{ r=await withSession(()=>fetch(path,opt)); }
   catch{ updateModeBadge(false); throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); }
   updateModeBadge(true);
   if(!r.ok){
@@ -909,6 +1010,12 @@ function fmtDateTH(s){
   const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? thDate(m[1],m[2],m[3]) : String(s||'');
 }
+/* ชื่อผู้บันทึกเป็นข้อความที่คัดลอกไว้ตอนบันทึก คำขอที่บันทึกก่อนมีระบบเข้าสู่ระบบจึงว่าง */
+function recordedBy(r){
+  const who = r.updated_by ? `แก้ไขโดย ${r.updated_by}` : (r.created_by ? `โดย ${r.created_by}` : '');
+  return who ? `<div class="rec-by">${esc(who)}</div>` : '';
+}
+
 function fmtStamp(s){
   if(!s) return '';
   const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
@@ -1126,7 +1233,7 @@ function renderTable(){
       <td class="sm">${esc(r.p4_resolution)||'-'}</td>
       <td>${r.p4_status?`<span class="tag tag-${STATUS_TAG[r.p4_status]||'neutral'}">${esc(r.p4_status)}</span>`:'-'}</td>
       <td class="num">${sal}</td>
-      <td class="tnum sm">${esc(fmtStamp(r.created))}</td>
+      <td class="sm">${esc(fmtStamp(r.created))}${recordedBy(r)}</td>
       <td class="cell-btn">${r.file_orig_name?`<a href="/uploads/${encodeURIComponent(r.file_name)}" target="_blank" class="btn btn-ghost" title="${esc(r.file_orig_name)}"><i class="fa fa-paperclip" aria-hidden="true"></i>ไฟล์</a>`:'-'}</td>
       <td class="actions">
         <button type="button" class="btn btn-ghost btn-icon" onclick="editRec('${rid}')" aria-label="แก้ไขคำขอ"><i class="fa fa-edit" aria-hidden="true"></i></button>

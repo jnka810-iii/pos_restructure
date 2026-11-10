@@ -23,6 +23,9 @@ if not errorlevel 1 goto firewall_ok
 echo [PosRestructure] WARNING: the firewall rule was not added, so other machines cannot connect yet
 :firewall_ok
 
+REM Other machines must log in, so with no accounts yet nobody can get in at all
+"%PY%" -c "import app; app.init_db(); con=app.get_db(); n=con.execute('SELECT COUNT(*) FROM users').fetchone()[0]; con.close(); print('[PosRestructure] WARNING: there are no user accounts yet - other machines cannot log in. Add one with:  python manage_users.py add <username> \"<display name>\"') if not n else None"
+
 echo.
 echo [PosRestructure] Server running on port %PORT%  (Ctrl+C to stop)
 echo [PosRestructure] Other machines on the LAN open:

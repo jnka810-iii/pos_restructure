@@ -23,12 +23,13 @@ Build .exe (Windows):
     --name "PosRestructure" app.py
 """
 
-import logging, os, socket, sys, sqlite3, threading, time, uuid
+import logging, os, secrets, socket, sys, sqlite3, threading, time, uuid
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, redirect, render_template, send_from_directory, session
 from werkzeug.exceptions import HTTPException
+from werkzeug.security import check_password_hash
 
 try:
     import webview
@@ -98,9 +99,19 @@ COLUMNS = {
     'file_orig_name': 'TEXT',
     'created'       : 'TEXT',
     'updated'       : 'TEXT',
+    'created_by'    : 'TEXT',
+    'updated_by'    : 'TEXT',
 }
 
-ALLOWED = set(COLUMNS) - {'created', 'updated'}
+# เวลาและชื่อผู้บันทึกมาจากเซิร์ฟเวอร์เสมอ หน้าเว็บส่งค่าเหล่านี้มาเองไม่ได้
+ALLOWED = set(COLUMNS) - {'created', 'updated', 'created_by', 'updated_by'}
+
+USER_COLUMNS = {
+    'username'     : 'TEXT NOT NULL UNIQUE',
+    'display_name' : 'TEXT NOT NULL',
+    'password_hash': 'TEXT NOT NULL',
+    'created'      : 'TEXT',
+}
 
 def init_db():
     con = get_db()
@@ -110,9 +121,12 @@ def init_db():
     for name, decl in COLUMNS.items():
         if name not in existing:
             con.execute(f'ALTER TABLE positions ADD COLUMN {name} {decl}')
+    user_decls = ', '.join(f'{name} {decl}' for name, decl in USER_COLUMNS.items())
+    con.execute(f'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, {user_decls})')
     migrate_timestamps(con)
     con.commit(); con.close()
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    app.secret_key = load_secret_key()
 
 def migrate_timestamps(con):
     """แปลง created กับ updated ที่เก็บเป็น DD/MM/YYYY HH:MM ของเดิมให้เป็น ISO 8601
@@ -137,6 +151,7 @@ def drop_upload(name):
 # ข้อความที่ผู้ใช้เห็นเป็นภาษาไทยและไม่เปิดเผยรายละเอียดภายใน รายละเอียดจริงไปอยู่ใน log
 HTTP_MESSAGES = {
     400: 'คำขอไม่ถูกต้อง',
+    401: 'กรุณาเข้าสู่ระบบ',
     403: 'คำขอนี้ถูกปฏิเสธ',
     404: 'ไม่พบรายการที่ต้องการ',
     405: 'วิธีเรียกใช้ไม่ถูกต้อง',
@@ -165,7 +180,7 @@ def block_cross_site_writes():
     """เบราว์เซอร์ส่ง Origin มากับทุกคำขอที่เปลี่ยนข้อมูล และหน้าเว็บอื่นปลอม Origin ไม่ได้
 
     คำขอที่ไม่มี Origin เลยคือ client ที่ไม่ใช่เบราว์เซอร์ เช่น curl หรือ test client
-    ซึ่งไม่ใช่ช่องทาง CSRF จึงปล่อยผ่าน การป้องกันการเข้าถึงจากภายนอกเป็นเรื่องของ F02
+    ซึ่งไม่ใช่ช่องทาง CSRF จึงปล่อยผ่าน การกันคนนอกเข้าถึงเป็นเรื่องของ require_login
     """
     if request.method in ('GET', 'HEAD', 'OPTIONS'):
         return None
@@ -175,9 +190,111 @@ def block_cross_site_writes():
         return jsonify({'ok': False, 'error': 'คำขอข้ามเว็บไซต์ถูกปฏิเสธ'}), 403
     return None
 
+
+# ── การเข้าสู่ระบบ ────────────────────────────────────────────────────────────
+# คำขอที่มาจากเครื่องแม่ข่ายเองไม่ต้องเข้าสู่ระบบ
+# เหตุผลอยู่ที่ docs/adr/0001-login-only-for-other-machines.md
+LOOPBACK        = {'127.0.0.1', '::1'}
+SESSION_HOURS   = 12
+LOCAL_RECORDER  = 'เครื่องแม่ข่าย'   # ชื่อผู้บันทึกเมื่อบันทึกจากเครื่องแม่ข่ายโดยไม่ได้เข้าสู่ระบบ
+OPEN_ENDPOINTS  = {'login', 'static'}
+
+app.permanent_session_lifetime = timedelta(hours=SESSION_HOURS)
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax')
+
+def secret_key_path():
+    """เก็บไว้ข้างฐานข้อมูล เทสที่ย้าย DB_PATH ไปโฟลเดอร์ชั่วคราวจึงได้กุญแจของตัวเองไปด้วย"""
+    return os.path.join(os.path.dirname(DB_PATH), 'secret_key')
+
+def load_secret_key():
+    """อ่านกุญแจที่ใช้เซ็นคุกกี้จากไฟล์ ถ้ายังไม่มีก็สร้างใหม่แล้วเก็บไว้
+
+    ถ้าสุ่มกุญแจใหม่ทุกครั้งที่เปิดแอป ทุกคนในวงจะหลุดออกจากระบบทันทีที่เครื่องแม่ข่าย
+    รีสตาร์ท รวมถึงคนที่กรอกแบบ บอ.1 ค้างไว้ยังไม่ได้บันทึก
+    """
+    path = secret_key_path()
+    try:
+        with open(path, encoding='utf-8') as fh:
+            key = fh.read().strip()
+        if key:
+            return key
+    except FileNotFoundError:
+        pass
+    key = secrets.token_hex(32)
+    with open(path, 'w', encoding='utf-8') as fh:
+        fh.write(key)
+    return key
+
+def from_this_machine():
+    return request.remote_addr in LOOPBACK
+
+def session_user():
+    """ชื่อแสดงผลของผู้ใช้งานที่เข้าสู่ระบบอยู่ หรือค่าว่างถ้ายังไม่เข้าหรือเซสชันหมดอายุ
+
+    อายุเซสชันตรวจที่ฝั่งเซิร์ฟเวอร์ ไม่พึ่งวันหมดอายุของคุกกี้อย่างเดียว เพราะวันหมดอายุ
+    ของคุกกี้เป็นเรื่องที่เบราว์เซอร์เลือกจะเชื่อฟังหรือไม่ก็ได้
+    """
+    since = session.get('since')
+    if not since:
+        return ''
+    if datetime.now() - datetime.strptime(since, '%Y-%m-%dT%H:%M:%S') > timedelta(hours=SESSION_HOURS):
+        session.clear()
+        return ''
+    return session.get('display_name', '')
+
+def recorder():
+    """ชื่อที่คัดลอกลงช่องผู้บันทึกของคำขอ เป็นข้อความ ไม่ใช่ตัวอ้างอิงไปยังบัญชี
+    เหตุผลอยู่ที่ docs/adr/0002-recorder-is-a-copied-name.md"""
+    return session_user() or (LOCAL_RECORDER if from_this_machine() else '')
+
+@app.before_request
+def require_login():
+    """ปิดทุก route ยกเว้นหน้าเข้าสู่ระบบกับไฟล์ static
+
+    ไฟล์แนบใน /uploads/ ก็อยู่ในด่านนี้ด้วย ชื่อไฟล์เป็น UUID ที่เดายาก แต่ชื่อนั้น
+    ปรากฏอยู่ในคำตอบของ GET /api/positions การเดายากจึงไม่ใช่การป้องกัน
+    """
+    if request.endpoint in OPEN_ENDPOINTS or from_this_machine():
+        return None
+    if session_user():
+        return None
+    if wants_json():
+        return jsonify({'ok': False, 'error': 'กรุณาเข้าสู่ระบบ'}), 401
+    return redirect('/login')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        if from_this_machine() or session_user():
+            return redirect('/')
+        return render_template('login.html', version=APP_VERSION)
+
+    cred = request.get_json(silent=True) or {}
+    with db() as con:
+        row = con.execute('SELECT username, display_name, password_hash FROM users WHERE username=?',
+                          [cred.get('username', '')]).fetchone()
+    if not row or not check_password_hash(row['password_hash'], cred.get('password', '')):
+        # หน่วงไว้หนึ่งวินาที การไล่เดารหัสผ่านเป็นหมื่นครั้งจึงไม่คุ้มอีกต่อไป
+        # ไม่ล็อกบัญชีหลังผิดหลายครั้ง เพราะเปิดช่องให้ใครก็ได้ในวงล็อกเพื่อนร่วมงานออกจากระบบ
+        time.sleep(1)
+        app.logger.warning('failed login as %r from %s', cred.get('username', ''), request.remote_addr)
+        return jsonify({'ok': False, 'error': 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง'}), 401
+
+    session.clear()
+    session.permanent = True
+    session['username']     = row['username']
+    session['display_name'] = row['display_name']
+    session['since']        = now_iso()
+    return jsonify({'ok': True, 'display_name': row['display_name']})
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'ok': True})
+
 # ── Routes ───────────────────────────────────────────────────────────────────
 @app.route('/')
-def index(): return render_template('index.html', version=APP_VERSION)
+def index(): return render_template('index.html', version=APP_VERSION, user=session_user())
 
 @app.route('/api/positions', methods=['GET'])
 def get_all():
@@ -189,8 +306,10 @@ def get_all():
 @app.route('/api/positions', methods=['POST'])
 def add_rec():
     d = {k:v for k,v in request.get_json(force=True).items() if k in ALLOWED}
-    d['created'] = now_iso()
-    d['updated'] = ''
+    d['created']    = now_iso()
+    d['updated']    = ''
+    d['created_by'] = recorder()
+    d['updated_by'] = ''
     cols = ','.join(d.keys()); plh = ','.join(['?']*len(d))
     with db() as con:
         cur = con.execute(f'INSERT INTO positions ({cols}) VALUES ({plh})', list(d.values()))
@@ -200,7 +319,8 @@ def add_rec():
 @app.route('/api/positions/<int:rid>', methods=['PUT'])
 def upd_rec(rid):
     d = {k:v for k,v in request.get_json(force=True).items() if k in ALLOWED}
-    d['updated'] = now_iso()
+    d['updated']    = now_iso()
+    d['updated_by'] = recorder()
     sets = ','.join([f'{k}=?' for k in d.keys()])
     with db() as con:
         prev = con.execute('SELECT file_name FROM positions WHERE id=?', [rid]).fetchone()
@@ -221,6 +341,9 @@ def del_rec(rid):
 
 @app.route('/api/positions', methods=['DELETE'])
 def del_all():
+    # การลบทุกคำขอในครั้งเดียวย้อนกลับไม่ได้ และไม่มีเหตุให้ทำจากเครื่องอื่น
+    if not from_this_machine():
+        return jsonify({'ok': False, 'error': 'ลบคำขอทั้งหมดทำได้จากเครื่องแม่ข่ายเท่านั้น'}), 403
     with db() as con:
         names = [r['file_name'] for r in con.execute('SELECT file_name FROM positions')]
         con.execute('DELETE FROM positions')
