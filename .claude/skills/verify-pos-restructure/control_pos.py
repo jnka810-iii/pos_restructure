@@ -1448,11 +1448,14 @@ READ_JS = r"""
     const t = document.querySelector(ARGS.table);
     out.table = t ? {
       headers: [...t.querySelectorAll('thead th')].map(e => norm(e.innerText)),
+      // ปุ่มในช่องจัดการถูกซ่อนตามบทบาทได้ กรองด้วย vis แบบเดียวกับ controls
+      // ไม่อย่างนั้นตารางจะรายงานปุ่มที่บทบาทนี้ไม่เห็นว่ามีอยู่
       rows: [...t.querySelectorAll('tbody tr')].map(
-        tr => [...tr.children].map(td => norm(td.innerText) ||
-               (td.querySelector('[aria-label]') ? '[' +
-                [...td.querySelectorAll('[aria-label]')].map(b =>
-                  b.getAttribute('aria-label')).join('|') + ']' : ''))),
+        tr => [...tr.children].map(td => {
+          if (norm(td.innerText)) return norm(td.innerText);
+          const btns = [...td.querySelectorAll('[aria-label]')].filter(vis);
+          return btns.length ? '[' + btns.map(b => b.getAttribute('aria-label')).join('|') + ']' : '';
+        })),
     } : {missing: ARGS.table};
   }
   return out;
