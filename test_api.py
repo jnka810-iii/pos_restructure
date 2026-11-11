@@ -30,27 +30,36 @@ app.init_db()
 client = app.app.test_client()
 
 # บัญชีสำหรับเทสที่ต้องเข้าสู่ระบบ สร้างตรงนี้แทนการเรียก manage_users.py ซึ่งถามรหัสผ่านทางแป้นพิมพ์
+# somchai เป็นผู้ดูแลระบบ somying เป็นเจ้าหน้าที่
 LAN_IP   = '192.168.1.50'
 USERNAME = 'somchai'
 PASSWORD = 'ความลับที่ยาวพอ'
 FULLNAME = 'สมชาย ใจดี'
+STAFF_USERNAME = 'somying'
+STAFF_PASSWORD = 'รหัสของเจ้าหน้าที่'
+STAFF_FULLNAME = 'สมหญิง รักงาน'
 _con = app.get_db()
-_con.execute('INSERT INTO users (username, display_name, password_hash, created) VALUES (?,?,?,?)',
-             [USERNAME, FULLNAME, generate_password_hash(PASSWORD), app.now_iso()])
+_con.executemany('INSERT INTO users (username, display_name, password_hash, created, role) VALUES (?,?,?,?,?)',
+                 [(USERNAME, FULLNAME, generate_password_hash(PASSWORD), app.now_iso(), 'admin'),
+                  (STAFF_USERNAME, STAFF_FULLNAME, generate_password_hash(STAFF_PASSWORD), app.now_iso(), 'staff')])
 _con.commit()
 _con.close()
 
+LOGINS = {'admin': (USERNAME, PASSWORD), 'staff': (STAFF_USERNAME, STAFF_PASSWORD)}
 
-def lan_client(logged_in=False):
+
+def lan_client(login=None):
     """client ที่ดูเหมือนเครื่องอื่นในวง LAN จึงต้องผ่านด่านเข้าสู่ระบบ
 
+    login เป็น 'admin' หรือ 'staff' สำหรับบัญชีของเทส หรือคู่ (ชื่อผู้ใช้งาน, รหัสผ่าน) ของบัญชีอื่น
     client ตัวหลักของไฟล์นี้เป็น 127.0.0.1 ตามค่าปริยายของ Flask ซึ่งนับเป็นเครื่องแม่ข่าย
     เทสเดิมทุกตัวจึงไม่ต้องรู้จักการเข้าสู่ระบบเลย
     """
     c = app.app.test_client()
     c.environ_base['REMOTE_ADDR'] = LAN_IP
-    if logged_in:
-        r = c.post('/login', json={'username': USERNAME, 'password': PASSWORD})
+    if login:
+        username, password = LOGINS.get(login, login)
+        r = c.post('/login', json={'username': username, 'password': password})
         assert r.status_code == 200, f'the fixture could not log in: {r.status_code} {r.get_json()}'
     return c
 
@@ -500,7 +509,7 @@ def serving_a_non_loopback_host_turns_the_login_on_by_itself():
 def serving_the_lan_with_no_accounts_refuses_to_start():
     """ไม่มีบัญชีแปลว่าไม่มีใครเข้าได้เลย รวมถึงผู้ดูแล การเปิดเซิร์ฟเวอร์ตอนนั้นคือการล็อกทุกคนออก"""
     con = app.get_db()
-    saved = con.execute('SELECT username, display_name, password_hash, created FROM users').fetchall()
+    saved = con.execute('SELECT * FROM users').fetchall()
     con.execute('DELETE FROM users')
     con.commit()
     con.close()
@@ -509,8 +518,9 @@ def serving_the_lan_with_no_accounts_refuses_to_start():
             assert started == [], 'the server started with no accounts, locking everyone out'
     finally:
         con = app.get_db()
-        con.executemany('INSERT INTO users (username, display_name, password_hash, created)'
-                        ' VALUES (?,?,?,?)', [tuple(r) for r in saved])
+        cols = saved[0].keys()
+        con.executemany(f'INSERT INTO users ({",".join(cols)}) VALUES ({",".join("?" * len(cols))})',
+                        [tuple(r) for r in saved])
         con.commit()
         con.close()
 
@@ -525,7 +535,7 @@ def an_attachment_is_behind_the_login_too():
     name = post_file('เอกสารแนบ.pdf').get_json()['file_name']
     r = lan_client().get(f'/uploads/{name}')
     assert r.status_code == 302, f'an attachment was served to a machine that never logged in: {r.status_code}'
-    r = lan_client(logged_in=True).get(f'/uploads/{name}')
+    r = lan_client('admin').get(f'/uploads/{name}')
     assert r.status_code == 200, f'a logged in machine could not read the attachment: {r.status_code}'
 
 
@@ -538,7 +548,7 @@ def a_wrong_password_hands_out_no_session():
 
 
 def a_record_remembers_who_saved_it():
-    c = lan_client(logged_in=True)
+    c = lan_client('admin')
     rid = c.post('/api/positions', json={'p4_status': 'อนุมัติ'}).get_json()['id']
     row = next(r for r in client.get('/api/positions').get_json() if r['id'] == rid)
     assert row['created_by'] == FULLNAME, f"expected {FULLNAME!r}, got {row['created_by']!r}"
@@ -566,13 +576,83 @@ def clearing_every_record_is_refused_from_the_lan():
     client.post('/api/positions', json={'p4_status': 'อนุมัติ'})
     before = len(client.get('/api/positions').get_json())
     assert before, 'the check needs at least one record to protect'
-    r = lan_client(logged_in=True).delete('/api/positions')
+    r = lan_client('admin').delete('/api/positions')
     assert r.status_code == 403, f'expected 403, got {r.status_code}'
     assert len(client.get('/api/positions').get_json()) == before, 'records were cleared from the LAN'
 
 
+@contextmanager
+def database_at(path):
+    """ชี้แอปไปที่ไฟล์ฐานข้อมูลอื่นชั่วคราว แล้วคืนฐานข้อมูลกับกุญแจคุกกี้ของเทสหลักให้ตามเดิม"""
+    real_path, real_key = app.DB_PATH, app.app.secret_key
+    app.DB_PATH = path
+    try:
+        yield
+    finally:
+        app.DB_PATH, app.app.secret_key = real_path, real_key
+
+
+def roles_in(path):
+    con = sqlite3.connect(path)
+    rows = con.execute('SELECT username, role FROM users ORDER BY id').fetchall()
+    con.close()
+    return rows
+
+
+def an_old_database_makes_its_oldest_account_the_admin():
+    folder = tempfile.mkdtemp(dir=TMP)
+    path = os.path.join(folder, 'old.db')
+    con = sqlite3.connect(path)
+    con.execute('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE,'
+                ' display_name TEXT NOT NULL, password_hash TEXT NOT NULL, created TEXT)')
+    con.executemany('INSERT INTO users (username, display_name, password_hash) VALUES (?,?,?)',
+                    [('first', 'คนแรก', 'x'), ('second', 'คนที่สอง', 'x'), ('third', 'คนที่สาม', 'x')])
+    con.commit()
+    con.close()
+    with database_at(path):
+        app.init_db()
+        once = roles_in(path)
+        app.init_db()
+        assert roles_in(path) == once, f'a second init_db changed the roles: {roles_in(path)}'
+    assert once == [('first', 'admin'), ('second', 'staff'), ('third', 'staff')], once
+
+    con = sqlite3.connect(path)
+    con.execute("UPDATE users SET role = CASE username WHEN 'third' THEN 'admin' ELSE 'staff' END")
+    con.commit()
+    con.close()
+    with database_at(path):
+        app.init_db()
+    admins = [u for u, role in roles_in(path) if role == 'admin']
+    assert admins == ['third'], f'init_db promoted someone although an admin already existed: {admins}'
+
+
+def staff_can_save_a_request_but_not_delete_one():
+    c = lan_client('staff')
+    r = c.post('/api/positions', json={'p4_status': 'อยู่ระหว่างพิจารณา'})
+    assert r.status_code == 201, f'staff could not create a request: {r.status_code} {r.get_json()}'
+    rid = r.get_json()['id']
+    r = c.put(f'/api/positions/{rid}', json={'p4_status': 'อนุมัติ'})
+    assert r.status_code == 200, f'staff could not edit a request: {r.status_code} {r.get_json()}'
+    r = c.delete(f'/api/positions/{rid}')
+    assert r.status_code == 403, f'staff deleted a request: {r.status_code}'
+    assert r.get_json()['error'] == 'บทบาทของคุณไม่มีสิทธิ์ทำรายการนี้', r.get_json()
+    assert any(x['id'] == rid for x in client.get('/api/positions').get_json()), 'the request is gone'
+    assert lan_client('admin').delete(f'/api/positions/{rid}').status_code == 200, 'an admin could not delete'
+
+
+def staff_cannot_clear_every_record_even_from_this_machine():
+    client.post('/api/positions', json={'p4_status': 'อนุมัติ'})
+    before = len(client.get('/api/positions').get_json())
+    with server_mode():
+        c = app.app.test_client()
+        c.post('/login', json={'username': STAFF_USERNAME, 'password': STAFF_PASSWORD})
+        r = c.delete('/api/positions')
+    assert r.status_code == 403, f'expected 403, got {r.status_code}'
+    assert len(client.get('/api/positions').get_json()) == before, 'staff cleared every record'
+
+
 def a_session_older_than_twelve_hours_is_rejected():
-    c = lan_client(logged_in=True)
+    c = lan_client('admin')
     with c.session_transaction() as sess:
         sess['since'] = (datetime.now() - timedelta(hours=app.SESSION_HOURS - 1)).strftime('%Y-%m-%dT%H:%M:%S')
     assert c.get('/api/positions').status_code == 200, 'a session inside the window was rejected'
@@ -851,6 +931,9 @@ CHECKS = [
     a_record_remembers_who_saved_it,
     the_page_can_never_set_who_saved_a_record,
     clearing_every_record_is_refused_from_the_lan,
+    an_old_database_makes_its_oldest_account_the_admin,
+    staff_can_save_a_request_but_not_delete_one,
+    staff_cannot_clear_every_record_even_from_this_machine,
     a_session_older_than_twelve_hours_is_rejected,
     an_unknown_page_still_answers_with_html_not_json,
     the_entry_point_waits_for_the_port_instead_of_sleeping,

@@ -26,8 +26,9 @@ Build .exe (Windows):
 import logging, os, secrets, socket, sys, sqlite3, threading, time, uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from functools import wraps
 from urllib.parse import urlparse
-from flask import Flask, request, jsonify, redirect, render_template, send_from_directory, session
+from flask import Flask, g, request, jsonify, redirect, render_template, send_from_directory, session
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash
 
@@ -111,22 +112,50 @@ USER_COLUMNS = {
     'display_name' : 'TEXT NOT NULL',
     'password_hash': 'TEXT NOT NULL',
     'created'      : 'TEXT',
+    'role'         : "TEXT NOT NULL DEFAULT 'staff'",
+    'updated'      : 'TEXT',
 }
+
+# บทบาทของบัญชีผู้ใช้งาน และสิ่งที่แต่ละบทบาททำได้ การตรวจสิทธิ์ทุกจุดอ่านจากตารางนี้ผ่าน can()
+# เหตุผลอยู่ที่ docs/adr/0004-roles-and-user-management-in-the-web.md
+ROLES = {'admin': 'ผู้ดูแลระบบ', 'staff': 'เจ้าหน้าที่'}
+PERMISSIONS = {
+    'admin': frozenset({'delete_request', 'delete_all', 'manage_users'}),
+    'staff': frozenset(),
+}
+
+def create_table(con, table, columns):
+    """สร้างตารางถ้ายังไม่มี และเพิ่มคอลัมน์ที่ฐานข้อมูลเก่ายังขาดอยู่"""
+    decls = ', '.join(f'{name} {decl}' for name, decl in columns.items())
+    con.execute(f'CREATE TABLE IF NOT EXISTS {table} (id INTEGER PRIMARY KEY AUTOINCREMENT, {decls})')
+    existing = {r[1] for r in con.execute(f'PRAGMA table_info({table})')}
+    for name, decl in columns.items():
+        if name not in existing:
+            con.execute(f'ALTER TABLE {table} ADD COLUMN {name} {decl}')
 
 def init_db():
     con = get_db()
-    decls = ', '.join(f'{name} {decl}' for name, decl in COLUMNS.items())
-    con.execute(f'CREATE TABLE IF NOT EXISTS positions (id INTEGER PRIMARY KEY AUTOINCREMENT, {decls})')
-    existing = {r[1] for r in con.execute('PRAGMA table_info(positions)')}
-    for name, decl in COLUMNS.items():
-        if name not in existing:
-            con.execute(f'ALTER TABLE positions ADD COLUMN {name} {decl}')
-    user_decls = ', '.join(f'{name} {decl}' for name, decl in USER_COLUMNS.items())
-    con.execute(f'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, {user_decls})')
+    create_table(con, 'positions', COLUMNS)
+    create_table(con, 'users', USER_COLUMNS)
     migrate_timestamps(con)
+    ensure_an_admin(con)
     con.commit(); con.close()
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     app.secret_key = load_secret_key()
+
+def ensure_an_admin(con):
+    """ถ้ามีบัญชีแต่ไม่มีผู้ดูแลระบบเลย ให้บัญชีที่เก่าที่สุดเป็นผู้ดูแลระบบ
+
+    ฐานข้อมูลจากก่อนมีบทบาทได้บัญชีทุกตัวเป็นเจ้าหน้าที่ ถ้าไม่ตั้งใครขึ้นมา จะไม่มีใครเปิด
+    แท็บจัดการผู้ใช้งานได้เลย บัญชีแรกมักเป็นของคนที่ตั้งระบบ จึงเลือกบัญชีนั้น
+    รันซ้ำได้ เมื่อมีผู้ดูแลระบบอยู่แล้วคำสั่งนี้ไม่แตะอะไร
+    """
+    con.execute("UPDATE users SET role='admin' WHERE id=(SELECT MIN(id) FROM users)"
+                " AND NOT EXISTS (SELECT 1 FROM users WHERE role='admin')")
+
+# ใส่ไว้ใน WHERE ของคำสั่งที่ลดบทบาทหรือลบบัญชี เพื่อให้การตรวจกับการเขียนเป็นคำสั่งเดียวกัน
+# สองคนที่กดลดบทบาทของกันและกันพร้อมกันจึงทำให้ระบบไม่เหลือผู้ดูแลระบบไม่ได้
+NOT_THE_LAST_ADMIN = "(role != 'admin' OR (SELECT COUNT(*) FROM users WHERE role='admin') > 1)"
 
 def migrate_timestamps(con):
     """แปลง created กับ updated ที่เก็บเป็น DD/MM/YYYY HH:MM ของเดิมให้เป็น ISO 8601
@@ -240,19 +269,58 @@ def walks_in_without_a_login():
     """
     return TRUST_LOCAL and from_this_machine()
 
-def session_user():
-    """ชื่อแสดงผลของผู้ใช้งานที่เข้าสู่ระบบอยู่ หรือค่าว่างถ้ายังไม่เข้าหรือเซสชันหมดอายุ
+def current_account():
+    """แถวบัญชีของผู้ใช้งานที่เข้าสู่ระบบอยู่ หรือ None ถ้ายังไม่เข้า เซสชันหมดอายุ หรือบัญชีถูกลบไปแล้ว
+
+    อ่านจากฐานข้อมูลทุกคำขอ ไม่เก็บชื่อหรือบทบาทไว้ในคุกกี้ ผู้ดูแลระบบลดบทบาทหรือลบบัญชีแล้ว
+    จึงมีผลกับเซสชันที่เปิดค้างอยู่ตั้งแต่คำขอถัดไป
 
     อายุเซสชันตรวจที่ฝั่งเซิร์ฟเวอร์ ไม่พึ่งวันหมดอายุของคุกกี้อย่างเดียว เพราะวันหมดอายุ
     ของคุกกี้เป็นเรื่องที่เบราว์เซอร์เลือกจะเชื่อฟังหรือไม่ก็ได้
     """
-    since = session.get('since')
-    if not since:
-        return ''
+    if 'account' not in g:
+        g.account = load_account()
+    return g.account
+
+def load_account():
+    since, username = session.get('since'), session.get('username')
+    if not since or not username:
+        return None
     if datetime.now() - datetime.strptime(since, '%Y-%m-%dT%H:%M:%S') > timedelta(hours=SESSION_HOURS):
         session.clear()
-        return ''
-    return session.get('display_name', '')
+        return None
+    with db() as con:
+        row = con.execute('SELECT id, username, display_name, role FROM users WHERE username=?',
+                          [username]).fetchone()
+    if not row:
+        session.clear()
+    return row
+
+def session_user():
+    """ชื่อแสดงผลของผู้ใช้งานที่เข้าสู่ระบบอยู่ หรือค่าว่างถ้ายังไม่ได้เข้าสู่ระบบ"""
+    account = current_account()
+    return account['display_name'] if account else ''
+
+def current_role():
+    """เครื่องแม่ข่ายในโหมดเดสก์ท็อปนับเป็นผู้ดูแลระบบ เพราะเจ้าของเครื่องเปิดไฟล์ฐานข้อมูลได้อยู่แล้ว"""
+    if walks_in_without_a_login():
+        return 'admin'
+    account = current_account()
+    return account['role'] if account else None
+
+def can(perm):
+    return perm in PERMISSIONS.get(current_role(), frozenset())
+
+def requires(perm):
+    """ปิด route ไว้สำหรับบทบาทที่มีสิทธิ์ perm ใน PERMISSIONS เท่านั้น"""
+    def wrap(view):
+        @wraps(view)
+        def guarded(*args, **kwargs):
+            if not can(perm):
+                return jsonify({'ok': False, 'error': 'บทบาทของคุณไม่มีสิทธิ์ทำรายการนี้'}), 403
+            return view(*args, **kwargs)
+        return guarded
+    return wrap
 
 def recorder():
     """ชื่อที่คัดลอกลงช่องผู้บันทึกของคำขอ เป็นข้อความ ไม่ใช่ตัวอ้างอิงไปยังบัญชี
@@ -283,7 +351,7 @@ def login():
 
     cred = request.get_json(silent=True) or {}
     with db() as con:
-        row = con.execute('SELECT username, display_name, password_hash FROM users WHERE username=?',
+        row = con.execute('SELECT username, display_name, role, password_hash FROM users WHERE username=?',
                           [cred.get('username', '')]).fetchone()
     if not row or not check_password_hash(row['password_hash'], cred.get('password', '')):
         # หน่วงไว้หนึ่งวินาที การไล่เดารหัสผ่านเป็นหมื่นครั้งจึงไม่คุ้มอีกต่อไป
@@ -294,10 +362,9 @@ def login():
 
     session.clear()
     session.permanent = True
-    session['username']     = row['username']
-    session['display_name'] = row['display_name']
-    session['since']        = now_iso()
-    return jsonify({'ok': True, 'display_name': row['display_name']})
+    session['username'] = row['username']
+    session['since']    = now_iso()
+    return jsonify({'ok': True, 'display_name': row['display_name'], 'role': row['role']})
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -344,6 +411,7 @@ def upd_rec(rid):
     return jsonify({'ok':True})
 
 @app.route('/api/positions/<int:rid>', methods=['DELETE'])
+@requires('delete_request')
 def del_rec(rid):
     with db() as con:
         row = con.execute('SELECT file_name FROM positions WHERE id=?',[rid]).fetchone()
@@ -352,6 +420,7 @@ def del_rec(rid):
     return jsonify({'ok':True})
 
 @app.route('/api/positions', methods=['DELETE'])
+@requires('delete_all')
 def del_all():
     # การลบทุกคำขอในครั้งเดียวย้อนกลับไม่ได้ และไม่มีเหตุให้ทำจากเครื่องอื่น
     if not from_this_machine():
