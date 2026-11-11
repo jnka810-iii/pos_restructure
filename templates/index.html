@@ -171,21 +171,43 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 /* Table */
 .table-wrap{background:var(--canvas);border:1px solid var(--hairline);border-radius:8px;overflow-x:auto}
-#tbl{width:100%;min-width:1280px;border-collapse:collapse;font-size:15px;line-height:1.6;overflow-wrap:normal}
-#tbl th{background:var(--page);color:var(--ink);font-size:14px;font-weight:600;line-height:1.5;height:48px;padding:12px 16px;
+.dt{width:100%;border-collapse:collapse;font-size:15px;line-height:1.6;overflow-wrap:normal}
+#tbl{min-width:1280px}
+#utbl{min-width:880px}
+.dt th{background:var(--page);color:var(--ink);font-size:14px;font-weight:600;line-height:1.5;height:48px;padding:12px 16px;
         text-align:left;white-space:nowrap;border-bottom:1px solid var(--hairline)}
-#tbl td{background:var(--canvas);color:var(--ink-body);height:48px;padding:12px 16px;vertical-align:middle;
+.dt td{background:var(--canvas);color:var(--ink-body);height:48px;padding:12px 16px;vertical-align:middle;
         border-bottom:1px solid var(--hairline);white-space:nowrap}
-#tbl td.wrap{white-space:normal;min-width:160px}
-#tbl tbody tr:last-child td{border-bottom:0}
-#tbl tbody tr:hover td{background:var(--band-blue)}
-#tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-#tbl .sm{font-size:14px}
-#tbl .tnum{font-variant-numeric:tabular-nums;white-space:nowrap}
-#tbl .cell-btn{white-space:nowrap;padding:2px 8px}
-#tbl .actions{text-align:right;white-space:nowrap;padding:2px 8px}
+.dt td.wrap{white-space:normal;min-width:160px}
+.dt tbody tr:last-child td{border-bottom:0}
+.dt tbody tr:hover td{background:var(--band-blue)}
+.dt .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dt .sm{font-size:14px}
+.dt .tnum{font-variant-numeric:tabular-nums;white-space:nowrap}
+.dt .cell-btn{white-space:nowrap;padding:2px 8px}
+.dt .actions{text-align:right;white-space:nowrap;padding:2px 8px}
 .empty-state{background:var(--canvas);border:1px solid var(--hairline);border-radius:8px;padding:48px 24px;text-align:center}
 .empty-state p{margin:0 0 16px;color:var(--ink-body)}
+
+/* Users tab */
+.tab-title{font-size:28px;font-weight:600;line-height:1.4;color:var(--ink);margin:0 0 16px}
+.role-chip{background:var(--band-blue);color:var(--primary-hover);font-weight:600}
+.u-avatar{color:var(--primary);margin-right:8px}
+.uname{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:14px}
+.pager{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:16px;
+       font-size:14px;line-height:1.5;color:var(--ink-meta)}
+.pager-size{display:flex;align-items:center;gap:8px;margin:0}
+.pager .form-select{width:auto;min-height:40px;padding:6px 36px 6px 12px;font-size:14px;
+                    background-position:right 12px center}
+.pager-nav{display:flex;align-items:center;gap:4px;margin-left:auto}
+.pbtn{min-width:40px;min-height:40px;padding:0 8px;font:inherit;font-size:14px;
+      background:var(--canvas);color:var(--ink-body);border:1px solid var(--hairline);
+      border-radius:8px;cursor:pointer}
+.pbtn:hover:not(:disabled){background:var(--band-blue)}
+.pbtn:disabled{color:var(--ink-disabled);cursor:default}
+.pbtn.active{background:var(--primary);border-color:var(--primary);color:var(--on-primary);font-weight:600}
+/* กล่องจัดการบัญชีเป็นฟอร์ม ไม่ใช่ข้อความยืนยันที่ต้องคงบรรทัดตามที่เขียนไว้ */
+#userModal .modal-body{white-space:normal}
 
 /* Status tags */
 .tag{display:inline-block;font-size:13px;font-weight:600;line-height:1.4;padding:2px 10px;border-radius:9999px;white-space:nowrap}
@@ -258,6 +280,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
     {# ว่างเมื่อเปิดจากเครื่องแม่ข่าย ซึ่งไม่ต้องเข้าสู่ระบบ #}
     {% if user %}
     <span class="status-chip"><i class="fa fa-user" aria-hidden="true"></i><span id="user-name">{{ user }}</span></span>
+    <span class="status-chip role-chip" id="role-chip"></span>
     <button type="button" class="btn btn-logout" onclick="logout()"><i class="fa fa-right-from-bracket" aria-hidden="true"></i>ออกจากระบบ</button>
     {% endif %}
   </div>
@@ -268,12 +291,13 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <button type="button" class="tbtn active" onclick="showTab('tab-form',this)"><i class="fa fa-edit" aria-hidden="true"></i>กรอกข้อมูล</button>
   <button type="button" class="tbtn" onclick="showTab('tab-list',this)"><i class="fa fa-list" aria-hidden="true"></i>คำขอทั้งหมด <span class="count-badge" id="badge-count">0</span></button>
   <button type="button" class="tbtn" onclick="showTab('tab-dashboard',this)"><i class="fa fa-chart-bar" aria-hidden="true"></i>สรุปภาพรวม</button>
+  <button type="button" class="tbtn" data-perm="manage_users" onclick="showTab('tab-users',this)"><i class="fa fa-users-gear" aria-hidden="true"></i>จัดการผู้ใช้งาน</button>
 </nav>
 
 <main class="page">
 
 <!-- ==================== TAB FORM ==================== -->
-<div id="tab-form">
+<div id="tab-form" class="tabpane">
 <form id="mainForm" novalidate>
   <input type="hidden" id="rec-id">
   <p class="form-note">ช่องที่มีเครื่องหมาย <span class="req-star">*</span> ต้องกรอก</p>
@@ -424,7 +448,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 </div>
 
 <!-- ==================== TAB LIST ==================== -->
-<div id="tab-list" style="display:none">
+<div id="tab-list" class="tabpane" style="display:none">
   <div class="toolbar">
     <div class="fld">
       <label class="form-label" for="search-input">ค้นหา</label>
@@ -443,7 +467,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
     <div class="d-flex flex-wrap gap-2">
       <button type="button" class="btn btn-secondary" onclick="doExportCSV()"><i class="fa fa-file-csv" aria-hidden="true"></i>Export CSV</button>
       <button type="button" class="btn btn-secondary" onclick="doExportJSON()"><i class="fa fa-file-code" aria-hidden="true"></i>Export JSON</button>
-      <button type="button" class="btn btn-danger" onclick="clearAll()"><i class="fa fa-trash" aria-hidden="true"></i>ลบทั้งหมด</button>
+      <button type="button" class="btn btn-danger" data-perm="delete_all" onclick="clearAll()"><i class="fa fa-trash" aria-hidden="true"></i>ลบทั้งหมด</button>
     </div>
     <span class="rec-count">แสดง <b id="rec-shown">0</b> / <b id="rec-total">0</b> คำขอ</span>
   </div>
@@ -465,7 +489,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 </div>
 
 <!-- ==================== TAB DASHBOARD ==================== -->
-<div id="tab-dashboard" style="display:none">
+<div id="tab-dashboard" class="tabpane" style="display:none">
   <div class="row g-4 mb-4" id="stat-cards"></div>
   <div class="row g-4">
     <div class="col-12 col-lg-5"><div class="cc"><canvas id="chart-status" height="240"></canvas></div></div>
@@ -475,9 +499,83 @@ input[type=number]{font-variant-numeric:tabular-nums}
   </div>
 </div>
 
+<!-- ==================== TAB USERS ==================== -->
+<div id="tab-users" class="tabpane" style="display:none">
+  <h2 class="tab-title">จัดการผู้ใช้งาน</h2>
+  <div class="mb-4">
+    <button type="button" class="btn btn-primary" onclick="openUser('add')">
+      <i class="fa fa-user-plus" aria-hidden="true"></i>เพิ่มผู้ใช้งาน
+    </button>
+  </div>
+  <div class="table-wrap">
+    <table id="utbl" class="dt">
+      <thead>
+        <tr>
+          <th class="num">ลำดับ</th><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>บทบาท</th>
+          <th>วันที่สร้าง</th><th>แก้ไขล่าสุด</th><th class="actions">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="utbody"></tbody>
+    </table>
+  </div>
+  <div class="pager">
+    <label class="pager-size" for="user-page-size">แสดง
+      <select class="form-select" id="user-page-size" onchange="setUserPageSize(this.value)">
+        <option>10</option><option>25</option><option>50</option>
+      </select>
+      รายการ
+    </label>
+    <span id="user-range"></span>
+    <div class="pager-nav" id="user-pages"></div>
+  </div>
+</div>
+
 </main>
 
 <footer class="ftr">สำนักนายกรัฐมนตรี · ระบบข้อมูลการปรับปรุงการกำหนดตำแหน่ง · เวอร์ชัน {{ version }}</footer>
+
+<!-- กล่องจัดการบัญชี กล่องเดียวทำสามอย่างตาม USER_MODES ช่องที่แสดงมาจากตารางนั้น -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="userForm" onsubmit="submitUser(event)" novalidate>
+        <div class="modal-header">
+          <h2 class="modal-title" id="userTitle"></h2>
+          <button type="button" class="btn btn-ghost btn-icon ms-auto" data-bs-dismiss="modal" aria-label="ปิด"><i class="fa fa-times" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="inline-notification inline-error" id="user-error" role="alert" style="display:none">
+            <i class="fa fa-exclamation-circle n-icon" aria-hidden="true"></i><span id="user-error-msg"></span>
+          </div>
+          <div class="mb-3" id="uf_display_name">
+            <label class="form-label required" for="u_display_name">ชื่อ-นามสกุล</label>
+            <input type="text" class="form-control" id="u_display_name" autocomplete="off">
+            <div class="helper-text">ชื่อนี้ไปปรากฏเป็นผู้บันทึกบนคำขอที่บัญชีนี้บันทึก</div>
+          </div>
+          <div class="mb-3" id="uf_username">
+            <label class="form-label required" for="u_username">ชื่อผู้ใช้</label>
+            <input type="text" class="form-control" id="u_username" autocomplete="off" spellcheck="false">
+            <div class="helper-text">a-z 0-9 . _ - ยาว 3 ถึง 32 ตัว ตั้งแล้วเปลี่ยนไม่ได้</div>
+          </div>
+          <div class="mb-3" id="uf_role">
+            <label class="form-label required" for="u_role">บทบาท</label>
+            <select class="form-select" id="u_role"></select>
+            <div class="helper-text">เจ้าหน้าที่บันทึกและแก้ไขคำขอได้ แต่ลบคำขอและจัดการผู้ใช้งานไม่ได้</div>
+          </div>
+          <div class="mb-3" id="uf_password">
+            <label class="form-label required" for="u_password">รหัสผ่าน</label>
+            <input type="password" class="form-control" id="u_password" autocomplete="new-password">
+            <div class="helper-text">ยาวอย่างน้อย 8 ตัวอักษร</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="userOk"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <!-- Confirm modal: ใช้กับการกระทำที่ลบหรือย้อนกลับไม่ได้ -->
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmTitle" aria-hidden="true">
@@ -901,8 +999,29 @@ function exportPDFRecord(){
 /* ============================================================
    SESSION
    ============================================================ */
-/* ว่างเมื่อเปิดจากเครื่องแม่ข่าย ซึ่งไม่ต้องเข้าสู่ระบบ */
-let currentUser = {{ user|tojson }};
+/* ตัวตนของผู้ใช้งานและตารางสิทธิ์มาจากเซิร์ฟเวอร์ หน้าเว็บไม่ได้เขียนกติกาซ้ำไว้เอง
+   name ว่างเมื่อเปิดจากเครื่องแม่ข่าย ซึ่งไม่ต้องเข้าสู่ระบบและนับเป็นผู้ดูแลระบบ */
+let me = {{ me|tojson }};
+const ROLE_NAME  = {{ roles|tojson }};
+const ROLE_PERMS = {{ permissions|tojson }};
+
+function can(perm){ return (ROLE_PERMS[me.role]||[]).includes(perm); }
+
+/* ปุ่มหรือแท็บที่ติด data-perm ไว้จะโผล่เฉพาะบทบาทที่มีสิทธิ์นั้น เพิ่มปุ่มใหม่ที่ต้องคุมสิทธิ์
+   จึงเติมแค่แอตทริบิวต์ ไม่ต้องแก้ฟังก์ชันนี้ */
+function applyPermissions(){
+  document.querySelectorAll('[data-perm]').forEach(el=>{ el.hidden=!can(el.dataset.perm); });
+  const chip=document.getElementById('role-chip');
+  if(chip) chip.textContent=ROLE_NAME[me.role]||'';
+}
+
+/* เข้าสู่ระบบด้วยบัญชีอื่นหรือลดบทบาทของตัวเองกลางคัน ทำให้แท็บที่เปิดค้างอยู่กลายเป็นแท็บที่
+   บทบาทใหม่เปิดไม่ได้ เรียกเฉพาะตอนบทบาทเปลี่ยนจริง ไม่ใช่ทุกครั้งที่วาดตารางใหม่ */
+function applyRoleChange(){
+  applyPermissions();
+  const open=document.querySelector('.tbtn.active');
+  if(open && open.hidden) document.querySelector('.tbtn:not([hidden])').click();
+}
 
 /* เซสชันหมดอายุกลางคันระหว่างกรอกแบบ บอ.1 ได้ ถ้าเด้งออกไปหน้าเข้าสู่ระบบ ข้อมูลที่กรอก
    ค้างไว้จะหายทั้งหมด จึงเปิดกล่องเข้าสู่ระบบซ้อนทับหน้าเดิม แล้วส่งคำขอที่ค้างซ้ำให้แทน */
@@ -931,9 +1050,10 @@ function promptLogin(){
                  body:JSON.stringify({username:user.value.trim(),password:pass.value})});
         const data=await r.json();
         if(!data.ok) throw new Error(data.error||'เข้าสู่ระบบไม่สำเร็จ');
-        currentUser=data.display_name;
+        me={id:data.id, name:data.display_name, role:data.role};
         const chip=document.getElementById('user-name');
         if(chip) chip.textContent=data.display_name;
+        applyRoleChange();
         modal.hide();
         resolve();
       }catch(e){
@@ -978,6 +1098,7 @@ function updateModeBadge(online){
   b.innerHTML=online?'<span class="dot dot-ok"></span>เชื่อมต่อแล้ว':'<span class="dot dot-err"></span>เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ — บันทึกไม่ได้';
 }
 (async()=>{
+  applyPermissions();
   for(let i=0;i<5;i++){
     try{ await apiFetch('/api/ping'); break; }
     catch{ if(i<4) await new Promise(r=>setTimeout(r,500)); }
@@ -1058,13 +1179,19 @@ function confirmDanger(title,body,okText,icon='fa-trash'){
   });
 }
 
+/* แท็บที่ต้องโหลดข้อมูลก่อนวาดอยู่ในตารางนี้ แท็บใหม่เติมหนึ่งบรรทัด ไม่ต้องแตะ showTab */
+const TAB_OPEN = {
+  'tab-list'     : ()=>loadAll().then(renderTable),
+  'tab-dashboard': ()=>loadAll().then(renderDashboard),
+  'tab-users'    : ()=>loadUsers().then(renderUsers),
+};
+
 function showTab(id,el){
-  ['tab-form','tab-list','tab-dashboard'].forEach(t=>document.getElementById(t).style.display='none');
+  document.querySelectorAll('.tabpane').forEach(t=>t.style.display='none');
   document.getElementById(id).style.display='';
   document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
   if(el) el.classList.add('active');
-  if(id==='tab-list')      loadAll().then(renderTable);
-  if(id==='tab-dashboard') loadAll().then(renderDashboard);
+  TAB_OPEN[id]?.();
 }
 
 /* ============================================================
@@ -1237,10 +1364,11 @@ function renderTable(){
       <td class="cell-btn">${r.file_orig_name?`<a href="/uploads/${encodeURIComponent(r.file_name)}" target="_blank" class="btn btn-ghost" title="${esc(r.file_orig_name)}"><i class="fa fa-paperclip" aria-hidden="true"></i>ไฟล์</a>`:'-'}</td>
       <td class="actions">
         <button type="button" class="btn btn-ghost btn-icon" onclick="editRec('${rid}')" aria-label="แก้ไขคำขอ"><i class="fa fa-edit" aria-hidden="true"></i></button>
-        <button type="button" class="btn btn-ghost btn-icon" onclick="delRec('${rid}')" aria-label="ลบคำขอ"><i class="fa fa-trash" aria-hidden="true"></i></button>
+        <button type="button" class="btn btn-ghost btn-icon" data-perm="delete_request" onclick="delRec('${rid}')" aria-label="ลบคำขอ"><i class="fa fa-trash" aria-hidden="true"></i></button>
       </td>
     </tr>`;
   }).join('');
+  applyPermissions();
 }
 
 async function editRec(id){
@@ -1273,6 +1401,156 @@ async function clearAll(){
   catch(err){ toast('ลบคำขอไม่สำเร็จ: '+err.message,'error'); }
   await loadAll(); renderTable();
 }
+
+/* ============================================================
+   USERS
+   ============================================================ */
+let allUsers     = [];
+let userPage     = 1;
+let userPageSize = 10;
+let userMode     = 'add';
+let userTarget   = null;
+
+/* กล่องจัดการบัญชีกล่องเดียวทำสามอย่าง ตารางนี้บอกว่าแต่ละอย่างแสดงช่องไหน ส่งไปที่ route ไหน
+   และขึ้นข้อความอะไรเมื่อสำเร็จ เพิ่มอย่างที่สี่คือเติมหนึ่งแถว ไม่ใช่เติม if อีกชั้น */
+const USER_MODES = {
+  add: {
+    title:'เพิ่มผู้ใช้งาน', ok:'เพิ่มผู้ใช้งาน', icon:'fa-user-plus',
+    fields:['display_name','username','role','password'],
+    done:'เพิ่มบัญชีผู้ใช้งานเรียบร้อยแล้ว',
+    send:()=>apiFetch('/api/users','POST',userForm('display_name','username','role','password')),
+  },
+  edit: {
+    title:'แก้ไขผู้ใช้งาน', ok:'บันทึกการแก้ไข', icon:'fa-floppy-disk',
+    fields:['display_name','username','role'],
+    done:'บันทึกการแก้ไขบัญชีเรียบร้อยแล้ว',
+    send:u=>apiFetch(`/api/users/${u.id}`,'PUT',userForm('display_name','role')),
+  },
+  password: {
+    title:'ตั้งรหัสผ่านใหม่', ok:'ตั้งรหัสผ่าน', icon:'fa-key',
+    fields:['username','password'],
+    done:'ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว เซสชันที่เปิดค้างอยู่ยังใช้ได้จนหมดอายุ',
+    send:u=>apiFetch(`/api/users/${u.id}/password`,'PUT',userForm('password')),
+  },
+};
+const USER_FIELDS = ['display_name','username','role','password'];
+
+/* รหัสผ่านไม่ตัดช่องว่าง เพราะช่องว่างเป็นส่วนหนึ่งของรหัสผ่านได้ แบบเดียวกับที่เซิร์ฟเวอร์ทำ */
+function userForm(...names){
+  const d={};
+  names.forEach(n=>{ const v=document.getElementById('u_'+n).value; d[n]=n==='password'?v:v.trim(); });
+  return d;
+}
+
+function openUser(mode,id){
+  userMode=mode;
+  userTarget=allUsers.find(u=>u.id===id)||null;
+  const cfg=USER_MODES[mode];
+  document.getElementById('userTitle').textContent=cfg.title;
+  document.getElementById('userOk').innerHTML=`<i class="fa ${cfg.icon}" aria-hidden="true"></i>${esc(cfg.ok)}`;
+  USER_FIELDS.forEach(n=>{
+    document.getElementById('uf_'+n).hidden=!cfg.fields.includes(n);
+    const inp=document.getElementById('u_'+n);
+    inp.value = n==='password' ? '' : (userTarget ? (userTarget[n]??'') : (n==='role'?'staff':''));
+    /* ชื่อผู้ใช้เปลี่ยนไม่ได้ เพราะเป็นสิ่งที่เจ้าของบัญชีพิมพ์ตอนเข้าสู่ระบบ */
+    inp.disabled = n==='username' && mode!=='add';
+  });
+  document.getElementById('user-error').style.display='none';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
+}
+
+async function submitUser(ev){
+  ev.preventDefault();
+  const err=document.getElementById('user-error');
+  const btn=document.getElementById('userOk');
+  err.style.display='none'; btn.disabled=true;
+  try{
+    const saved=(await USER_MODES[userMode].send(userTarget)).user;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).hide();
+    toast(USER_MODES[userMode].done);
+    /* คำตอบของคำขอที่เพิ่งส่งคือที่เดียวที่บอกบทบาทใหม่ของตัวเองได้ การอ่านรายชื่อบัญชีซ้ำ
+       หลังลดบทบาทตัวเองลงเป็นเจ้าหน้าที่จะถูกปฏิเสธ เพราะสิทธิ์หายไปตั้งแต่คำขอนั้นสำเร็จแล้ว */
+    if(saved && saved.id===me.id) return updateMyAccount(saved);
+    await loadUsers(); renderUsers();
+  }catch(e){
+    document.getElementById('user-error-msg').textContent=e.message;
+    err.style.display='flex';
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+async function updateMyAccount(saved){
+  const chip=document.getElementById('user-name');
+  if(chip) chip.textContent=saved.display_name;
+  me.name=saved.display_name;
+  if(saved.role!==me.role){ me.role=saved.role; return applyRoleChange(); }
+  await loadUsers(); renderUsers();
+}
+
+async function delUser(id){
+  const u=allUsers.find(x=>x.id===id);
+  if(!u) return;
+  const body=`บัญชี ${u.username} (${u.display_name}) จะเข้าสู่ระบบไม่ได้อีก\n`
+           + `ชื่อผู้บันทึกบนคำขอที่บัญชีนี้บันทึกไว้ไม่เปลี่ยน\nลบแล้วย้อนกลับไม่ได้`;
+  if(!await confirmDanger('ลบบัญชีผู้ใช้งานนี้?',body,'ลบบัญชี')) return;
+  try{ await apiFetch(`/api/users/${id}`,'DELETE'); toast('ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว'); }
+  catch(e){ toast('ลบบัญชีไม่สำเร็จ: '+e.message,'error'); }
+  await loadUsers(); renderUsers();
+}
+
+async function loadUsers(){
+  try{ allUsers=await apiFetch('/api/users'); }
+  catch(e){ allUsers=[]; toast('โหลดบัญชีผู้ใช้งานไม่สำเร็จ: '+e.message,'error'); }
+}
+
+/* เซิร์ฟเวอร์ปฏิเสธการลบบัญชีที่กำลังใช้งานอยู่และผู้ดูแลระบบคนสุดท้ายอยู่แล้ว หน้าเว็บจึงไม่โชว์
+   ปุ่มที่กดแล้วได้ข้อความปฏิเสธกลับมาเสมอ การตัดสินจริงยังเป็นของเซิร์ฟเวอร์ */
+function deletable(u){
+  const admins=allUsers.filter(x=>x.role==='admin').length;
+  return u.id!==me.id && !(u.role==='admin' && admins<=1);
+}
+
+function renderUsers(){
+  const pages=Math.max(1,Math.ceil(allUsers.length/userPageSize));
+  userPage=Math.min(Math.max(userPage,1),pages);
+  const from=(userPage-1)*userPageSize;
+  const shown=allUsers.slice(from,from+userPageSize);
+  document.getElementById('utbody').innerHTML=shown.map((u,i)=>`<tr>
+      <td class="num">${from+i+1}</td>
+      <td><i class="fa fa-circle-user u-avatar" aria-hidden="true"></i>${esc(u.display_name)}</td>
+      <td><span class="uname">${esc(u.username)}</span></td>
+      <td><span class="tag tag-${u.role==='admin'?'info':'neutral'}">${esc(ROLE_NAME[u.role]||u.role)}</span></td>
+      <td class="tnum sm">${esc(fmtStamp(u.created))||'-'}</td>
+      <td class="tnum sm">${esc(fmtStamp(u.updated))||'-'}</td>
+      <td class="actions">
+        <button type="button" class="btn btn-ghost btn-icon" onclick="openUser('edit',${u.id})" aria-label="แก้ไขบัญชี ${esc(u.username)}"><i class="fa fa-edit" aria-hidden="true"></i></button>
+        <button type="button" class="btn btn-ghost btn-icon" onclick="openUser('password',${u.id})" aria-label="ตั้งรหัสผ่านใหม่ของ ${esc(u.username)}"><i class="fa fa-key" aria-hidden="true"></i></button>
+        ${deletable(u)?`<button type="button" class="btn btn-ghost btn-icon" onclick="delUser(${u.id})" aria-label="ลบบัญชี ${esc(u.username)}"><i class="fa fa-trash" aria-hidden="true"></i></button>`:''}
+      </td>
+    </tr>`).join('');
+  document.getElementById('user-range').textContent=
+    allUsers.length?`${from+1}–${from+shown.length} จาก ${allUsers.length} รายการ`:'ยังไม่มีบัญชีผู้ใช้งาน';
+  renderUserPages(pages);
+}
+
+function renderUserPages(pages){
+  const btn=(text,label,page,disabled,active)=>
+    `<button type="button" class="pbtn${active?' active':''}"${disabled?' disabled':''}`
+    + ` onclick="gotoUserPage(${page})" aria-label="${esc(label)}">${esc(text)}</button>`;
+  document.getElementById('user-pages').innerHTML=[
+    btn('\u2039','หน้าก่อนหน้า',userPage-1,userPage===1,false),
+    ...Array.from({length:pages},(_,i)=>btn(String(i+1),`หน้า ${i+1}`,i+1,false,i+1===userPage)),
+    btn('\u203a','หน้าถัดไป',userPage+1,userPage===pages,false),
+  ].join('');
+}
+
+function gotoUserPage(p){ userPage=p; renderUsers(); }
+function setUserPageSize(n){ userPageSize=Number(n)||10; userPage=1; renderUsers(); }
+
+/* ตัวเลือกบทบาทมาจากตารางเดียวกับที่เซิร์ฟเวอร์ใช้ ไม่ได้พิมพ์ชื่อบทบาทซ้ำไว้ในหน้าเว็บ */
+document.getElementById('u_role').innerHTML=
+  Object.entries(ROLE_NAME).map(([k,v])=>`<option value="${esc(k)}">${esc(v)}</option>`).join('');
 
 /* ============================================================
    EXPORT CSV / JSON

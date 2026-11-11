@@ -742,6 +742,58 @@ def the_last_admin_stays_and_an_admin_cannot_delete_themselves():
         'with two admins one of them could not be removed'
 
 
+def page_identity(client_, expect_status=200):
+    """อ่านค่าที่หน้าเว็บได้รับจาก index() กลับมาเป็น dict โดยไม่ต้องรันหน้าเว็บ"""
+    r = client_.get('/')
+    assert r.status_code == expect_status, f'GET / answered {r.status_code}'
+    html = r.get_data(as_text=True)
+    out = {}
+    for name, key in [('me', 'let me = '), ('roles', 'const ROLE_NAME  = '),
+                      ('perms', 'const ROLE_PERMS = ')]:
+        start = html.index(key) + len(key)
+        out[name] = json.loads(html[start:html.index('\n', start)].rstrip(';'))
+    return out
+
+
+def the_page_gets_the_same_permission_table_the_server_enforces():
+    """หน้าเว็บซ่อนปุ่มตามตารางนี้ ถ้าตารางที่ส่งไปไม่ตรงกับที่ requires() ใช้ ปุ่มกับสิทธิ์จะเพี้ยนกัน"""
+    for who, role in [('admin', 'admin'), ('staff', 'staff')]:
+        got = page_identity(lan_client(who))
+        assert got['perms'] == {r: sorted(p) for r, p in app.PERMISSIONS.items()}, got['perms']
+        assert got['roles'] == app.ROLES, got['roles']
+        assert got['me']['role'] == role, got['me']
+        assert got['me']['id'] == user_id(LOGINS[who][0]), got['me']
+    desktop = page_identity(client)
+    assert desktop['me'] == {'id': None, 'name': '', 'role': 'admin'}, desktop['me']
+
+
+def every_gated_control_names_a_permission_the_server_knows():
+    """ปุ่มที่ติด data-perm ชื่อผิดจะหายไปเงียบๆ ตลอดกาล เพราะไม่มีบทบาทไหนมีสิทธิ์ชื่อนั้น
+
+    เทสนี้ทำให้ชื่อที่พิมพ์ผิดตกที่นี่ แทนที่จะไปโผล่เป็นปุ่มที่ไม่มีใครเห็น
+    """
+    named = set(re.findall(r'data-perm="([^"]+)"', PAGE_SOURCE))
+    known = set().union(*app.PERMISSIONS.values())
+    assert named, 'the page gates nothing at all'
+    assert named <= known, f'the page gates on permissions the server never grants: {named - known}'
+
+
+def the_page_never_offers_to_delete_the_last_admin_or_the_account_in_use():
+    """เซิร์ฟเวอร์ปฏิเสธสองกรณีนี้อยู่แล้ว ปุ่มที่กดแล้วถูกปฏิเสธเสมอจึงไม่ควรโผล่"""
+    if not NODE:
+        raise Skipped('node is not on PATH')
+    rows = [{'id': 1, 'role': 'admin'}, {'id': 2, 'role': 'staff'}, {'id': 3, 'role': 'admin'}]
+    got = run_js(['deletable'], 'const allUsers=%s;\nlet me;\n'
+                 'const check=myId=>{ me={id:myId}; return allUsers.map(u=>deletable(u)); };\n'
+                 'console.log(JSON.stringify({'
+                 'two_admins: check(1),'
+                 'lone_admin: (allUsers.length=2, check(2)),'
+                 'desktop: check(null)}));' % json.dumps(rows))
+    assert got['two_admins'] == [False, True, True], got['two_admins']
+    assert got['lone_admin'] == [False, False], got['lone_admin']
+    assert got['desktop'] == [False, True], got['desktop']
+
+
 def desktop_mode_counts_as_an_admin():
     assert app.TRUST_LOCAL is True
     r = client.get('/api/users')
@@ -1038,6 +1090,9 @@ CHECKS = [
     an_account_created_in_the_web_can_log_in_and_is_managed_live,
     the_user_api_rejects_bad_input_with_a_thai_message,
     the_last_admin_stays_and_an_admin_cannot_delete_themselves,
+    the_page_gets_the_same_permission_table_the_server_enforces,
+    every_gated_control_names_a_permission_the_server_knows,
+    the_page_never_offers_to_delete_the_last_admin_or_the_account_in_use,
     desktop_mode_counts_as_an_admin,
     a_session_older_than_twelve_hours_is_rejected,
     an_unknown_page_still_answers_with_html_not_json,

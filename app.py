@@ -124,6 +124,11 @@ PERMISSIONS = {
     'staff': frozenset(),
 }
 
+# หน้าเว็บได้ตารางนี้ไปทั้งตาราง แล้วซ่อนปุ่มที่บทบาทปัจจุบันไม่มีสิทธิ์ กติกาว่าใครทำอะไรได้
+# จึงเขียนไว้ที่เดียวคือ PERMISSIONS การตรวจสิทธิ์จริงยังอยู่ที่ requires() ของทุก route
+# การซ่อนปุ่มเป็นเรื่องของหน้าตา ไม่ใช่การป้องกัน
+PAGE_PERMISSIONS = {role: sorted(perms) for role, perms in PERMISSIONS.items()}
+
 # กติกาของบัญชีที่ทั้งหน้าจัดการผู้ใช้งานและ manage_users.py ใช้ร่วมกัน
 USERNAME_RULE = re.compile(r'^[a-z0-9][a-z0-9._-]{2,31}$')
 MIN_PASSWORD  = 8
@@ -315,6 +320,17 @@ def current_role():
 def can(perm):
     return perm in PERMISSIONS.get(current_role(), frozenset())
 
+def me_for_page():
+    """ตัวตนของผู้ใช้งานเท่าที่หน้าเว็บต้องรู้เพื่อซ่อนปุ่มที่บทบาทนี้กดไม่ได้
+
+    id เป็น None เมื่อเปิดจากเครื่องแม่ข่ายในโหมดเดสก์ท็อป ซึ่งนับเป็นผู้ดูแลระบบโดยไม่มีบัญชี
+    หน้าเว็บใช้ id เทียบว่าแถวไหนคือบัญชีของตัวเอง เพื่อไม่โชว์ปุ่มลบบัญชีที่กำลังใช้งานอยู่
+    """
+    account = current_account()
+    return {'id': account['id'] if account else None,
+            'name': session_user(),
+            'role': current_role()}
+
 def requires(perm):
     """ปิด route ไว้สำหรับบทบาทที่มีสิทธิ์ perm ใน PERMISSIONS เท่านั้น"""
     def wrap(view):
@@ -355,7 +371,7 @@ def login():
 
     cred = request.get_json(silent=True) or {}
     with db() as con:
-        row = con.execute('SELECT username, display_name, role, password_hash FROM users WHERE username=?',
+        row = con.execute('SELECT id, username, display_name, role, password_hash FROM users WHERE username=?',
                           [cred.get('username', '')]).fetchone()
     if not row or not check_password_hash(row['password_hash'], cred.get('password', '')):
         # หน่วงไว้หนึ่งวินาที การไล่เดารหัสผ่านเป็นหมื่นครั้งจึงไม่คุ้มอีกต่อไป
@@ -368,7 +384,8 @@ def login():
     session.permanent = True
     session['username'] = row['username']
     session['since']    = now_iso()
-    return jsonify({'ok': True, 'display_name': row['display_name'], 'role': row['role']})
+    return jsonify({'ok': True, 'id': row['id'], 'display_name': row['display_name'],
+                    'role': row['role']})
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -377,7 +394,9 @@ def logout():
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 @app.route('/')
-def index(): return render_template('index.html', version=APP_VERSION, user=session_user())
+def index():
+    return render_template('index.html', version=APP_VERSION, user=session_user(),
+                           me=me_for_page(), roles=ROLES, permissions=PAGE_PERMISSIONS)
 
 @app.route('/api/positions', methods=['GET'])
 def get_all():
