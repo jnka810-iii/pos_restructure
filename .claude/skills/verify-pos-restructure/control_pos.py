@@ -825,7 +825,7 @@ def cmd_users(args):
     try:
         if args.users_cmd == 'list':
             rows = [dict(r) for r in con.execute(
-                'SELECT id, username, display_name, created FROM users ORDER BY id')]
+                'SELECT id, username, display_name, role, created FROM users ORDER BY id')]
             emit({'ok': True, 'command': 'users list', 'db': db_path,
                   'count': len(rows), 'users': rows})
 
@@ -842,7 +842,8 @@ def cmd_users(args):
                            next_steps=['สั่งซ้ำด้วยรหัสผ่านยาวอย่างน้อย 8 ตัว'])
             if args.dry_run:
                 emit({'ok': True, 'command': 'users add', 'dry_run': True, 'db': db_path,
-                      'would_add': {'username': args.username, 'display_name': args.display},
+                      'would_add': {'username': args.username, 'display_name': args.display,
+                                    'role': args.role},
                       'note': 'ยังไม่ได้เพิ่มบัญชี สั่งซ้ำโดยไม่ใส่ --dry-run จึงจะเพิ่มจริง'})
             existing = con.execute('SELECT id FROM users WHERE username=?', [args.username]).fetchone()
             if existing:
@@ -850,12 +851,14 @@ def cmd_users(args):
                            next_steps=['control_pos.py users list',
                                        f'control_pos.py users remove --username {args.username} --apply'])
             con.execute(
-                'INSERT INTO users (username, display_name, password_hash, created) VALUES (?,?,?,?)',
-                [args.username, args.display, generate_password_hash(args.password),
+                'INSERT INTO users (username, display_name, role, password_hash, created)'
+                ' VALUES (?,?,?,?,?)',
+                [args.username, args.display, args.role, generate_password_hash(args.password),
                  datetime.now().strftime('%Y-%m-%dT%H:%M:%S')])
             con.commit()
             emit({'ok': True, 'command': 'users add', 'db': db_path,
-                  'added': {'username': args.username, 'display_name': args.display},
+                  'added': {'username': args.username, 'display_name': args.display,
+                            'role': args.role},
                   'next': [f'control_pos.py api GET /api/positions --from lan '
                            f'--login {args.username}:<รหัสผ่าน>']})
 
@@ -1712,6 +1715,8 @@ def build_parser():
     u_add.add_argument('--username', required=True, help='a-z 0-9 . _ - ยาว 3 ถึง 32 ตัว')
     u_add.add_argument('--display', required=True, help='ชื่อแสดงผล ภาษาไทยได้')
     u_add.add_argument('--password', required=True, help='ยาวอย่างน้อย 8 ตัว')
+    u_add.add_argument('--role', choices=['admin', 'staff'], default='staff',
+                       help="บทบาทของบัญชี ค่าเริ่มต้น staff ซึ่งลบคำขอและเปิดแท็บจัดการผู้ใช้งานไม่ได้")
     u_add.add_argument('--dry-run', action='store_true', help='แสดงบัญชีที่จะเพิ่มโดยไม่เพิ่ม')
     u_add.set_defaults(func=cmd_users)
     u_rm = usub.add_parser('remove', help='ลบบัญชี (dry-run โดยค่าเริ่มต้น)',
