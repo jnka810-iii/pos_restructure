@@ -199,6 +199,10 @@ SESSION_HOURS   = 12
 LOCAL_RECORDER  = 'เครื่องแม่ข่าย'   # ชื่อผู้บันทึกเมื่อบันทึกจากเครื่องแม่ข่ายโดยไม่ได้เข้าสู่ระบบ
 OPEN_ENDPOINTS  = {'login', 'static'}
 
+# คำขอจากเครื่องนี้เองผ่านด่านได้หรือไม่ serve() ตั้งค่านี้จาก host ที่ผูกจริง
+# ค่าตั้งต้นเป็น True สำหรับโหมดเดสก์ท็อปและไฟล์ .exe ซึ่งเสิร์ฟให้ 127.0.0.1 เท่านั้น
+TRUST_LOCAL     = True
+
 app.permanent_session_lifetime = timedelta(hours=SESSION_HOURS)
 app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax')
 
@@ -228,6 +232,14 @@ def load_secret_key():
 def from_this_machine():
     return request.remote_addr in LOOPBACK
 
+def walks_in_without_a_login():
+    """คำขอที่ผ่านด่านได้โดยไม่ต้องเข้าสู่ระบบ
+
+    ทั้งด่านและหน้าเข้าสู่ระบบต้องตอบคำถามนี้ตรงกัน ถ้าด่านส่งเครื่องแม่ข่ายไป /login
+    แต่ /login ส่งกลับมาที่ / เครื่องแม่ข่ายจะวนไม่รู้จบ
+    """
+    return TRUST_LOCAL and from_this_machine()
+
 def session_user():
     """ชื่อแสดงผลของผู้ใช้งานที่เข้าสู่ระบบอยู่ หรือค่าว่างถ้ายังไม่เข้าหรือเซสชันหมดอายุ
 
@@ -254,7 +266,7 @@ def require_login():
     ไฟล์แนบใน /uploads/ ก็อยู่ในด่านนี้ด้วย ชื่อไฟล์เป็น UUID ที่เดายาก แต่ชื่อนั้น
     ปรากฏอยู่ในคำตอบของ GET /api/positions การเดายากจึงไม่ใช่การป้องกัน
     """
-    if request.endpoint in OPEN_ENDPOINTS or from_this_machine():
+    if request.endpoint in OPEN_ENDPOINTS or walks_in_without_a_login():
         return None
     if session_user():
         return None
@@ -265,7 +277,7 @@ def require_login():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
-        if from_this_machine() or session_user():
+        if walks_in_without_a_login() or session_user():
             return redirect('/')
         return render_template('login.html', version=APP_VERSION)
 
@@ -390,6 +402,32 @@ def wait_for_port(port, timeout=20.0, host='127.0.0.1'):
         except OSError:
             time.sleep(0.05)
     return False
+
+def serve(host='127.0.0.1', port=PORT):
+    """เปิดเซิร์ฟเวอร์ และตั้งนโยบายเข้าสู่ระบบจาก host ที่ผูกจริง
+
+    host ที่ไม่ใช่ loopback แปลว่าเครื่องอื่นเข้าถึงแอปได้ ทุกคนจึงต้องเข้าสู่ระบบ รวมถึง
+    คนที่นั่งอยู่หน้าเครื่องแม่ข่าย เพราะเมื่อเปิดรับจากภายนอกแล้ว เซิร์ฟเวอร์ไม่มีทางรู้ว่า
+    คำขอที่มาจาก 127.0.0.1 เป็นคนที่นั่งอยู่หน้าเครื่องจริง หรือถูกส่งต่อมาจากที่อื่น
+    นโยบายจึงมาจากสิ่งเดียวที่รู้แน่ คือเราเปิดให้ใครเข้าถึงได้บ้าง
+
+    คืน 0 เมื่อเซิร์ฟเวอร์ปิดตามปกติ และคืน 1 เมื่อปฏิเสธที่จะเปิด
+    """
+    global TRUST_LOCAL
+    TRUST_LOCAL = host in LOOPBACK
+    init_db()
+    if not TRUST_LOCAL:
+        with db() as con:
+            accounts = con.execute('SELECT COUNT(*) FROM users').fetchone()[0]
+        if not accounts:
+            print('[PosRestructure] ยังไม่มีบัญชีผู้ใช้งาน จึงเปิดเซิร์ฟเวอร์ให้ไม่ได้')
+            print('[PosRestructure] โหมดนี้ทุกคนต้องเข้าสู่ระบบ รวมถึงเครื่องนี้ '
+                  'ถ้าเปิดตอนนี้จะไม่มีใครเข้าได้เลย')
+            print('[PosRestructure] สร้างบัญชีแรกก่อนด้วย  '
+                  'python manage_users.py add <ชื่อผู้ใช้งาน> "<ชื่อแสดงผล>"')
+            return 1
+    app.run(host=host, port=port, debug=False)
+    return 0
 
 def main():
     init_db()

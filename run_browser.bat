@@ -10,5 +10,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0stop_app.ps1"
 
 echo [PosRestructure] Opening http://127.0.0.1:5020  (close this window to stop)
 start "" /b cmd /c "timeout /t 2 /nobreak >nul & start "" http://127.0.0.1:5020"
-"%PY%" -c "import app; app.init_db(); app.app.run(host='127.0.0.1', port=app.PORT, debug=False)"
+"%PY%" -c "import app, sys; sys.exit(app.serve(port=app.PORT))"
 pause

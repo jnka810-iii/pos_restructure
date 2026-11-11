@@ -23,9 +23,6 @@ if not errorlevel 1 goto firewall_ok
 echo [PosRestructure] WARNING: the firewall rule was not added, so other machines cannot connect yet
 :firewall_ok
 
-REM Other machines must log in, so with no accounts yet nobody can get in at all
-"%PY%" -c "import app; app.init_db(); con=app.get_db(); n=con.execute('SELECT COUNT(*) FROM users').fetchone()[0]; con.close(); print('[PosRestructure] WARNING: there are no user accounts yet - other machines cannot log in. Add one with:  python manage_users.py add <username> \"<display name>\"') if not n else None"
-
 echo.
 echo [PosRestructure] Server running on port %PORT%  (Ctrl+C to stop)
 echo [PosRestructure] Other machines on the LAN open:
@@ -33,7 +30,9 @@ REM Only networks with a gateway, so virtual adapters (WSL, Hyper-V, VirtualBox)
 powershell -NoProfile -Command "Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -and $_.NetAdapter.Status -eq 'Up' } | ForEach-Object { '    http://' + $_.IPv4Address[0].IPAddress + ':%PORT%   (' + $_.InterfaceAlias + ')' }"
 REM A real network port with an address but no cable shows nothing above, so say so
 powershell -NoProfile -Command "Get-NetAdapter | Where-Object { $_.HardwareInterface -and $_.Status -ne 'Up' } | ForEach-Object { $ip = (Get-NetIPAddress -InterfaceIndex $_.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '169.254.*' }).IPAddress; if ($ip) { '[PosRestructure] WARNING: ' + $_.Name + ' (' + ($ip -join ', ') + ') is not connected - plug in the LAN cable to serve that network' } }"
-echo [PosRestructure] This machine opens:  http://127.0.0.1:%PORT%
+echo [PosRestructure] This machine opens:  http://127.0.0.1:%PORT%  (log in here too)
 echo.
-"%PY%" -c "import app; app.init_db(); app.app.run(host='0.0.0.0', port=app.PORT, debug=False)"
+REM Binding every interface makes app.serve require a login from everyone, this
+REM machine included, and refuse to start while no account exists.
+"%PY%" -c "import app, sys; sys.exit(app.serve(host='0.0.0.0', port=app.PORT))"
 pause
