@@ -13,16 +13,13 @@ r"""จัดการบัญชีผู้ใช้งานสำหรั�
 """
 
 import getpass
-import re
 import sqlite3
 import sys
 
 from werkzeug.security import generate_password_hash
 
 import app
-
-USERNAME_RULE = re.compile(r'^[a-z0-9][a-z0-9._-]{2,31}$')
-MIN_PASSWORD  = 8
+from app import MIN_PASSWORD, USERNAME_RULE
 
 
 def ask_password(username):

@@ -651,6 +651,106 @@ def staff_cannot_clear_every_record_even_from_this_machine():
     assert len(client.get('/api/positions').get_json()) == before, 'staff cleared every record'
 
 
+def user_id(username):
+    return next(u['id'] for u in client.get('/api/users').get_json() if u['username'] == username)
+
+
+def staff_is_refused_every_user_route():
+    c = lan_client('staff')
+    uid = user_id(USERNAME)
+    calls = [c.get('/api/users'),
+             c.post('/api/users', json={'username': 'intruder', 'display_name': 'ผู้บุกรุก',
+                                        'role': 'admin', 'password': 'ยาวพอแน่นอน'}),
+             c.put(f'/api/users/{uid}', json={'display_name': 'ถูกเปลี่ยน', 'role': 'staff'}),
+             c.put(f'/api/users/{uid}/password', json={'password': 'ยึดบัญชีแล้ว'}),
+             c.delete(f'/api/users/{uid}')]
+    assert [r.status_code for r in calls] == [403] * 5, [r.status_code for r in calls]
+    names = [u['username'] for u in client.get('/api/users').get_json()]
+    assert 'intruder' not in names, 'staff created an account'
+    assert lan_client('admin').get('/api/users').status_code == 200, 'staff changed the admin password'
+
+
+def an_account_created_in_the_web_can_log_in_and_is_managed_live():
+    admin = lan_client('admin')
+    r = admin.post('/api/users', json={'username': 'wichai', 'display_name': '  วิชัย มั่นคง ',
+                                       'role': 'staff', 'password': 'รหัสแรกของวิชัย'})
+    assert r.status_code == 201, f'expected 201, got {r.status_code} {r.get_json()}'
+    created = r.get_json()['user']
+    assert (created['display_name'], created['role']) == ('วิชัย มั่นคง', 'staff'), created
+    assert ISO_STAMP.match(created['created']), created
+
+    wichai = lan_client(('wichai', 'รหัสแรกของวิชัย'))
+    assert wichai.get('/api/users').status_code == 403, 'a new staff account can manage users'
+
+    r = admin.put(f"/api/users/{created['id']}", json={'display_name': 'วิชัย มั่นคง', 'role': 'admin',
+                                                       'username': 'renamed'})
+    assert r.status_code == 200, f'expected 200, got {r.status_code} {r.get_json()}'
+    assert r.get_json()['user']['username'] == 'wichai', 'the username changed through an edit'
+    assert ISO_STAMP.match(r.get_json()['user']['updated'] or ''), r.get_json()
+    assert wichai.get('/api/users').status_code == 200, 'the promotion did not reach the open session'
+
+    r = admin.put(f"/api/users/{created['id']}/password", json={'password': 'รหัสใหม่ของวิชัย'})
+    assert r.status_code == 200, f'expected 200, got {r.status_code} {r.get_json()}'
+    old = lan_client().post('/login', json={'username': 'wichai', 'password': 'รหัสแรกของวิชัย'})
+    assert old.status_code == 401, 'the old password still logs in'
+    lan_client(('wichai', 'รหัสใหม่ของวิชัย'))
+
+    r = admin.delete(f"/api/users/{created['id']}")
+    assert r.status_code == 200, f'expected 200, got {r.status_code} {r.get_json()}'
+    assert wichai.get('/api/positions').status_code == 401, 'a deleted account kept its session'
+    gone = lan_client().post('/login', json={'username': 'wichai', 'password': 'รหัสใหม่ของวิชัย'})
+    assert gone.status_code == 401, 'a deleted account can still log in'
+
+
+def the_user_api_rejects_bad_input_with_a_thai_message():
+    good = {'username': 'kanya', 'display_name': 'กัญญา ดีงาม', 'role': 'staff', 'password': 'ยาวพอแน่นอน'}
+    for bad in ({'username': 'Bad Name'}, {'username': 'ab'}, {'display_name': '   '},
+                {'role': 'owner'}, {'password': 'สั้น'}, {'password': None}):
+        r = client.post('/api/users', json={**good, **bad})
+        assert r.status_code == 400, f'{bad} got {r.status_code}'
+        assert r.get_json()['ok'] is False and r.get_json()['error'], r.get_json()
+    assert client.post('/api/users', json=good).status_code == 201
+    r = client.post('/api/users', json=good)
+    assert r.status_code == 409, f'a duplicate username got {r.status_code}'
+    assert 'kanya' in r.get_json()['error'], r.get_json()
+    uid = user_id('kanya')
+    assert client.put(f'/api/users/{uid}', json={'display_name': 'กัญญา', 'role': 'owner'}).status_code == 400
+    assert client.put(f'/api/users/{uid}/password', json={'password': 'สั้น'}).status_code == 400
+    assert client.put('/api/users/999999', json={'display_name': 'ไม่มี', 'role': 'staff'}).status_code == 404
+    assert client.delete('/api/users/999999').status_code == 404
+    client.delete(f'/api/users/{uid}')
+
+
+def the_last_admin_stays_and_an_admin_cannot_delete_themselves():
+    uid = user_id(USERNAME)
+    admins = [u for u in client.get('/api/users').get_json() if u['role'] == 'admin']
+    assert [u['username'] for u in admins] == [USERNAME], f'the check expects one admin, found {admins}'
+    r = client.put(f'/api/users/{uid}', json={'display_name': FULLNAME, 'role': 'staff'})
+    assert r.status_code == 409, f'the last admin was demoted: {r.status_code}'
+    assert 'ผู้ดูแลระบบ' in r.get_json()['error'], r.get_json()
+    assert client.delete(f'/api/users/{uid}').status_code == 409, 'the last admin was deleted'
+    assert user_id(USERNAME) == uid
+
+    client.post('/api/users', json={'username': 'admin2', 'display_name': 'ผู้ดูแลคนที่สอง',
+                                    'role': 'admin', 'password': 'ยาวพอแน่นอน'})
+    second = lan_client(('admin2', 'ยาวพอแน่นอน'))
+    r = second.delete(f"/api/users/{user_id('admin2')}")
+    assert r.status_code == 409, f'an admin deleted their own account: {r.status_code}'
+    assert r.get_json()['error'] == 'ลบบัญชีที่กำลังใช้งานอยู่ไม่ได้', r.get_json()
+    assert second.get('/api/users').status_code == 200, 'the refused self-delete still removed the account'
+    assert client.delete(f"/api/users/{user_id('admin2')}").status_code == 200, \
+        'with two admins one of them could not be removed'
+
+
+def desktop_mode_counts_as_an_admin():
+    assert app.TRUST_LOCAL is True
+    r = client.get('/api/users')
+    assert r.status_code == 200, f'the desktop could not list accounts: {r.status_code}'
+    assert {USERNAME, STAFF_USERNAME} <= {u['username'] for u in r.get_json()}, r.get_json()
+    assert set(r.get_json()[0]) == {'id', 'username', 'display_name', 'role', 'created', 'updated'}, \
+        'the account list leaks a column it should not, such as the password hash'
+
+
 def a_session_older_than_twelve_hours_is_rejected():
     c = lan_client('admin')
     with c.session_transaction() as sess:
@@ -934,6 +1034,11 @@ CHECKS = [
     an_old_database_makes_its_oldest_account_the_admin,
     staff_can_save_a_request_but_not_delete_one,
     staff_cannot_clear_every_record_even_from_this_machine,
+    staff_is_refused_every_user_route,
+    an_account_created_in_the_web_can_log_in_and_is_managed_live,
+    the_user_api_rejects_bad_input_with_a_thai_message,
+    the_last_admin_stays_and_an_admin_cannot_delete_themselves,
+    desktop_mode_counts_as_an_admin,
     a_session_older_than_twelve_hours_is_rejected,
     an_unknown_page_still_answers_with_html_not_json,
     the_entry_point_waits_for_the_port_instead_of_sleeping,

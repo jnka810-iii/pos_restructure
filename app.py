@@ -23,14 +23,14 @@ Build .exe (Windows):
     --name "PosRestructure" app.py
 """
 
-import logging, os, secrets, socket, sys, sqlite3, threading, time, uuid
+import logging, os, re, secrets, socket, sys, sqlite3, threading, time, uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
 from urllib.parse import urlparse
 from flask import Flask, g, request, jsonify, redirect, render_template, send_from_directory, session
 from werkzeug.exceptions import HTTPException
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 try:
     import webview
@@ -123,6 +123,10 @@ PERMISSIONS = {
     'admin': frozenset({'delete_request', 'delete_all', 'manage_users'}),
     'staff': frozenset(),
 }
+
+# กติกาของบัญชีที่ทั้งหน้าจัดการผู้ใช้งานและ manage_users.py ใช้ร่วมกัน
+USERNAME_RULE = re.compile(r'^[a-z0-9][a-z0-9._-]{2,31}$')
+MIN_PASSWORD  = 8
 
 def create_table(con, table, columns):
     """สร้างตารางถ้ายังไม่มี และเพิ่มคอลัมน์ที่ฐานข้อมูลเก่ายังขาดอยู่"""
@@ -433,6 +437,111 @@ def del_all():
 
 @app.route('/api/ping')
 def ping(): return jsonify({'ok':True})
+
+# ── บัญชีผู้ใช้งาน ────────────────────────────────────────────────────────────
+USER_FIELDS = 'id, username, display_name, role, created, updated'
+
+ACCOUNT_RULES = {
+    'display_name': (lambda v: bool(v), 'กรุณากรอกชื่อ-นามสกุล'),
+    'username'    : (lambda v: bool(USERNAME_RULE.match(v)),
+                     'ชื่อผู้ใช้ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3 ถึง 32 ตัว และขึ้นต้นด้วยตัวอักษรหรือตัวเลข'),
+    'role'        : (lambda v: v in ROLES, 'กรุณาเลือกบทบาทเป็นผู้ดูแลระบบหรือเจ้าหน้าที่'),
+    'password'    : (lambda v: len(v) >= MIN_PASSWORD, f'รหัสผ่านต้องยาวอย่างน้อย {MIN_PASSWORD} ตัวอักษร'),
+}
+LAST_ADMIN_MESSAGE = 'ระบบต้องมีผู้ดูแลระบบอย่างน้อยหนึ่งคน ตั้งคนอื่นเป็นผู้ดูแลระบบก่อน'
+
+def account_fields(*names):
+    """อ่านช่องที่ต้องการจาก JSON ของคำขอ คืน (ค่า, ข้อความของช่องแรกที่ไม่ผ่าน หรือ None)
+
+    ไล่ตรวจตามลำดับใน names ซึ่งผู้เรียกส่งมาตามลำดับช่องบนหน้าจอ
+    รหัสผ่านไม่ตัดช่องว่าง เพราะช่องว่างเป็นส่วนหนึ่งของรหัสผ่านได้
+    """
+    body = request.get_json(silent=True) or {}
+    values = {}
+    for name in names:
+        raw = body.get(name)
+        raw = raw if isinstance(raw, str) else ''
+        values[name] = raw if name == 'password' else raw.strip()
+    for name in names:
+        ok, message = ACCOUNT_RULES[name]
+        if not ok(values[name]):
+            return values, message
+    return values, None
+
+def account_row(con, uid):
+    return con.execute(f'SELECT {USER_FIELDS} FROM users WHERE id=?', [uid]).fetchone()
+
+def not_found_or_last_admin(con, uid):
+    """คำสั่งที่มีเงื่อนไข NOT_THE_LAST_ADMIN ไม่โดนแถวไหนเลย บอกให้ถูกว่าเพราะอะไร"""
+    if not account_row(con, uid):
+        return jsonify({'ok': False, 'error': 'ไม่พบบัญชีผู้ใช้งานนี้'}), 404
+    return jsonify({'ok': False, 'error': LAST_ADMIN_MESSAGE}), 409
+
+@app.route('/api/users', methods=['GET'])
+@requires('manage_users')
+def list_users():
+    with db() as con:
+        rows = con.execute(f'SELECT {USER_FIELDS} FROM users ORDER BY id').fetchall()
+    return jsonify([dict(r) for r in rows])
+
+@app.route('/api/users', methods=['POST'])
+@requires('manage_users')
+def add_user():
+    d, problem = account_fields('display_name', 'username', 'role', 'password')
+    if problem:
+        return jsonify({'ok': False, 'error': problem}), 400
+    try:
+        with db() as con:
+            uid = con.execute('INSERT INTO users (username, display_name, role, password_hash, created)'
+                              ' VALUES (?,?,?,?,?)',
+                              [d['username'], d['display_name'], d['role'],
+                               generate_password_hash(d['password']), now_iso()]).lastrowid
+            ensure_an_admin(con)
+            row = account_row(con, uid)
+    except sqlite3.IntegrityError:
+        return jsonify({'ok': False, 'error': f"มีชื่อผู้ใช้ {d['username']} อยู่แล้ว"}), 409
+    return jsonify({'ok': True, 'user': dict(row)}), 201
+
+@app.route('/api/users/<int:uid>', methods=['PUT'])
+@requires('manage_users')
+def update_user(uid):
+    """ชื่อผู้ใช้เปลี่ยนไม่ได้ เพราะเป็นสิ่งที่เจ้าของบัญชีพิมพ์ตอนเข้าสู่ระบบ"""
+    d, problem = account_fields('display_name', 'role')
+    if problem:
+        return jsonify({'ok': False, 'error': problem}), 400
+    with db() as con:
+        changed = con.execute('UPDATE users SET display_name=?, role=?, updated=?'
+                              f" WHERE id=? AND (?='admin' OR {NOT_THE_LAST_ADMIN})",
+                              [d['display_name'], d['role'], now_iso(), uid, d['role']]).rowcount
+        if not changed:
+            return not_found_or_last_admin(con, uid)
+        row = account_row(con, uid)
+    return jsonify({'ok': True, 'user': dict(row)})
+
+@app.route('/api/users/<int:uid>/password', methods=['PUT'])
+@requires('manage_users')
+def reset_password(uid):
+    d, problem = account_fields('password')
+    if problem:
+        return jsonify({'ok': False, 'error': problem}), 400
+    with db() as con:
+        changed = con.execute('UPDATE users SET password_hash=?, updated=? WHERE id=?',
+                              [generate_password_hash(d['password']), now_iso(), uid]).rowcount
+    if not changed:
+        return jsonify({'ok': False, 'error': 'ไม่พบบัญชีผู้ใช้งานนี้'}), 404
+    return jsonify({'ok': True})
+
+@app.route('/api/users/<int:uid>', methods=['DELETE'])
+@requires('manage_users')
+def delete_user(uid):
+    """ชื่อผู้บันทึกบนคำขอเดิมไม่เปลี่ยน ดู docs/adr/0002-recorder-is-a-copied-name.md"""
+    me = current_account()
+    if me and me['id'] == uid:
+        return jsonify({'ok': False, 'error': 'ลบบัญชีที่กำลังใช้งานอยู่ไม่ได้'}), 409
+    with db() as con:
+        if not con.execute(f'DELETE FROM users WHERE id=? AND {NOT_THE_LAST_ADMIN}', [uid]).rowcount:
+            return not_found_or_last_admin(con, uid)
+    return jsonify({'ok': True})
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
