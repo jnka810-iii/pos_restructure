@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import tempfile
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
 
@@ -52,6 +53,22 @@ def lan_client(logged_in=False):
         r = c.post('/login', json={'username': USERNAME, 'password': PASSWORD})
         assert r.status_code == 200, f'the fixture could not log in: {r.status_code} {r.get_json()}'
     return c
+
+
+@contextmanager
+def running_server(host):
+    """เรียก app.serve กับ host หนึ่ง โดยไม่ให้มันผูกพอร์ตจริง
+
+    yield รายการ host ที่ serve สั่งผูก ซึ่งว่างเมื่อ serve ปฏิเสธที่จะเปิดเซิร์ฟเวอร์
+    """
+    bound, real_run, real_trust = [], app.app.run, app.TRUST_LOCAL
+    app.app.run = lambda host=None, **kw: bound.append(host)
+    try:
+        app.serve(host=host, port=5098)
+        yield bound
+    finally:
+        app.app.run = real_run
+        app.TRUST_LOCAL = real_trust
 APP_SOURCE = open(os.path.join(HERE, 'app.py'), encoding='utf-8').read()
 PAGE_SOURCE = open(os.path.join(HERE, 'templates', 'index.html'), encoding='utf-8').read()
 
@@ -429,9 +446,79 @@ def a_machine_on_the_lan_must_log_in_first():
     assert r.headers['Location'].endswith('/login'), r.headers['Location']
 
 
-def this_machine_never_has_to_log_in():
+def desktop_mode_never_asks_this_machine_to_log_in():
+    assert app.TRUST_LOCAL is True, 'importing app.py no longer defaults to desktop mode'
     assert client.get('/').status_code == 200, 'the server machine was asked to log in'
     assert client.get('/api/positions').status_code == 200, 'the server machine was asked to log in'
+
+
+@contextmanager
+def server_mode():
+    """โหมดที่ run_server.bat ใช้ ซึ่งบังคับเข้าสู่ระบบกับทุกคนรวมถึงเครื่องแม่ข่ายเอง"""
+    app.TRUST_LOCAL = False
+    try:
+        yield
+    finally:
+        app.TRUST_LOCAL = True
+
+
+def server_mode_asks_even_this_machine_to_log_in():
+    with server_mode():
+        r = client.get('/')
+        assert r.status_code == 302, f'the server machine walked straight in, got {r.status_code}'
+        assert r.headers['Location'].endswith('/login'), r.headers['Location']
+        r = client.get('/api/positions')
+        assert r.status_code == 401, f'expected 401, got {r.status_code}'
+        assert r.get_json()['error'] == 'กรุณาเข้าสู่ระบบ', r.get_json()
+
+
+def the_login_page_does_not_bounce_this_machine_in_server_mode():
+    """ด่านส่ง / ไป /login ถ้า /login ส่งกลับมาที่ / เครื่องแม่ข่ายจะวนไม่รู้จบ"""
+    with server_mode():
+        r = client.get('/login')
+        assert r.status_code == 200, f'/login redirected instead of showing the form, got {r.status_code}'
+        assert 'id="login-form"' in r.get_data(as_text=True), 'the login page has no form on it'
+
+
+def this_machine_logs_in_and_is_recorded_by_name_in_server_mode():
+    with server_mode():
+        c = app.app.test_client()
+        assert c.post('/login', json={'username': USERNAME, 'password': PASSWORD}).status_code == 200
+        rid = c.post('/api/positions', json={'p4_status': 'อนุมัติ'}).get_json()['id']
+    row = next(r for r in client.get('/api/positions').get_json() if r['id'] == rid)
+    assert row['created_by'] == FULLNAME, f"expected {FULLNAME!r}, got {row['created_by']!r}"
+
+
+def serving_a_non_loopback_host_turns_the_login_on_by_itself():
+    """นโยบายเข้าสู่ระบบมาจาก host ที่ผูกจริง การเปิดให้ทั้งวงโดยไม่บังคับล็อกอินจึงเขียนไม่ได้"""
+    for host, trusted in (('127.0.0.1', True), (LAN_IP, False), ('0.0.0.0', False)):
+        with running_server(host) as started:
+            assert started == [host], f'serve did not bind {host}: {started}'
+            assert app.TRUST_LOCAL is trusted, f'binding {host} left TRUST_LOCAL {app.TRUST_LOCAL}'
+
+
+def serving_the_lan_with_no_accounts_refuses_to_start():
+    """ไม่มีบัญชีแปลว่าไม่มีใครเข้าได้เลย รวมถึงผู้ดูแล การเปิดเซิร์ฟเวอร์ตอนนั้นคือการล็อกทุกคนออก"""
+    con = app.get_db()
+    saved = con.execute('SELECT username, display_name, password_hash, created FROM users').fetchall()
+    con.execute('DELETE FROM users')
+    con.commit()
+    con.close()
+    try:
+        with running_server(LAN_IP) as started:
+            assert started == [], 'the server started with no accounts, locking everyone out'
+    finally:
+        con = app.get_db()
+        con.executemany('INSERT INTO users (username, display_name, password_hash, created)'
+                        ' VALUES (?,?,?,?)', [tuple(r) for r in saved])
+        con.commit()
+        con.close()
+
+
+def the_lan_launcher_goes_through_the_one_entry_point_that_sets_the_policy():
+    source = open(os.path.join(HERE, 'run_server.bat'), encoding='utf-8').read()
+    assert 'app.serve(' in source, 'run_server.bat no longer starts the app through app.serve'
+    assert 'app.app.run(' not in source, 'run_server.bat binds the port itself and skips the login policy'
 
 
 def an_attachment_is_behind_the_login_too():
@@ -752,7 +839,13 @@ CHECKS = [
     a_cross_site_upload_never_reaches_the_disk,
     reading_is_never_blocked_by_the_origin_check,
     a_machine_on_the_lan_must_log_in_first,
-    this_machine_never_has_to_log_in,
+    desktop_mode_never_asks_this_machine_to_log_in,
+    server_mode_asks_even_this_machine_to_log_in,
+    the_login_page_does_not_bounce_this_machine_in_server_mode,
+    this_machine_logs_in_and_is_recorded_by_name_in_server_mode,
+    serving_a_non_loopback_host_turns_the_login_on_by_itself,
+    serving_the_lan_with_no_accounts_refuses_to_start,
+    the_lan_launcher_goes_through_the_one_entry_point_that_sets_the_policy,
     an_attachment_is_behind_the_login_too,
     a_wrong_password_hands_out_no_session,
     a_record_remembers_who_saved_it,
